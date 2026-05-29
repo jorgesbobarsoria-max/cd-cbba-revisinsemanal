@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InspeccionIdRouteImport } from './routes/inspeccion.$id'
 
+const HistorialRoute = HistorialRouteImport.update({
+  id: '/historial',
+  path: '/historial',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -32,35 +38,46 @@ const InspeccionIdRoute = InspeccionIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/historial': typeof HistorialRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/historial': typeof HistorialRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/historial': typeof HistorialRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/inspeccion/$id'
+  fullPaths: '/' | '/auth' | '/historial' | '/inspeccion/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/inspeccion/$id'
-  id: '__root__' | '/' | '/auth' | '/inspeccion/$id'
+  to: '/' | '/auth' | '/historial' | '/inspeccion/$id'
+  id: '__root__' | '/' | '/auth' | '/historial' | '/inspeccion/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  HistorialRoute: typeof HistorialRoute
   InspeccionIdRoute: typeof InspeccionIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/historial': {
+      id: '/historial'
+      path: '/historial'
+      fullPath: '/historial'
+      preLoaderRoute: typeof HistorialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  HistorialRoute: HistorialRoute,
   InspeccionIdRoute: InspeccionIdRoute,
 }
 export const routeTree = rootRouteImport
