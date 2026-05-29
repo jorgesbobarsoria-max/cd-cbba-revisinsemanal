@@ -14,7 +14,222 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      equipos: {
+        Row: {
+          capacidad: string | null
+          categoria: string
+          created_at: string
+          criticidad: string | null
+          estado: string | null
+          id: string
+          marca: string | null
+          modelo: string | null
+          orden: number
+          redundancia: string | null
+          tag: string
+          ubicacion: string | null
+        }
+        Insert: {
+          capacidad?: string | null
+          categoria: string
+          created_at?: string
+          criticidad?: string | null
+          estado?: string | null
+          id: string
+          marca?: string | null
+          modelo?: string | null
+          orden?: number
+          redundancia?: string | null
+          tag: string
+          ubicacion?: string | null
+        }
+        Update: {
+          capacidad?: string | null
+          categoria?: string
+          created_at?: string
+          criticidad?: string | null
+          estado?: string | null
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          orden?: number
+          redundancia?: string | null
+          tag?: string
+          ubicacion?: string | null
+        }
+        Relationships: []
+      }
+      inspeccion_items: {
+        Row: {
+          accion_correctiva: string | null
+          created_at: string
+          equipo_id: string
+          estado: string | null
+          id: string
+          inspeccion_id: string
+          observaciones: string | null
+          punto_id: number
+          semaforo: string | null
+          valor: string | null
+        }
+        Insert: {
+          accion_correctiva?: string | null
+          created_at?: string
+          equipo_id: string
+          estado?: string | null
+          id?: string
+          inspeccion_id: string
+          observaciones?: string | null
+          punto_id: number
+          semaforo?: string | null
+          valor?: string | null
+        }
+        Update: {
+          accion_correctiva?: string | null
+          created_at?: string
+          equipo_id?: string
+          estado?: string | null
+          id?: string
+          inspeccion_id?: string
+          observaciones?: string | null
+          punto_id?: number
+          semaforo?: string | null
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspeccion_items_equipo_id_fkey"
+            columns: ["equipo_id"]
+            isOneToOne: false
+            referencedRelation: "equipos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspeccion_items_inspeccion_id_fkey"
+            columns: ["inspeccion_id"]
+            isOneToOne: false
+            referencedRelation: "inspecciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspeccion_items_punto_id_fkey"
+            columns: ["punto_id"]
+            isOneToOne: false
+            referencedRelation: "puntos_inspeccion"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspecciones: {
+        Row: {
+          carga_it: number | null
+          cargo: string | null
+          condicion_clima: string | null
+          created_at: string
+          estado: string
+          fecha: string
+          hr_sala: number | null
+          id: string
+          presion_diferencial: number | null
+          proxima_revision: string | null
+          pue: number | null
+          semana: number
+          supervisor: string | null
+          tecnico: string | null
+          temp_sala: number | null
+          turno: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          carga_it?: number | null
+          cargo?: string | null
+          condicion_clima?: string | null
+          created_at?: string
+          estado?: string
+          fecha: string
+          hr_sala?: number | null
+          id?: string
+          presion_diferencial?: number | null
+          proxima_revision?: string | null
+          pue?: number | null
+          semana: number
+          supervisor?: string | null
+          tecnico?: string | null
+          temp_sala?: number | null
+          turno?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          carga_it?: number | null
+          cargo?: string | null
+          condicion_clima?: string | null
+          created_at?: string
+          estado?: string
+          fecha?: string
+          hr_sala?: number | null
+          id?: string
+          presion_diferencial?: number | null
+          proxima_revision?: string | null
+          pue?: number | null
+          semana?: number
+          supervisor?: string | null
+          tecnico?: string | null
+          temp_sala?: number | null
+          turno?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      puntos_inspeccion: {
+        Row: {
+          descripcion: string
+          equipo_id: string
+          id: number
+          max_alerta: number | null
+          max_ok: number | null
+          min_alerta: number | null
+          min_ok: number | null
+          numero: number
+          tipo: string
+          unidad: string | null
+        }
+        Insert: {
+          descripcion: string
+          equipo_id: string
+          id?: number
+          max_alerta?: number | null
+          max_ok?: number | null
+          min_alerta?: number | null
+          min_ok?: number | null
+          numero: number
+          tipo?: string
+          unidad?: string | null
+        }
+        Update: {
+          descripcion?: string
+          equipo_id?: string
+          id?: number
+          max_alerta?: number | null
+          max_ok?: number | null
+          min_alerta?: number | null
+          min_ok?: number | null
+          numero?: number
+          tipo?: string
+          unidad?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "puntos_inspeccion_equipo_id_fkey"
+            columns: ["equipo_id"]
+            isOneToOne: false
+            referencedRelation: "equipos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
