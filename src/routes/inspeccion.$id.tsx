@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Semaforo, evaluar } from "@/components/semaforo";
-import { ChevronDown, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/inspeccion/$id")({
@@ -152,20 +152,52 @@ function InspeccionPage() {
         </div>
       </div>
 
-      {/* Equipos */}
-      <div className="space-y-2 mb-6">
-        {equipos.map((eq) => {
+      {/* Tabs por equipo (scroll horizontal) */}
+      <div className="-mx-4 px-4 mb-3 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2 min-w-max pb-1">
+          {equipos.map((eq) => {
+            const eqPuntos = puntos.filter((p) => p.equipo_id === eq.id);
+            if (eqPuntos.length === 0) return null;
+            const eqItems = eqPuntos.map((p) => items[p.id]).filter(Boolean);
+            const done = eqItems.length;
+            const eqFail = eqItems.filter((i) => i?.semaforo === "rojo").length;
+            const eqAlert = eqItems.filter((i) => i?.semaforo === "amarillo").length;
+            const isActive = open === eq.id;
+            const Icon = iconCat[eq.categoria] ?? Activity;
+            return (
+              <button
+                key={eq.id}
+                onClick={() => setOpen(eq.id)}
+                className={`shrink-0 flex items-center gap-2 px-3 h-10 rounded-xl border text-xs font-semibold transition ${
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-[0_0_18px_oklch(0.78_0.17_175_/_0.35)]"
+                    : "bg-surface-1 border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="size-3.5" />
+                <span className="truncate max-w-[120px]">{eq.tag}</span>
+                <span className={`font-mono text-[10px] ${isActive ? "opacity-80" : "opacity-60"}`}>{done}/{eqPuntos.length}</span>
+                {eqFail > 0 && <span className="size-1.5 rounded-full bg-fail" />}
+                {eqAlert > 0 && !eqFail && <span className="size-1.5 rounded-full bg-warn" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Contenido del equipo activo */}
+      <div className="space-y-3 mb-6">
+        {(() => {
+          const eq = equipos.find((e) => e.id === open);
+          if (!eq) return null;
           const eqPuntos = puntos.filter((p) => p.equipo_id === eq.id);
-          if (eqPuntos.length === 0) return null;
-          const isOpen = open === eq.id;
-          const eqItems = eqPuntos.map((p) => items[p.id]).filter(Boolean);
-          const eqOk = eqItems.filter((i) => i?.semaforo === "verde").length;
-          const eqFail = eqItems.filter((i) => i?.semaforo === "rojo").length;
-          const eqAlert = eqItems.filter((i) => i?.semaforo === "amarillo").length;
           const Icon = iconCat[eq.categoria] ?? Activity;
+          const idx = equipos.findIndex((e) => e.id === eq.id);
+          const prev = equipos[idx - 1];
+          const next = equipos[idx + 1];
           return (
-            <div key={eq.id} className="glass rounded-2xl overflow-hidden">
-              <button onClick={() => setOpen(isOpen ? null : eq.id)} className="w-full p-4 flex items-center gap-3 text-left">
+            <div className="glass rounded-2xl overflow-hidden">
+              <div className="p-4 flex items-center gap-3 border-b border-border/40">
                 <div className="size-10 rounded-xl bg-primary/10 border border-primary/30 grid place-items-center">
                   <Icon className="size-4 text-primary" />
                 </div>
@@ -173,102 +205,114 @@ function InspeccionPage() {
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{eq.categoria}</p>
                   <p className="font-semibold truncate">{eq.tag} <span className="text-muted-foreground font-normal text-xs">· {eq.marca}</span></p>
                 </div>
-                <div className="flex items-center gap-1">
-                  {eqFail > 0 && <span className="size-2 rounded-full bg-fail" />}
-                  {eqAlert > 0 && <span className="size-2 rounded-full bg-warn" />}
-                  {eqOk > 0 && <span className="size-2 rounded-full bg-ok" />}
-                  <span className="text-xs text-muted-foreground font-mono ml-1">{eqItems.length}/{eqPuntos.length}</span>
-                </div>
-                <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-              </button>
+                <span className="text-[10px] font-mono text-muted-foreground">{idx + 1}/{equipos.length}</span>
+              </div>
 
-              {isOpen && (
-                <div className="px-4 pb-4 space-y-3 border-t border-border/40 pt-3">
-                  {eqPuntos.map((p) => {
-                    const it = items[p.id];
-                    return (
-                      <div key={p.id} className="bg-surface-1 rounded-xl p-3">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="text-sm font-medium leading-tight">
-                            <span className="text-muted-foreground font-mono mr-1.5">{p.numero}.</span>
-                            {p.descripcion}
-                            {p.unidad && <span className="text-muted-foreground"> ({p.unidad})</span>}
-                          </p>
-                          <Semaforo estado={it?.semaforo} />
-                        </div>
+              <div className="p-4 space-y-3">
+                {eqPuntos.map((p) => {
+                  const it = items[p.id];
+                  return (
+                    <div key={p.id} className="bg-surface-1 rounded-xl p-3">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-sm font-medium leading-tight">
+                          <span className="text-muted-foreground font-mono mr-1.5">{p.numero}.</span>
+                          {p.descripcion}
+                          {p.unidad && <span className="text-muted-foreground"> ({p.unidad})</span>}
+                        </p>
+                        <Semaforo estado={it?.semaforo} />
+                      </div>
 
-                        {/* Estado buttons */}
-                        <div className="grid grid-cols-4 gap-1 mb-2">
-                          {(["OK", "ALERTA", "FALLA", "NA"] as const).map((s) => (
+                      <div className="grid grid-cols-4 gap-1 mb-2">
+                        {(["OK", "ALERTA", "FALLA", "NA"] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => update(p, { estado: s })}
+                            className={`py-2 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition ${
+                              it?.estado === s
+                                ? s === "OK" ? "bg-ok text-ok-foreground"
+                                : s === "ALERTA" ? "bg-warn text-warn-foreground"
+                                : s === "FALLA" ? "bg-fail text-fail-foreground"
+                                : "bg-muted text-foreground"
+                                : "bg-background/40 text-muted-foreground hover:text-foreground"
+                            }`}
+                          >{s === "NA" ? "N/A" : s}</button>
+                        ))}
+                      </div>
+
+                      {p.tipo === "numerico" && (
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
+                          value={it?.valor ?? ""}
+                          onChange={(e) => update(p, { valor: e.target.value })}
+                          className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
+                        />
+                      )}
+
+                      {p.tipo === "binario" && (
+                        <div className="grid grid-cols-2 gap-1 mb-2">
+                          {(["No", "Sí"] as const).map((v) => (
                             <button
-                              key={s}
-                              onClick={() => update(p, { estado: s })}
-                              className={`py-2 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition ${
-                                it?.estado === s
-                                  ? s === "OK" ? "bg-ok text-ok-foreground"
-                                  : s === "ALERTA" ? "bg-warn text-warn-foreground"
-                                  : s === "FALLA" ? "bg-fail text-fail-foreground"
-                                  : "bg-muted text-foreground"
+                              key={v}
+                              onClick={() => update(p, { valor: v })}
+                              className={`py-2 text-xs font-semibold rounded-lg transition ${
+                                it?.valor === v
+                                  ? v === "No" ? "bg-ok text-ok-foreground" : "bg-fail text-fail-foreground"
                                   : "bg-background/40 text-muted-foreground hover:text-foreground"
                               }`}
-                            >{s === "NA" ? "N/A" : s}</button>
+                            >{v === "No" ? "✓ Sin alertas" : "⚠ Con alertas"}</button>
                           ))}
                         </div>
+                      )}
 
-                        {p.tipo === "numerico" && (
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
-                            value={it?.valor ?? ""}
-                            onChange={(e) => update(p, { valor: e.target.value })}
-                            className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
-                          />
-                        )}
-
-                        {p.tipo === "binario" && (
-                          <div className="grid grid-cols-2 gap-1 mb-2">
-                            {(["No", "Sí"] as const).map((v) => (
-                              <button
-                                key={v}
-                                onClick={() => update(p, { valor: v })}
-                                className={`py-2 text-xs font-semibold rounded-lg transition ${
-                                  it?.valor === v
-                                    ? v === "No" ? "bg-ok text-ok-foreground" : "bg-fail text-fail-foreground"
-                                    : "bg-background/40 text-muted-foreground hover:text-foreground"
-                                }`}
-                              >{v === "No" ? "✓ Sin alertas" : "⚠ Con alertas"}</button>
-                            ))}
-                          </div>
-                        )}
-
-                        {p.tipo === "texto" && (
-                          <input
-                            type="text"
-                            placeholder="Lectura / valor textual (ej: 230/231/229 50Hz)"
-                            value={it?.valor ?? ""}
-                            onChange={(e) => update(p, { valor: e.target.value })}
-                            className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
-                          />
-                        )}
-
-
-                        <textarea
-                          placeholder="Observaciones / acción correctiva..."
-                          value={it?.observaciones ?? ""}
-                          onChange={(e) => update(p, { observaciones: e.target.value })}
-                          rows={2}
-                          className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary resize-none"
+                      {p.tipo === "texto" && (
+                        <input
+                          type="text"
+                          placeholder="Lectura / valor textual (ej: 230/231/229 50Hz)"
+                          value={it?.valor ?? ""}
+                          onChange={(e) => update(p, { valor: e.target.value })}
+                          className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
                         />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      )}
+
+                      <textarea
+                        placeholder="Observaciones / acción correctiva..."
+                        value={it?.observaciones ?? ""}
+                        onChange={(e) => update(p, { observaciones: e.target.value })}
+                        rows={2}
+                        className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary resize-none"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Navegación entre equipos */}
+              <div className="grid grid-cols-2 gap-2 p-3 border-t border-border/40">
+                <button
+                  onClick={() => prev && setOpen(prev.id)}
+                  disabled={!prev}
+                  className="h-11 rounded-xl bg-surface-1 border border-border text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
+                >
+                  <ChevronLeft className="size-4" />
+                  {prev ? prev.tag : "Inicio"}
+                </button>
+                <button
+                  onClick={() => next && setOpen(next.id)}
+                  disabled={!next}
+                  className="h-11 rounded-xl bg-primary/15 text-primary border border-primary/30 text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
+                >
+                  {next ? next.tag : "Final"}
+                  <ChevronRight className="size-4" />
+                </button>
+              </div>
             </div>
           );
-        })}
+        })()}
       </div>
+
+
 
       {/* Botones */}
       <div className="sticky bottom-20 grid grid-cols-3 gap-2">
