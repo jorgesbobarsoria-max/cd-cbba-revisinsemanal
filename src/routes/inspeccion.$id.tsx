@@ -226,6 +226,33 @@ function InspeccionPage() {
                           />
                         )}
 
+                        {p.tipo === "binario" && (
+                          <div className="grid grid-cols-2 gap-1 mb-2">
+                            {(["No", "Sí"] as const).map((v) => (
+                              <button
+                                key={v}
+                                onClick={() => update(p, { valor: v })}
+                                className={`py-2 text-xs font-semibold rounded-lg transition ${
+                                  it?.valor === v
+                                    ? v === "No" ? "bg-ok text-ok-foreground" : "bg-fail text-fail-foreground"
+                                    : "bg-background/40 text-muted-foreground hover:text-foreground"
+                                }`}
+                              >{v === "No" ? "✓ Sin alertas" : "⚠ Con alertas"}</button>
+                            ))}
+                          </div>
+                        )}
+
+                        {p.tipo === "texto" && (
+                          <input
+                            type="text"
+                            placeholder="Lectura / valor textual (ej: 230/231/229 50Hz)"
+                            value={it?.valor ?? ""}
+                            onChange={(e) => update(p, { valor: e.target.value })}
+                            className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
+                          />
+                        )}
+
+
                         <textarea
                           placeholder="Observaciones / acción correctiva..."
                           value={it?.observaciones ?? ""}
