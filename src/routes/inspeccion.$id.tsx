@@ -312,11 +312,7 @@ function InspeccionPage() {
         })()}
       </div>
 
-              )}
-            </div>
-          );
-        })}
-      </div>
+
 
       {/* Botones */}
       <div className="sticky bottom-20 grid grid-cols-3 gap-2">
