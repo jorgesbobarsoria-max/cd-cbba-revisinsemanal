@@ -21,9 +21,11 @@ export type Database = {
           created_at: string
           criticidad: string | null
           estado: string | null
+          fecha_instalacion: string | null
           id: string
           marca: string | null
           modelo: string | null
+          observaciones: string | null
           orden: number
           redundancia: string | null
           tag: string
@@ -35,9 +37,11 @@ export type Database = {
           created_at?: string
           criticidad?: string | null
           estado?: string | null
+          fecha_instalacion?: string | null
           id: string
           marca?: string | null
           modelo?: string | null
+          observaciones?: string | null
           orden?: number
           redundancia?: string | null
           tag: string
@@ -49,9 +53,11 @@ export type Database = {
           created_at?: string
           criticidad?: string | null
           estado?: string | null
+          fecha_instalacion?: string | null
           id?: string
           marca?: string | null
           modelo?: string | null
+          observaciones?: string | null
           orden?: number
           redundancia?: string | null
           tag?: string
