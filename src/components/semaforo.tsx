@@ -19,10 +19,16 @@ export function Semaforo({ estado, className }: { estado?: string | null; classN
 export function evaluar(valor: string | undefined, p: { tipo: string; min_ok?: number | null; max_ok?: number | null; min_alerta?: number | null; max_alerta?: number | null }, estadoManual?: string): string {
   if (estadoManual === "NA") return "gris";
   if (estadoManual === "FALLA") return "rojo";
-  if (p.tipo === "estado") {
-    if (estadoManual === "OK") return "verde";
-    if (estadoManual === "ALERTA") return "amarillo";
+  if (estadoManual === "OK") return "verde";
+  if (estadoManual === "ALERTA") return "amarillo";
+  // Binario: para "Alertas Presentes" => No = verde, Sí = rojo
+  if (p.tipo === "binario") {
+    if (valor === "No") return "verde";
+    if (valor === "Sí") return "rojo";
     return "gris";
+  }
+  if (p.tipo === "texto" || p.tipo === "estado") {
+    return valor && valor.trim() !== "" ? "verde" : "gris";
   }
   if (valor == null || valor === "") return "gris";
   const n = parseFloat(valor.replace(",", "."));
@@ -31,3 +37,4 @@ export function evaluar(valor: string | undefined, p: { tipo: string; min_ok?: n
   if (p.min_alerta != null && p.max_alerta != null && n >= p.min_alerta && n <= p.max_alerta) return "amarillo";
   return "rojo";
 }
+
