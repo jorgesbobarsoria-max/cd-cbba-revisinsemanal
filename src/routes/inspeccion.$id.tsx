@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Semaforo, evaluar } from "@/components/semaforo";
-import { ChevronDown, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/inspeccion/$id")({
