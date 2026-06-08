@@ -4,8 +4,11 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Semaforo, evaluar } from "@/components/semaforo";
-import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { generarInformeWord } from "@/lib/reporte.functions";
+
 
 export const Route = createFileRoute("/inspeccion/$id")({
   component: InspeccionPage,
@@ -35,6 +38,29 @@ function InspeccionPage() {
   const [open, setOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportar = useServerFn(generarInformeWord);
+
+  const descargarWord = async () => {
+    setExporting(true);
+    try {
+      const res = await exportar({ data: { inspeccionId: id } });
+      const bin = atob(res.base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = res.filename; a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Informe Word descargado");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Error al exportar");
+    } finally {
+      setExporting(false);
+    }
+  };
+
 
   useEffect(() => { if (!authLoading && !user) nav({ to: "/auth" }); }, [user, authLoading, nav]);
 
@@ -314,6 +340,16 @@ function InspeccionPage() {
 
 
 
+      {/* Exportar Word */}
+      <button
+        onClick={descargarWord}
+        disabled={exporting}
+        className="w-full mb-2 h-11 rounded-xl bg-surface-1 border border-primary/30 text-primary font-semibold flex items-center justify-center gap-2 text-sm"
+      >
+        {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
+        Exportar informe Word
+      </button>
+
       {/* Botones */}
       <div className="sticky bottom-20 grid grid-cols-3 gap-2">
         <button onClick={eliminar} className="h-12 rounded-xl bg-fail/15 text-fail font-semibold flex items-center justify-center gap-1.5">
@@ -328,6 +364,7 @@ function InspeccionPage() {
           Finalizar
         </button>
       </div>
+
     </AppShell>
   );
 }
