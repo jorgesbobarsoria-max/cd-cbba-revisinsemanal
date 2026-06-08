@@ -176,16 +176,13 @@ export const generarInformeWord = createServerFn({ method: "POST" })
       // tabla de parámetros
       const rows: TableRow[] = [
         new TableRow({ tableHeader: true, children: [
-          cell("#", { bold: true, fill: "0D3B66", width: 600 }),
-          cell("Parámetro", { bold: true, fill: "0D3B66", width: 4200 }),
-          cell("Valor", { bold: true, fill: "0D3B66", width: 1600 }),
-          cell("Rango OK", { bold: true, fill: "0D3B66", width: 1560 }),
-          cell("Estado", { bold: true, fill: "0D3B66", width: 1400, align: AlignmentType.CENTER }),
-        ].map((c) => {
-          // override text color to white for header
-          (c as any).options.children = [new Paragraph({ children: [new TextRun({ text: (c as any).options.children[0].options.children[0].options.text, bold: true, color: "FFFFFF", size: 20, font: "Calibri" })] })];
-          return c;
-        })}),
+          cell("#", { bold: true, fill: "0D3B66", width: 600, color: "FFFFFF", align: AlignmentType.CENTER }),
+          cell("Parámetro", { bold: true, fill: "0D3B66", width: 4200, color: "FFFFFF" }),
+          cell("Valor", { bold: true, fill: "0D3B66", width: 1600, color: "FFFFFF", align: AlignmentType.CENTER }),
+          cell("Rango OK", { bold: true, fill: "0D3B66", width: 1560, color: "FFFFFF", align: AlignmentType.CENTER }),
+          cell("Estado", { bold: true, fill: "0D3B66", width: 1400, color: "FFFFFF", align: AlignmentType.CENTER }),
+        ]}),
+
       ];
       for (const pt of eqPuntos) {
         const it = eqItems.find((x) => x.punto_id === pt.id);
