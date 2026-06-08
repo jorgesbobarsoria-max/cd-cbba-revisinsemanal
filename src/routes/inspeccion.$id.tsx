@@ -340,6 +340,16 @@ function InspeccionPage() {
 
 
 
+      {/* Exportar Word */}
+      <button
+        onClick={descargarWord}
+        disabled={exporting}
+        className="w-full mb-2 h-11 rounded-xl bg-surface-1 border border-primary/30 text-primary font-semibold flex items-center justify-center gap-2 text-sm"
+      >
+        {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
+        Exportar informe Word
+      </button>
+
       {/* Botones */}
       <div className="sticky bottom-20 grid grid-cols-3 gap-2">
         <button onClick={eliminar} className="h-12 rounded-xl bg-fail/15 text-fail font-semibold flex items-center justify-center gap-1.5">
@@ -354,6 +364,7 @@ function InspeccionPage() {
           Finalizar
         </button>
       </div>
+
     </AppShell>
   );
 }
