@@ -46,15 +46,16 @@ function h(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]
   });
 }
 
-function cell(text: string, opts: { bold?: boolean; fill?: string; width?: number; align?: (typeof AlignmentType)[keyof typeof AlignmentType] } = {}) {
+function cell(text: string, opts: { bold?: boolean; fill?: string; width?: number; align?: (typeof AlignmentType)[keyof typeof AlignmentType]; color?: string } = {}) {
   return new TableCell({
     borders: cellBorders,
     width: opts.width ? { size: opts.width, type: WidthType.DXA } : undefined,
     shading: opts.fill ? { fill: opts.fill, type: ShadingType.CLEAR, color: "auto" } : undefined,
     margins: { top: 80, bottom: 80, left: 120, right: 120 },
-    children: [new Paragraph({ alignment: opts.align, children: [new TextRun({ text, bold: opts.bold, size: 20, font: "Calibri" })] })],
+    children: [new Paragraph({ alignment: opts.align, children: [new TextRun({ text, bold: opts.bold, size: 20, font: "Calibri", color: opts.color })] })],
   });
 }
+
 
 async function fetchChartPng(config: object): Promise<Uint8Array | null> {
   try {
