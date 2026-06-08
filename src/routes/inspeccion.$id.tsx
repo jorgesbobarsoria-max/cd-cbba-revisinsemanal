@@ -38,6 +38,29 @@ function InspeccionPage() {
   const [open, setOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportar = useServerFn(generarInformeWord);
+
+  const descargarWord = async () => {
+    setExporting(true);
+    try {
+      const res = await exportar({ data: { inspeccionId: id } });
+      const bin = atob(res.base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = res.filename; a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Informe Word descargado");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Error al exportar");
+    } finally {
+      setExporting(false);
+    }
+  };
+
 
   useEffect(() => { if (!authLoading && !user) nav({ to: "/auth" }); }, [user, authLoading, nav]);
 
