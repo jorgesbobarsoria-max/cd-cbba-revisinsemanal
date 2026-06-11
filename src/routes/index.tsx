@@ -188,12 +188,13 @@ function HomePage() {
   };
 
   if (loading) return null;
-  const semana = getWeekNumber(new Date());
-  const year = new Date().getFullYear();
+  const selected = insps.find(i => i.id === selectedId);
+  const semana = selected?.semana ?? getWeekNumber(new Date());
+  const year = selected ? new Date(selected.fecha).getFullYear() : new Date().getFullYear();
 
   return (
     <AppShell title="Dashboard">
-      <section className="mb-5 flex items-start justify-between gap-3">
+      <section className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Revisión Semanal</p>
           <h2 className="text-xl font-bold mt-0.5">DC Cochabamba</h2>
@@ -207,6 +208,29 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Selector de semana */}
+      <section className="glass rounded-2xl p-3 mb-4 flex items-center gap-2">
+        <Calendar className="size-4 text-primary shrink-0" />
+        <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">Semana</label>
+        <select
+          value={selectedId ?? ""}
+          onChange={(e) => setSelectedId(e.target.value || null)}
+          disabled={insps.length === 0}
+          className="flex-1 min-w-0 bg-transparent border border-border/60 rounded-lg px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary/60"
+        >
+          {insps.length === 0 && <option value="">Sin revisiones</option>}
+          {insps.map(i => {
+            const y = new Date(i.fecha).getFullYear();
+            return (
+              <option key={i.id} value={i.id}>
+                {y}-W{i.semana} · {i.fecha} {i.estado === "finalizado" ? "✓" : "•"}
+              </option>
+            );
+          })}
+        </select>
+      </section>
+
 
       <button
         onClick={nuevaInspeccion}
