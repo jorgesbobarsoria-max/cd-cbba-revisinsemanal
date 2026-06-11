@@ -49,6 +49,7 @@ function HomePage() {
   const [items, setItems] = useState<Item[]>([]);
   const [trend, setTrend] = useState<{ semana: string; alertas: number; ok: number }[]>([]);
   const [busy, setBusy] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -56,38 +57,43 @@ function HomePage() {
     if (!user) return;
     (async () => {
       const [{ data: ins }, { data: eqs }, { data: pts }] = await Promise.all([
-        supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado").order("fecha", { ascending: false }).limit(8),
+        supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado").order("fecha", { ascending: false }).limit(24),
         supabase.from("equipos").select("id,tag,marca,modelo,categoria").order("orden"),
         supabase.from("puntos_inspeccion").select("id,equipo_id,descripcion,tipo,unidad"),
       ]);
       setInsps(ins ?? []);
       setEquipos(eqs ?? []);
       setPuntos(pts ?? []);
-
-      if (ins && ins.length > 0) {
-        const { data: it } = await supabase
-          .from("inspeccion_items")
-          .select("equipo_id,punto_id,semaforo,valor,observaciones,accion_correctiva")
-          .eq("inspeccion_id", ins[0].id);
-        setItems(it ?? []);
-
-        // tendencia: últimas inspecciones
-        const ids = ins.slice(0, 6).reverse();
-        const { data: allItems } = await supabase
-          .from("inspeccion_items")
-          .select("inspeccion_id,semaforo")
-          .in("inspeccion_id", ids.map(i => i.id));
-        const map: Record<string, { alertas: number; ok: number; semana: string }> = {};
-        ids.forEach(i => { map[i.id] = { alertas: 0, ok: 0, semana: `W${i.semana}` }; });
-        (allItems ?? []).forEach(r => {
-          const m = map[r.inspeccion_id]; if (!m) return;
-          if (r.semaforo === "amarillo" || r.semaforo === "rojo") m.alertas++;
-          else if (r.semaforo === "verde") m.ok++;
-        });
-        setTrend(ids.map(i => map[i.id]));
-      }
+      if (ins && ins.length > 0) setSelectedId(prev => prev ?? ins[0].id);
     })();
   }, [user]);
+
+  useEffect(() => {
+    if (!selectedId || insps.length === 0) return;
+    (async () => {
+      const { data: it } = await supabase
+        .from("inspeccion_items")
+        .select("equipo_id,punto_id,semaforo,valor,observaciones,accion_correctiva")
+        .eq("inspeccion_id", selectedId);
+      setItems(it ?? []);
+
+      // Tendencia: hasta 6 inspecciones desde la seleccionada hacia atrás, en orden cronológico
+      const idx = insps.findIndex(i => i.id === selectedId);
+      const window = insps.slice(idx, idx + 6).slice().reverse();
+      const { data: allItems } = await supabase
+        .from("inspeccion_items")
+        .select("inspeccion_id,semaforo")
+        .in("inspeccion_id", window.map(i => i.id));
+      const map: Record<string, { alertas: number; ok: number; semana: string }> = {};
+      window.forEach(i => { map[i.id] = { alertas: 0, ok: 0, semana: `W${i.semana}` }; });
+      (allItems ?? []).forEach(r => {
+        const m = map[r.inspeccion_id]; if (!m) return;
+        if (r.semaforo === "amarillo" || r.semaforo === "rojo") m.alertas++;
+        else if (r.semaforo === "verde") m.ok++;
+      });
+      setTrend(window.map(i => map[i.id]));
+    })();
+  }, [selectedId, insps]);
 
   const stats = useMemo(() => {
     const ok = items.filter(i => i.semaforo === "verde").length;
