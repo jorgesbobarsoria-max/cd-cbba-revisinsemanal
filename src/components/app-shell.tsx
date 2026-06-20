@@ -1,11 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, ClipboardList, History, Server, LogOut } from "lucide-react";
+import { Home, History, Server, LogOut, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", icon: Home, label: "Inicio" },
   { to: "/equipos", icon: Server, label: "Equipos" },
+  { to: "/mantenimiento", icon: Wrench, label: "Mant." },
   { to: "/historial", icon: History, label: "Historial" },
 ];
 
