@@ -9,18 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as MantenimientoRouteImport } from './routes/mantenimiento'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EquiposRouteImport } from './routes/equipos'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MantenimientoIndexRouteImport } from './routes/mantenimiento.index'
 import { Route as InspeccionIdRouteImport } from './routes/inspeccion.$id'
 
-const MantenimientoRoute = MantenimientoRouteImport.update({
-  id: '/mantenimiento',
-  path: '/mantenimiento',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const HistorialRoute = HistorialRouteImport.update({
   id: '/historial',
   path: '/historial',
@@ -41,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MantenimientoIndexRoute = MantenimientoIndexRouteImport.update({
+  id: '/mantenimiento/',
+  path: '/mantenimiento/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InspeccionIdRoute = InspeccionIdRouteImport.update({
   id: '/inspeccion/$id',
   path: '/inspeccion/$id',
@@ -52,16 +52,16 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
-  '/mantenimiento': typeof MantenimientoRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
+  '/mantenimiento/': typeof MantenimientoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
-  '/mantenimiento': typeof MantenimientoRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
+  '/mantenimiento': typeof MantenimientoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,8 +69,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
-  '/mantenimiento': typeof MantenimientoRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
+  '/mantenimiento/': typeof MantenimientoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -79,24 +79,24 @@ export interface FileRouteTypes {
     | '/auth'
     | '/equipos'
     | '/historial'
-    | '/mantenimiento'
     | '/inspeccion/$id'
+    | '/mantenimiento/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/equipos'
     | '/historial'
-    | '/mantenimiento'
     | '/inspeccion/$id'
+    | '/mantenimiento'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/equipos'
     | '/historial'
-    | '/mantenimiento'
     | '/inspeccion/$id'
+    | '/mantenimiento/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -104,19 +104,12 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   EquiposRoute: typeof EquiposRoute
   HistorialRoute: typeof HistorialRoute
-  MantenimientoRoute: typeof MantenimientoRoute
   InspeccionIdRoute: typeof InspeccionIdRoute
+  MantenimientoIndexRoute: typeof MantenimientoIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/mantenimiento': {
-      id: '/mantenimiento'
-      path: '/mantenimiento'
-      fullPath: '/mantenimiento'
-      preLoaderRoute: typeof MantenimientoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/historial': {
       id: '/historial'
       path: '/historial'
@@ -145,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mantenimiento/': {
+      id: '/mantenimiento/'
+      path: '/mantenimiento'
+      fullPath: '/mantenimiento/'
+      preLoaderRoute: typeof MantenimientoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/inspeccion/$id': {
       id: '/inspeccion/$id'
       path: '/inspeccion/$id'
@@ -160,8 +160,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   EquiposRoute: EquiposRoute,
   HistorialRoute: HistorialRoute,
-  MantenimientoRoute: MantenimientoRoute,
   InspeccionIdRoute: InspeccionIdRoute,
+  MantenimientoIndexRoute: MantenimientoIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
