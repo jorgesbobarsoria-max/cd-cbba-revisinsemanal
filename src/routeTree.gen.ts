@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MantenimientoRouteImport } from './routes/mantenimiento'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EquiposRouteImport } from './routes/equipos'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -16,6 +17,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MantenimientoIndexRouteImport } from './routes/mantenimiento.index'
 import { Route as InspeccionIdRouteImport } from './routes/inspeccion.$id'
 
+const MantenimientoRoute = MantenimientoRouteImport.update({
+  id: '/mantenimiento',
+  path: '/mantenimiento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistorialRoute = HistorialRouteImport.update({
   id: '/historial',
   path: '/historial',
@@ -37,9 +43,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const MantenimientoIndexRoute = MantenimientoIndexRouteImport.update({
-  id: '/mantenimiento/',
-  path: '/mantenimiento/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => MantenimientoRoute,
 } as any)
 const InspeccionIdRoute = InspeccionIdRouteImport.update({
   id: '/inspeccion/$id',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
+  '/mantenimiento': typeof MantenimientoRouteWithChildren
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/': typeof MantenimientoIndexRoute
 }
@@ -69,6 +76,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
+  '/mantenimiento': typeof MantenimientoRouteWithChildren
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/': typeof MantenimientoIndexRoute
 }
@@ -79,6 +87,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/equipos'
     | '/historial'
+    | '/mantenimiento'
     | '/inspeccion/$id'
     | '/mantenimiento/'
   fileRoutesByTo: FileRoutesByTo
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/equipos'
     | '/historial'
+    | '/mantenimiento'
     | '/inspeccion/$id'
     | '/mantenimiento/'
   fileRoutesById: FileRoutesById
@@ -104,12 +114,19 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   EquiposRoute: typeof EquiposRoute
   HistorialRoute: typeof HistorialRoute
+  MantenimientoRoute: typeof MantenimientoRouteWithChildren
   InspeccionIdRoute: typeof InspeccionIdRoute
-  MantenimientoIndexRoute: typeof MantenimientoIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mantenimiento': {
+      id: '/mantenimiento'
+      path: '/mantenimiento'
+      fullPath: '/mantenimiento'
+      preLoaderRoute: typeof MantenimientoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/historial': {
       id: '/historial'
       path: '/historial'
@@ -140,10 +157,10 @@ declare module '@tanstack/react-router' {
     }
     '/mantenimiento/': {
       id: '/mantenimiento/'
-      path: '/mantenimiento'
+      path: '/'
       fullPath: '/mantenimiento/'
       preLoaderRoute: typeof MantenimientoIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof MantenimientoRoute
     }
     '/inspeccion/$id': {
       id: '/inspeccion/$id'
@@ -155,14 +172,36 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MantenimientoRouteChildren {
+  MantenimientoIndexRoute: typeof MantenimientoIndexRoute
+}
+
+const MantenimientoRouteChildren: MantenimientoRouteChildren = {
+  MantenimientoIndexRoute: MantenimientoIndexRoute,
+}
+
+const MantenimientoRouteWithChildren = MantenimientoRoute._addFileChildren(
+  MantenimientoRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   EquiposRoute: EquiposRoute,
   HistorialRoute: HistorialRoute,
+  MantenimientoRoute: MantenimientoRouteWithChildren,
   InspeccionIdRoute: InspeccionIdRoute,
-  MantenimientoIndexRoute: MantenimientoIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
