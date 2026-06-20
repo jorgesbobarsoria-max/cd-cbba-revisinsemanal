@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MantenimientoIndexRouteImport } from './routes/mantenimiento.index'
 import { Route as InspeccionIdRouteImport } from './routes/inspeccion.$id'
+import { Route as MantenimientoNuevoTipoRouteImport } from './routes/mantenimiento.nuevo.$tipo'
 
 const MantenimientoRoute = MantenimientoRouteImport.update({
   id: '/mantenimiento',
@@ -52,6 +53,11 @@ const InspeccionIdRoute = InspeccionIdRouteImport.update({
   path: '/inspeccion/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MantenimientoNuevoTipoRoute = MantenimientoNuevoTipoRouteImport.update({
+  id: '/nuevo/$tipo',
+  path: '/nuevo/$tipo',
+  getParentRoute: () => MantenimientoRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/mantenimiento': typeof MantenimientoRouteWithChildren
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/': typeof MantenimientoIndexRoute
+  '/mantenimiento/nuevo/$tipo': typeof MantenimientoNuevoTipoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/historial': typeof HistorialRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento': typeof MantenimientoIndexRoute
+  '/mantenimiento/nuevo/$tipo': typeof MantenimientoNuevoTipoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/mantenimiento': typeof MantenimientoRouteWithChildren
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/': typeof MantenimientoIndexRoute
+  '/mantenimiento/nuevo/$tipo': typeof MantenimientoNuevoTipoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/mantenimiento'
     | '/inspeccion/$id'
     | '/mantenimiento/'
+    | '/mantenimiento/nuevo/$tipo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/historial'
     | '/inspeccion/$id'
     | '/mantenimiento'
+    | '/mantenimiento/nuevo/$tipo'
   id:
     | '__root__'
     | '/'
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/mantenimiento'
     | '/inspeccion/$id'
     | '/mantenimiento/'
+    | '/mantenimiento/nuevo/$tipo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -169,15 +181,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InspeccionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mantenimiento/nuevo/$tipo': {
+      id: '/mantenimiento/nuevo/$tipo'
+      path: '/nuevo/$tipo'
+      fullPath: '/mantenimiento/nuevo/$tipo'
+      preLoaderRoute: typeof MantenimientoNuevoTipoRouteImport
+      parentRoute: typeof MantenimientoRoute
+    }
   }
 }
 
 interface MantenimientoRouteChildren {
   MantenimientoIndexRoute: typeof MantenimientoIndexRoute
+  MantenimientoNuevoTipoRoute: typeof MantenimientoNuevoTipoRoute
 }
 
 const MantenimientoRouteChildren: MantenimientoRouteChildren = {
   MantenimientoIndexRoute: MantenimientoIndexRoute,
+  MantenimientoNuevoTipoRoute: MantenimientoNuevoTipoRoute,
 }
 
 const MantenimientoRouteWithChildren = MantenimientoRoute._addFileChildren(
