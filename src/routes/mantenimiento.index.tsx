@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Wrench, ChevronRight } from "lucide-react";
 import { PLANTILLAS } from "@/lib/mantenimiento-plantillas";
 
-export const Route = createFileRoute("/mantenimiento")({
+export const Route = createFileRoute("/mantenimiento/")({
   component: MantenimientoListPage,
 });
 

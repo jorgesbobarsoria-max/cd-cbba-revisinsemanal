@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MantenimientoRouteImport } from './routes/mantenimiento'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EquiposRouteImport } from './routes/equipos'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InspeccionIdRouteImport } from './routes/inspeccion.$id'
 
+const MantenimientoRoute = MantenimientoRouteImport.update({
+  id: '/mantenimiento',
+  path: '/mantenimiento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistorialRoute = HistorialRouteImport.update({
   id: '/historial',
   path: '/historial',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
+  '/mantenimiento': typeof MantenimientoRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
+  '/mantenimiento': typeof MantenimientoRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,34 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
+  '/mantenimiento': typeof MantenimientoRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/equipos' | '/historial' | '/inspeccion/$id'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/equipos'
+    | '/historial'
+    | '/mantenimiento'
+    | '/inspeccion/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/equipos' | '/historial' | '/inspeccion/$id'
-  id: '__root__' | '/' | '/auth' | '/equipos' | '/historial' | '/inspeccion/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/equipos'
+    | '/historial'
+    | '/mantenimiento'
+    | '/inspeccion/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/equipos'
+    | '/historial'
+    | '/mantenimiento'
+    | '/inspeccion/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,11 +104,19 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   EquiposRoute: typeof EquiposRoute
   HistorialRoute: typeof HistorialRoute
+  MantenimientoRoute: typeof MantenimientoRoute
   InspeccionIdRoute: typeof InspeccionIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mantenimiento': {
+      id: '/mantenimiento'
+      path: '/mantenimiento'
+      fullPath: '/mantenimiento'
+      preLoaderRoute: typeof MantenimientoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/historial': {
       id: '/historial'
       path: '/historial'
@@ -124,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   EquiposRoute: EquiposRoute,
   HistorialRoute: HistorialRoute,
+  MantenimientoRoute: MantenimientoRoute,
   InspeccionIdRoute: InspeccionIdRoute,
 }
 export const routeTree = rootRouteImport
