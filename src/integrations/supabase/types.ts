@@ -189,6 +189,77 @@ export type Database = {
         }
         Relationships: []
       }
+      mantenimientos: {
+        Row: {
+          actividad: string | null
+          cargo: string | null
+          ciudad: string | null
+          created_at: string
+          created_by: string | null
+          datos: Json
+          direccion: string | null
+          empresa: string | null
+          equipo_externo: Json | null
+          equipo_id: string | null
+          estado: string
+          fecha: string
+          id: string
+          observaciones: string | null
+          proyecto: string | null
+          tecnico: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          actividad?: string | null
+          cargo?: string | null
+          ciudad?: string | null
+          created_at?: string
+          created_by?: string | null
+          datos?: Json
+          direccion?: string | null
+          empresa?: string | null
+          equipo_externo?: Json | null
+          equipo_id?: string | null
+          estado?: string
+          fecha?: string
+          id?: string
+          observaciones?: string | null
+          proyecto?: string | null
+          tecnico?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          actividad?: string | null
+          cargo?: string | null
+          ciudad?: string | null
+          created_at?: string
+          created_by?: string | null
+          datos?: Json
+          direccion?: string | null
+          empresa?: string | null
+          equipo_externo?: Json | null
+          equipo_id?: string | null
+          estado?: string
+          fecha?: string
+          id?: string
+          observaciones?: string | null
+          proyecto?: string | null
+          tecnico?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mantenimientos_equipo_id_fkey"
+            columns: ["equipo_id"]
+            isOneToOne: false
+            referencedRelation: "equipos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       puntos_inspeccion: {
         Row: {
           descripcion: string
