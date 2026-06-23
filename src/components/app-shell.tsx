@@ -1,12 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, History, Server, LogOut, Wrench } from "lucide-react";
+import { Home, ClipboardList, History, Server, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", icon: Home, label: "Inicio" },
   { to: "/equipos", icon: Server, label: "Equipos" },
-  { to: "/mantenimiento", icon: Wrench, label: "Mant." },
   { to: "/historial", icon: History, label: "Historial" },
 ];
 
@@ -36,7 +35,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
       <main className="flex-1 px-4 py-5">{children}</main>
 
       <nav className="fixed bottom-0 inset-x-0 z-30 glass border-t border-border/60">
-        <div className="max-w-md mx-auto grid grid-cols-4">
+        <div className="max-w-md mx-auto grid grid-cols-3">
           {items.map((it) => {
             const active = loc.pathname === it.to || (it.to !== "/" && loc.pathname.startsWith(it.to));
             return (

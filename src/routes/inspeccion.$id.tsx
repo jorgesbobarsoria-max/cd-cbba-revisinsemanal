@@ -340,24 +340,15 @@ function InspeccionPage() {
 
 
 
-      {/* Exportar Word — informe técnico corporativo */}
-      <div className={`mb-3 rounded-2xl p-3 border ${insp?.estado === "finalizado" ? "bg-primary/10 border-primary/40" : "bg-surface-1 border-border"}`}>
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <p className="text-sm font-semibold">Informe técnico Word</p>
-            <p className="text-[11px] text-muted-foreground">Antecedentes, gráficas, tendencias, conclusiones y recomendaciones</p>
-          </div>
-          {insp?.estado === "finalizado" && <span className="text-[10px] px-2 py-0.5 rounded-full bg-ok/15 text-ok uppercase tracking-wider font-semibold">Listo</span>}
-        </div>
-        <button
-          onClick={descargarWord}
-          disabled={exporting}
-          className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 text-sm shadow-[0_0_18px_oklch(0.78_0.17_175_/_0.35)] disabled:opacity-60"
-        >
-          {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
-          {exporting ? "Generando informe…" : "Descargar informe Word"}
-        </button>
-      </div>
+      {/* Exportar Word */}
+      <button
+        onClick={descargarWord}
+        disabled={exporting}
+        className="w-full mb-2 h-11 rounded-xl bg-surface-1 border border-primary/30 text-primary font-semibold flex items-center justify-center gap-2 text-sm"
+      >
+        {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
+        Exportar informe Word
+      </button>
 
       {/* Botones */}
       <div className="sticky bottom-20 grid grid-cols-3 gap-2">
