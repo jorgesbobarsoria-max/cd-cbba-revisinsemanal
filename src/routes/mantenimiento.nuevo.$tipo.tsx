@@ -18,16 +18,22 @@ export const Route = createFileRoute("/mantenimiento/nuevo/$tipo")({
 });
 
 type Equipo = { id: string; tag: string; categoria: string; marca: string | null; modelo: string | null };
+type Externo = { id: string; tag: string; tipo: string; marca: string | null; modelo: string | null; serie: string | null; capacidad: string | null; ubicacion: string | null };
+type ExtraParam = { id: string; seccion: string; clave: string; label: string; tipo_dato: string; unidad: string | null; opciones: string[] | null; orden: number };
 
 function NuevoMantPage() {
   const { tipo } = Route.useParams();
   const { user, loading } = useAuth();
   const nav = useNavigate();
-  const plantilla = useMemo(() => getPlantilla(tipo), [tipo]);
+  const plantillaBase = useMemo(() => getPlantilla(tipo), [tipo]);
 
   const [equipos, setEquipos] = useState<Equipo[]>([]);
+  const [externos, setExternos] = useState<Externo[]>([]);
+  const [extras, setExtras] = useState<ExtraParam[]>([]);
   const [modoExterno, setModoExterno] = useState(false);
   const [equipoId, setEquipoId] = useState<string>("");
+  const [externoId, setExternoId] = useState<string>("");
+  const [guardarExterno, setGuardarExterno] = useState(true);
   const [ext, setExt] = useState({ tag: "", modelo: "", serie: "", marca: "", capacidad: "", ubicacion: "" });
   const [meta, setMeta] = useState({
     fecha: new Date().toISOString().slice(0, 10),
@@ -42,12 +48,37 @@ function NuevoMantPage() {
 
   useEffect(() => {
     (async () => {
-      if (!plantilla?.categoriaEquipo) { setModoExterno(true); return; }
-      const { data } = await supabase.from("equipos").select("id,tag,categoria,marca,modelo")
-        .eq("categoria", plantilla.categoriaEquipo).order("orden");
-      setEquipos((data ?? []) as Equipo[]);
+      const [eq, ex, pp] = await Promise.all([
+        plantillaBase?.categoriaEquipo
+          ? supabase.from("equipos").select("id,tag,categoria,marca,modelo").eq("categoria", plantillaBase.categoriaEquipo).order("orden")
+          : Promise.resolve({ data: [] as Equipo[] }),
+        supabase.from("equipos_externos").select("id,tag,tipo,marca,modelo,serie,capacidad,ubicacion").eq("tipo", tipo).order("tag"),
+        supabase.from("plantilla_parametros").select("*").eq("tipo", tipo).order("orden"),
+      ]);
+      setEquipos((eq.data ?? []) as Equipo[]);
+      setExternos((ex.data ?? []) as Externo[]);
+      setExtras((pp.data ?? []) as ExtraParam[]);
+      if (!plantillaBase?.categoriaEquipo) setModoExterno(true);
     })();
-  }, [plantilla?.categoriaEquipo]);
+  }, [tipo, plantillaBase?.categoriaEquipo]);
+
+  // Plantilla final = base + parámetros personalizados agrupados por sección
+  const plantilla = useMemo(() => {
+    if (!plantillaBase) return undefined;
+    if (extras.length === 0) return plantillaBase;
+    const secciones = plantillaBase.secciones.map(s => ({ ...s, items: [...s.items] }));
+    for (const p of extras) {
+      const item: ItemPlantilla = {
+        k: `x_${p.clave}`, l: p.label, t: p.tipo_dato as any,
+        u: p.unidad ?? undefined, o: p.opciones ?? undefined,
+      };
+      const idx = secciones.findIndex(s => s.titulo === p.seccion);
+      if (idx >= 0) secciones[idx].items.push(item);
+      else secciones.push({ titulo: p.seccion, items: [item] });
+    }
+    return { ...plantillaBase, secciones };
+  }, [plantillaBase, extras]);
+
 
   if (!plantilla) {
     return <AppShell title="Mantenimiento"><p className="text-sm text-muted-foreground">Tipo no válido.</p></AppShell>;
@@ -57,12 +88,28 @@ function NuevoMantPage() {
 
   async function guardar(finalizar: boolean) {
     if (!modoExterno && !equipoId) { toast.error("Selecciona un equipo o usa Equipo no registrado"); return; }
-    if (modoExterno && !ext.tag && !ext.modelo) { toast.error("Indica al menos TAG o Modelo del equipo"); return; }
+    let extData: any = null;
+    if (modoExterno) {
+      if (externoId) {
+        const found = externos.find(e => e.id === externoId);
+        if (!found) { toast.error("Equipo externo no encontrado"); return; }
+        extData = { id: found.id, tag: found.tag, modelo: found.modelo, serie: found.serie, marca: found.marca, capacidad: found.capacidad, ubicacion: found.ubicacion };
+      } else {
+        if (!ext.tag && !ext.modelo) { toast.error("Indica al menos TAG o Modelo del equipo"); return; }
+        extData = ext;
+        if (guardarExterno && ext.tag) {
+          const { data: nuevo } = await supabase.from("equipos_externos")
+            .insert({ tipo, tag: ext.tag, marca: ext.marca || null, modelo: ext.modelo || null, serie: ext.serie || null, capacidad: ext.capacidad || null, ubicacion: ext.ubicacion || null, created_by: user?.id ?? null })
+            .select("id").single();
+          if (nuevo?.id) extData = { ...extData, id: nuevo.id };
+        }
+      }
+    }
     setBusy(true);
     const payload = {
       tipo,
       equipo_id: modoExterno ? null : equipoId,
-      equipo_externo: modoExterno ? ext : null,
+      equipo_externo: extData,
       fecha: meta.fecha,
       tecnico: meta.tecnico || null,
       cargo: meta.cargo || null,
@@ -82,6 +129,7 @@ function NuevoMantPage() {
     toast.success(finalizar ? "Mantenimiento finalizado" : "Borrador guardado");
     nav({ to: "/mantenimiento/$id", params: { id: data!.id } });
   }
+
 
   // Progreso: cuántos ítems tienen valor
   const totalItems = plantilla.secciones.reduce((s, x) => s + x.items.length, 0);
@@ -133,15 +181,44 @@ function NuevoMantPage() {
             )}
           </>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
-            <Field label="TAG"><Input value={ext.tag} onChange={(e) => setExt({ ...ext, tag: e.target.value })} placeholder="UPS-EXT-01" /></Field>
-            <Field label="Modelo"><Input value={ext.modelo} onChange={(e) => setExt({ ...ext, modelo: e.target.value })} /></Field>
-            <Field label="Nº Serie"><Input value={ext.serie} onChange={(e) => setExt({ ...ext, serie: e.target.value })} /></Field>
-            <Field label="Marca"><Input value={ext.marca} onChange={(e) => setExt({ ...ext, marca: e.target.value })} /></Field>
-            <Field label="Capacidad"><Input value={ext.capacidad} onChange={(e) => setExt({ ...ext, capacidad: e.target.value })} /></Field>
-            <Field label="Ubicación"><Input value={ext.ubicacion} onChange={(e) => setExt({ ...ext, ubicacion: e.target.value })} /></Field>
-          </div>
+          <>
+            {externos.length > 0 && (
+              <div className="space-y-1">
+                <Label className="text-[11px]">Equipos guardados ({externos.length})</Label>
+                <Select value={externoId || "__nuevo__"} onValueChange={(v) => {
+                  if (v === "__nuevo__") { setExternoId(""); return; }
+                  setExternoId(v);
+                  const f = externos.find(e => e.id === v);
+                  if (f) setExt({ tag: f.tag, modelo: f.modelo ?? "", serie: f.serie ?? "", marca: f.marca ?? "", capacidad: f.capacidad ?? "", ubicacion: f.ubicacion ?? "" });
+                }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__nuevo__">＋ Ingresar nuevo manualmente</SelectItem>
+                    {externos.map(e => <SelectItem key={e.id} value={e.id}>{e.tag} · {e.modelo ?? e.marca ?? "—"}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Link to="/mantenimiento/equipos-externos" className="text-[10px] text-primary hover:underline">Administrar equipos no registrados →</Link>
+              </div>
+            )}
+            {!externoId && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="TAG"><Input value={ext.tag} onChange={(e) => setExt({ ...ext, tag: e.target.value })} placeholder="UPS-EXT-01" /></Field>
+                  <Field label="Modelo"><Input value={ext.modelo} onChange={(e) => setExt({ ...ext, modelo: e.target.value })} /></Field>
+                  <Field label="Nº Serie"><Input value={ext.serie} onChange={(e) => setExt({ ...ext, serie: e.target.value })} /></Field>
+                  <Field label="Marca"><Input value={ext.marca} onChange={(e) => setExt({ ...ext, marca: e.target.value })} /></Field>
+                  <Field label="Capacidad"><Input value={ext.capacidad} onChange={(e) => setExt({ ...ext, capacidad: e.target.value })} /></Field>
+                  <Field label="Ubicación"><Input value={ext.ubicacion} onChange={(e) => setExt({ ...ext, ubicacion: e.target.value })} /></Field>
+                </div>
+                <label className="flex items-center gap-2 text-[11px] text-muted-foreground cursor-pointer">
+                  <input type="checkbox" checked={guardarExterno} onChange={(e) => setGuardarExterno(e.target.checked)} className="accent-primary" />
+                  Guardar este equipo en el catálogo de "no registrados" para futuros mantenimientos
+                </label>
+              </>
+            )}
+          </>
         )}
+
       </section>
 
       {/* Datos generales */}

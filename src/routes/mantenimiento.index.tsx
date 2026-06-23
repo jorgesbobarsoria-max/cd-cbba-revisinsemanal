@@ -4,8 +4,9 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Wrench, ChevronRight } from "lucide-react";
+import { Plus, Wrench, ChevronRight, Server, SlidersHorizontal } from "lucide-react";
 import { PLANTILLAS } from "@/lib/mantenimiento-plantillas";
+
 
 export const Route = createFileRoute("/mantenimiento/")({
   component: MantenimientoListPage,
@@ -41,6 +42,24 @@ function MantenimientoListPage() {
         <h2 className="text-xl font-bold flex items-center gap-2"><Wrench className="size-5 text-primary" /> Mantenimiento preventivo</h2>
         <p className="text-xs text-muted-foreground mt-1">Formularios oficiales por tipo de equipo · Climatización · UPS · ATS · Generador · Supresor de incendios · MDC</p>
       </div>
+
+      <section className="mb-5 grid grid-cols-2 gap-2">
+        <Link to="/mantenimiento/equipos-externos" className="glass rounded-xl p-3 hover:bg-secondary/40 flex items-start gap-2">
+          <Server className="size-5 text-primary mt-0.5" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold leading-tight">Equipos no registrados</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Crear · editar · eliminar</p>
+          </div>
+        </Link>
+        <Link to="/mantenimiento/parametros" className="glass rounded-xl p-3 hover:bg-secondary/40 flex items-start gap-2">
+          <SlidersHorizontal className="size-5 text-primary mt-0.5" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold leading-tight">Parámetros del formulario</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Añadir · modificar · borrar</p>
+          </div>
+        </Link>
+      </section>
+
 
       <section className="mb-6">
         <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">Nuevo mantenimiento</h3>
