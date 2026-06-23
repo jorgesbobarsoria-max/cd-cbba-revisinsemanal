@@ -65,51 +65,6 @@ export type Database = {
         }
         Relationships: []
       }
-      equipos_externos: {
-        Row: {
-          capacidad: string | null
-          created_at: string
-          created_by: string | null
-          id: string
-          marca: string | null
-          modelo: string | null
-          notas: string | null
-          serie: string | null
-          tag: string
-          tipo: string
-          ubicacion: string | null
-          updated_at: string
-        }
-        Insert: {
-          capacidad?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          marca?: string | null
-          modelo?: string | null
-          notas?: string | null
-          serie?: string | null
-          tag: string
-          tipo: string
-          ubicacion?: string | null
-          updated_at?: string
-        }
-        Update: {
-          capacidad?: string | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          marca?: string | null
-          modelo?: string | null
-          notas?: string | null
-          serie?: string | null
-          tag?: string
-          tipo?: string
-          ubicacion?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       inspeccion_items: {
         Row: {
           accion_correctiva: string | null
@@ -304,51 +259,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      plantilla_parametros: {
-        Row: {
-          clave: string
-          created_at: string
-          created_by: string | null
-          id: string
-          label: string
-          opciones: string[] | null
-          orden: number
-          seccion: string
-          tipo: string
-          tipo_dato: string
-          unidad: string | null
-          updated_at: string
-        }
-        Insert: {
-          clave: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          label: string
-          opciones?: string[] | null
-          orden?: number
-          seccion: string
-          tipo: string
-          tipo_dato?: string
-          unidad?: string | null
-          updated_at?: string
-        }
-        Update: {
-          clave?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          label?: string
-          opciones?: string[] | null
-          orden?: number
-          seccion?: string
-          tipo?: string
-          tipo_dato?: string
-          unidad?: string | null
-          updated_at?: string
-        }
-        Relationships: []
       }
       puntos_inspeccion: {
         Row: {
