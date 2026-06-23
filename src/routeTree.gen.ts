@@ -15,6 +15,7 @@ import { Route as EquiposRouteImport } from './routes/equipos'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MantenimientoIndexRouteImport } from './routes/mantenimiento.index'
+import { Route as MantenimientoEquiposExternosRouteImport } from './routes/mantenimiento.equipos-externos'
 import { Route as MantenimientoIdRouteImport } from './routes/mantenimiento.$id'
 import { Route as InspeccionIdRouteImport } from './routes/inspeccion.$id'
 import { Route as MantenimientoNuevoTipoRouteImport } from './routes/mantenimiento.nuevo.$tipo'
@@ -49,6 +50,12 @@ const MantenimientoIndexRoute = MantenimientoIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MantenimientoRoute,
 } as any)
+const MantenimientoEquiposExternosRoute =
+  MantenimientoEquiposExternosRouteImport.update({
+    id: '/equipos-externos',
+    path: '/equipos-externos',
+    getParentRoute: () => MantenimientoRoute,
+  } as any)
 const MantenimientoIdRoute = MantenimientoIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -73,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/mantenimiento': typeof MantenimientoRouteWithChildren
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/$id': typeof MantenimientoIdRoute
+  '/mantenimiento/equipos-externos': typeof MantenimientoEquiposExternosRoute
   '/mantenimiento/': typeof MantenimientoIndexRoute
   '/mantenimiento/nuevo/$tipo': typeof MantenimientoNuevoTipoRoute
 }
@@ -83,6 +91,7 @@ export interface FileRoutesByTo {
   '/historial': typeof HistorialRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/$id': typeof MantenimientoIdRoute
+  '/mantenimiento/equipos-externos': typeof MantenimientoEquiposExternosRoute
   '/mantenimiento': typeof MantenimientoIndexRoute
   '/mantenimiento/nuevo/$tipo': typeof MantenimientoNuevoTipoRoute
 }
@@ -95,6 +104,7 @@ export interface FileRoutesById {
   '/mantenimiento': typeof MantenimientoRouteWithChildren
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/$id': typeof MantenimientoIdRoute
+  '/mantenimiento/equipos-externos': typeof MantenimientoEquiposExternosRoute
   '/mantenimiento/': typeof MantenimientoIndexRoute
   '/mantenimiento/nuevo/$tipo': typeof MantenimientoNuevoTipoRoute
 }
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/mantenimiento'
     | '/inspeccion/$id'
     | '/mantenimiento/$id'
+    | '/mantenimiento/equipos-externos'
     | '/mantenimiento/'
     | '/mantenimiento/nuevo/$tipo'
   fileRoutesByTo: FileRoutesByTo
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/historial'
     | '/inspeccion/$id'
     | '/mantenimiento/$id'
+    | '/mantenimiento/equipos-externos'
     | '/mantenimiento'
     | '/mantenimiento/nuevo/$tipo'
   id:
@@ -129,6 +141,7 @@ export interface FileRouteTypes {
     | '/mantenimiento'
     | '/inspeccion/$id'
     | '/mantenimiento/$id'
+    | '/mantenimiento/equipos-externos'
     | '/mantenimiento/'
     | '/mantenimiento/nuevo/$tipo'
   fileRoutesById: FileRoutesById
@@ -186,6 +199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MantenimientoIndexRouteImport
       parentRoute: typeof MantenimientoRoute
     }
+    '/mantenimiento/equipos-externos': {
+      id: '/mantenimiento/equipos-externos'
+      path: '/equipos-externos'
+      fullPath: '/mantenimiento/equipos-externos'
+      preLoaderRoute: typeof MantenimientoEquiposExternosRouteImport
+      parentRoute: typeof MantenimientoRoute
+    }
     '/mantenimiento/$id': {
       id: '/mantenimiento/$id'
       path: '/$id'
@@ -212,12 +232,14 @@ declare module '@tanstack/react-router' {
 
 interface MantenimientoRouteChildren {
   MantenimientoIdRoute: typeof MantenimientoIdRoute
+  MantenimientoEquiposExternosRoute: typeof MantenimientoEquiposExternosRoute
   MantenimientoIndexRoute: typeof MantenimientoIndexRoute
   MantenimientoNuevoTipoRoute: typeof MantenimientoNuevoTipoRoute
 }
 
 const MantenimientoRouteChildren: MantenimientoRouteChildren = {
   MantenimientoIdRoute: MantenimientoIdRoute,
+  MantenimientoEquiposExternosRoute: MantenimientoEquiposExternosRoute,
   MantenimientoIndexRoute: MantenimientoIndexRoute,
   MantenimientoNuevoTipoRoute: MantenimientoNuevoTipoRoute,
 }

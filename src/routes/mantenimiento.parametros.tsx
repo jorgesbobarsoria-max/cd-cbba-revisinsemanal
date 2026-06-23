@@ -1,0 +1,195 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { AppShell } from "@/components/app-shell";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ChevronLeft, Plus, Pencil, Trash2, SlidersHorizontal } from "lucide-react";
+import { toast } from "sonner";
+import { PLANTILLAS, getPlantilla } from "@/lib/mantenimiento-plantillas";
+
+export const Route = createFileRoute("/mantenimiento/parametros")({
+  component: ParametrosPage,
+});
+
+type Param = {
+  id: string; tipo: string; seccion: string; clave: string; label: string;
+  tipo_dato: string; unidad: string | null; opciones: string[] | null; orden: number;
+};
+
+const TIPOS_DATO = [
+  { v: "texto", l: "Texto" },
+  { v: "numerico", l: "Numérico" },
+  { v: "binario", l: "Sí / No" },
+  { v: "opcion", l: "Opción (lista)" },
+  { v: "trio", l: "Trío R/S/T" },
+];
+
+const EMPTY = { seccion: "Personalizados", clave: "", label: "", tipo_dato: "texto", unidad: "", opciones: "", orden: 0 };
+
+function ParametrosPage() {
+  const { user, loading } = useAuth();
+  const nav = useNavigate();
+  const [tipo, setTipo] = useState(PLANTILLAS[0].id);
+  const [rows, setRows] = useState<Param[]>([]);
+  const [busy, setBusy] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Param | null>(null);
+  const [form, setForm] = useState({ ...EMPTY });
+
+  useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
+
+  const plantilla = useMemo(() => getPlantilla(tipo), [tipo]);
+  const seccionesBase = plantilla?.secciones.map(s => s.titulo) ?? [];
+
+  async function load() {
+    setBusy(true);
+    const { data } = await supabase.from("plantilla_parametros").select("*").eq("tipo", tipo).order("orden");
+    setRows((data ?? []) as Param[]);
+    setBusy(false);
+  }
+  useEffect(() => { load(); }, [tipo]);
+
+  function startNew() {
+    setEditing(null);
+    setForm({ ...EMPTY, seccion: "Personalizados", orden: rows.length });
+    setOpen(true);
+  }
+  function startEdit(r: Param) {
+    setEditing(r);
+    setForm({
+      seccion: r.seccion, clave: r.clave, label: r.label, tipo_dato: r.tipo_dato,
+      unidad: r.unidad ?? "", opciones: (r.opciones ?? []).join(", "), orden: r.orden,
+    });
+    setOpen(true);
+  }
+
+  async function save() {
+    if (!form.label.trim()) { toast.error("La etiqueta es obligatoria"); return; }
+    const clave = (form.clave || form.label).trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    if (!clave) { toast.error("Clave inválida"); return; }
+    const opciones = form.tipo_dato === "opcion"
+      ? form.opciones.split(",").map(s => s.trim()).filter(Boolean)
+      : null;
+    if (form.tipo_dato === "opcion" && (!opciones || opciones.length === 0)) { toast.error("Define al menos una opción separada por comas"); return; }
+    const payload = {
+      tipo, seccion: form.seccion.trim() || "Personalizados", clave, label: form.label.trim(),
+      tipo_dato: form.tipo_dato, unidad: form.unidad || null, opciones, orden: Number(form.orden) || 0,
+    };
+    const q = editing
+      ? supabase.from("plantilla_parametros").update(payload).eq("id", editing.id)
+      : supabase.from("plantilla_parametros").insert({ ...payload, created_by: user?.id ?? null });
+    const { error } = await q;
+    if (error) { toast.error(error.message); return; }
+    toast.success(editing ? "Parámetro actualizado" : "Parámetro creado");
+    setOpen(false); load();
+  }
+
+  async function remove(id: string) {
+    const { error } = await supabase.from("plantilla_parametros").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Parámetro eliminado"); load();
+  }
+
+  return (
+    <AppShell title="Parámetros">
+      <div className="flex items-center justify-between mb-4">
+        <Link to="/mantenimiento" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="size-4" /> Volver
+        </Link>
+        <Button size="sm" onClick={startNew}><Plus className="size-4" /> Nuevo</Button>
+      </div>
+
+      <div className="mb-4">
+        <h2 className="text-lg font-bold flex items-center gap-2"><SlidersHorizontal className="size-5 text-primary" /> Parámetros del formulario</h2>
+        <p className="text-xs text-muted-foreground mt-1">Añade, edita o elimina parámetros adicionales que aparecerán en el formulario de mantenimiento por tipo de equipo.</p>
+      </div>
+
+      <div className="glass rounded-xl p-3 mb-3">
+        <Label className="text-[11px]">Tipo de equipo</Label>
+        <Select value={tipo} onValueChange={setTipo}>
+          <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+          <SelectContent>{PLANTILLAS.map(p => <SelectItem key={p.id} value={p.id}>{p.icon} {p.nombre}</SelectItem>)}</SelectContent>
+        </Select>
+        <p className="text-[10px] text-muted-foreground mt-2">Secciones base: {seccionesBase.join(" · ")}</p>
+      </div>
+
+      {busy ? <p className="text-sm text-muted-foreground">Cargando…</p> : rows.length === 0 ? (
+        <div className="glass rounded-xl p-6 text-center">
+          <p className="text-sm text-muted-foreground">Sin parámetros personalizados para este tipo.</p>
+          <p className="text-[11px] text-muted-foreground mt-1">El formulario ya incluye {plantilla?.secciones.reduce((s, x) => s + x.items.length, 0)} parámetros estándar.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {rows.map(r => (
+            <div key={r.id} className="glass rounded-xl p-3 flex items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold truncate">{r.label} {r.unidad && <span className="text-muted-foreground font-normal">({r.unidad})</span>}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{r.seccion} · {r.tipo_dato}{r.opciones?.length ? ` · ${r.opciones.join("/")}` : ""}</p>
+              </div>
+              <Button size="icon" variant="ghost" onClick={() => startEdit(r)}><Pencil className="size-4" /></Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="icon" variant="ghost"><Trash2 className="size-4 text-fail" /></Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Eliminar parámetro</AlertDialogTitle>
+                    <AlertDialogDescription>¿Eliminar "{r.label}"? Los registros existentes mantendrán el dato.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => remove(r.id)}>Eliminar</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{editing ? "Editar parámetro" : "Nuevo parámetro"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Field label="Etiqueta *"><Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Ej. Temperatura ambiente" /></Field>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Sección">
+                <Input list="sec-list" value={form.seccion} onChange={(e) => setForm({ ...form, seccion: e.target.value })} />
+                <datalist id="sec-list">
+                  {seccionesBase.map(s => <option key={s} value={s} />)}
+                  <option value="Personalizados" />
+                </datalist>
+              </Field>
+              <Field label="Tipo de dato">
+                <Select value={form.tipo_dato} onValueChange={(v) => setForm({ ...form, tipo_dato: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{TIPOS_DATO.map(t => <SelectItem key={t.v} value={t.v}>{t.l}</SelectItem>)}</SelectContent>
+                </Select>
+              </Field>
+              <Field label="Unidad"><Input value={form.unidad} onChange={(e) => setForm({ ...form, unidad: e.target.value })} placeholder="°C, V, A…" /></Field>
+              <Field label="Orden"><Input type="number" value={form.orden} onChange={(e) => setForm({ ...form, orden: Number(e.target.value) })} /></Field>
+            </div>
+            {form.tipo_dato === "opcion" && (
+              <Field label="Opciones (separadas por coma)"><Input value={form.opciones} onChange={(e) => setForm({ ...form, opciones: e.target.value })} placeholder="Ok, Requiere cambio" /></Field>
+            )}
+            <Field label="Clave (opcional, autogenerada)"><Input value={form.clave} onChange={(e) => setForm({ ...form, clave: e.target.value })} placeholder={form.label ? form.label.toLowerCase().replace(/[^a-z0-9]+/g, "_") : "clave_unica"} /></Field>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={save}>{editing ? "Guardar" : "Crear"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppShell>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div className="space-y-1"><Label className="text-[11px]">{label}</Label>{children}</div>;
+}
