@@ -18,16 +18,21 @@ export const Route = createFileRoute("/mantenimiento/nuevo/$tipo")({
 });
 
 type Equipo = { id: string; tag: string; categoria: string; marca: string | null; modelo: string | null };
+type EquipoExt = { id: string; tag: string; tipo: string; marca: string | null; modelo: string | null; serie: string | null; capacidad: string | null; ubicacion: string | null };
+type ParamExtra = { id: string; tipo: string; seccion: string; clave: string; label: string; tipo_dato: string; unidad: string | null; opciones: string[] | null; orden: number };
 
 function NuevoMantPage() {
   const { tipo } = Route.useParams();
   const { user, loading } = useAuth();
   const nav = useNavigate();
-  const plantilla = useMemo(() => getPlantilla(tipo), [tipo]);
+  const plantillaBase = useMemo(() => getPlantilla(tipo), [tipo]);
 
   const [equipos, setEquipos] = useState<Equipo[]>([]);
+  const [equiposExt, setEquiposExt] = useState<EquipoExt[]>([]);
+  const [paramsExtra, setParamsExtra] = useState<ParamExtra[]>([]);
   const [modoExterno, setModoExterno] = useState(false);
   const [equipoId, setEquipoId] = useState<string>("");
+  const [equipoExtId, setEquipoExtId] = useState<string>("");
   const [ext, setExt] = useState({ tag: "", modelo: "", serie: "", marca: "", capacidad: "", ubicacion: "" });
   const [meta, setMeta] = useState({
     fecha: new Date().toISOString().slice(0, 10),
@@ -42,12 +47,42 @@ function NuevoMantPage() {
 
   useEffect(() => {
     (async () => {
-      if (!plantilla?.categoriaEquipo) { setModoExterno(true); return; }
-      const { data } = await supabase.from("equipos").select("id,tag,categoria,marca,modelo")
-        .eq("categoria", plantilla.categoriaEquipo).order("orden");
-      setEquipos((data ?? []) as Equipo[]);
+      if (plantillaBase?.categoriaEquipo) {
+        const { data } = await supabase.from("equipos").select("id,tag,categoria,marca,modelo")
+          .eq("categoria", plantillaBase.categoriaEquipo).order("orden");
+        setEquipos((data ?? []) as Equipo[]);
+      } else {
+        setModoExterno(true);
+      }
+      const [{ data: exts }, { data: pars }] = await Promise.all([
+        supabase.from("equipos_externos").select("id,tag,tipo,marca,modelo,serie,capacidad,ubicacion").eq("tipo", tipo).order("tag"),
+        supabase.from("plantilla_parametros").select("*").eq("tipo", tipo).order("orden"),
+      ]);
+      setEquiposExt((exts ?? []) as EquipoExt[]);
+      setParamsExtra((pars ?? []) as ParamExtra[]);
     })();
-  }, [plantilla?.categoriaEquipo]);
+  }, [plantillaBase?.categoriaEquipo, tipo]);
+
+  // Plantilla combinada: base + extras agrupados por sección
+  const plantilla = useMemo(() => {
+    if (!plantillaBase) return undefined;
+    const map = new Map(plantillaBase.secciones.map(s => [s.titulo, { titulo: s.titulo, items: [...s.items] }]));
+    for (const p of paramsExtra) {
+      const item = { k: p.clave, l: p.label, t: p.tipo_dato as any, u: p.unidad ?? undefined, o: p.opciones ?? undefined };
+      const sec = map.get(p.seccion);
+      if (sec) sec.items.push(item);
+      else map.set(p.seccion, { titulo: p.seccion, items: [item] });
+    }
+    return { ...plantillaBase, secciones: Array.from(map.values()) };
+  }, [plantillaBase, paramsExtra]);
+
+  function pickEquipoExt(id: string) {
+    setEquipoExtId(id);
+    const e = equiposExt.find(x => x.id === id);
+    if (e) setExt({ tag: e.tag, modelo: e.modelo ?? "", serie: e.serie ?? "", marca: e.marca ?? "", capacidad: e.capacidad ?? "", ubicacion: e.ubicacion ?? "" });
+  }
+
+
 
   if (!plantilla) {
     return <AppShell title="Mantenimiento"><p className="text-sm text-muted-foreground">Tipo no válido.</p></AppShell>;
