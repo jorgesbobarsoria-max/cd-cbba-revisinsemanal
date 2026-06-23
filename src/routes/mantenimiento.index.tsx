@@ -42,6 +42,25 @@ function MantenimientoListPage() {
         <p className="text-xs text-muted-foreground mt-1">Formularios oficiales por tipo de equipo · Climatización · UPS · ATS · Generador · Supresor de incendios · MDC</p>
       </div>
 
+      <div className="grid grid-cols-2 gap-2 mb-5">
+        <Link to="/mantenimiento/equipos" className="glass rounded-xl p-3 hover:bg-secondary/40 flex items-center gap-2">
+          <span className="text-xl">🗂️</span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold leading-tight">Equipos no registrados</p>
+            <p className="text-[10px] text-muted-foreground">Catálogo manual · CRUD</p>
+          </div>
+        </Link>
+        <Link to="/mantenimiento/parametros" className="glass rounded-xl p-3 hover:bg-secondary/40 flex items-center gap-2">
+          <span className="text-xl">🎚️</span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold leading-tight">Parámetros</p>
+            <p className="text-[10px] text-muted-foreground">Añadir / editar / borrar</p>
+          </div>
+        </Link>
+      </div>
+
+
+
       <section className="mb-6">
         <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">Nuevo mantenimiento</h3>
         <div className="grid grid-cols-2 gap-2">
