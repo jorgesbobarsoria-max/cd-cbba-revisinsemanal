@@ -15,6 +15,7 @@ import { Route as EquiposRouteImport } from './routes/equipos'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MantenimientoIndexRouteImport } from './routes/mantenimiento.index'
+import { Route as MantenimientoParametrosRouteImport } from './routes/mantenimiento.parametros'
 import { Route as MantenimientoEquiposExternosRouteImport } from './routes/mantenimiento.equipos-externos'
 import { Route as MantenimientoIdRouteImport } from './routes/mantenimiento.$id'
 import { Route as InspeccionIdRouteImport } from './routes/inspeccion.$id'
@@ -50,6 +51,11 @@ const MantenimientoIndexRoute = MantenimientoIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MantenimientoRoute,
 } as any)
+const MantenimientoParametrosRoute = MantenimientoParametrosRouteImport.update({
+  id: '/parametros',
+  path: '/parametros',
+  getParentRoute: () => MantenimientoRoute,
+} as any)
 const MantenimientoEquiposExternosRoute =
   MantenimientoEquiposExternosRouteImport.update({
     id: '/equipos-externos',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/$id': typeof MantenimientoIdRoute
   '/mantenimiento/equipos-externos': typeof MantenimientoEquiposExternosRoute
+  '/mantenimiento/parametros': typeof MantenimientoParametrosRoute
   '/mantenimiento/': typeof MantenimientoIndexRoute
   '/mantenimiento/nuevo/$tipo': typeof MantenimientoNuevoTipoRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/$id': typeof MantenimientoIdRoute
   '/mantenimiento/equipos-externos': typeof MantenimientoEquiposExternosRoute
+  '/mantenimiento/parametros': typeof MantenimientoParametrosRoute
   '/mantenimiento': typeof MantenimientoIndexRoute
   '/mantenimiento/nuevo/$tipo': typeof MantenimientoNuevoTipoRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/inspeccion/$id': typeof InspeccionIdRoute
   '/mantenimiento/$id': typeof MantenimientoIdRoute
   '/mantenimiento/equipos-externos': typeof MantenimientoEquiposExternosRoute
+  '/mantenimiento/parametros': typeof MantenimientoParametrosRoute
   '/mantenimiento/': typeof MantenimientoIndexRoute
   '/mantenimiento/nuevo/$tipo': typeof MantenimientoNuevoTipoRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/inspeccion/$id'
     | '/mantenimiento/$id'
     | '/mantenimiento/equipos-externos'
+    | '/mantenimiento/parametros'
     | '/mantenimiento/'
     | '/mantenimiento/nuevo/$tipo'
   fileRoutesByTo: FileRoutesByTo
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/inspeccion/$id'
     | '/mantenimiento/$id'
     | '/mantenimiento/equipos-externos'
+    | '/mantenimiento/parametros'
     | '/mantenimiento'
     | '/mantenimiento/nuevo/$tipo'
   id:
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/inspeccion/$id'
     | '/mantenimiento/$id'
     | '/mantenimiento/equipos-externos'
+    | '/mantenimiento/parametros'
     | '/mantenimiento/'
     | '/mantenimiento/nuevo/$tipo'
   fileRoutesById: FileRoutesById
@@ -199,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MantenimientoIndexRouteImport
       parentRoute: typeof MantenimientoRoute
     }
+    '/mantenimiento/parametros': {
+      id: '/mantenimiento/parametros'
+      path: '/parametros'
+      fullPath: '/mantenimiento/parametros'
+      preLoaderRoute: typeof MantenimientoParametrosRouteImport
+      parentRoute: typeof MantenimientoRoute
+    }
     '/mantenimiento/equipos-externos': {
       id: '/mantenimiento/equipos-externos'
       path: '/equipos-externos'
@@ -233,6 +252,7 @@ declare module '@tanstack/react-router' {
 interface MantenimientoRouteChildren {
   MantenimientoIdRoute: typeof MantenimientoIdRoute
   MantenimientoEquiposExternosRoute: typeof MantenimientoEquiposExternosRoute
+  MantenimientoParametrosRoute: typeof MantenimientoParametrosRoute
   MantenimientoIndexRoute: typeof MantenimientoIndexRoute
   MantenimientoNuevoTipoRoute: typeof MantenimientoNuevoTipoRoute
 }
@@ -240,6 +260,7 @@ interface MantenimientoRouteChildren {
 const MantenimientoRouteChildren: MantenimientoRouteChildren = {
   MantenimientoIdRoute: MantenimientoIdRoute,
   MantenimientoEquiposExternosRoute: MantenimientoEquiposExternosRoute,
+  MantenimientoParametrosRoute: MantenimientoParametrosRoute,
   MantenimientoIndexRoute: MantenimientoIndexRoute,
   MantenimientoNuevoTipoRoute: MantenimientoNuevoTipoRoute,
 }

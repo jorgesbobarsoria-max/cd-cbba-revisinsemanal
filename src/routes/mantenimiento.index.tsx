@@ -4,8 +4,9 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Wrench, ChevronRight } from "lucide-react";
+import { Plus, Wrench, ChevronRight, Server, SlidersHorizontal } from "lucide-react";
 import { PLANTILLAS } from "@/lib/mantenimiento-plantillas";
+
 
 export const Route = createFileRoute("/mantenimiento/")({
   component: MantenimientoListPage,
