@@ -88,12 +88,28 @@ function NuevoMantPage() {
 
   async function guardar(finalizar: boolean) {
     if (!modoExterno && !equipoId) { toast.error("Selecciona un equipo o usa Equipo no registrado"); return; }
-    if (modoExterno && !ext.tag && !ext.modelo) { toast.error("Indica al menos TAG o Modelo del equipo"); return; }
+    let extData: any = null;
+    if (modoExterno) {
+      if (externoId) {
+        const found = externos.find(e => e.id === externoId);
+        if (!found) { toast.error("Equipo externo no encontrado"); return; }
+        extData = { id: found.id, tag: found.tag, modelo: found.modelo, serie: found.serie, marca: found.marca, capacidad: found.capacidad, ubicacion: found.ubicacion };
+      } else {
+        if (!ext.tag && !ext.modelo) { toast.error("Indica al menos TAG o Modelo del equipo"); return; }
+        extData = ext;
+        if (guardarExterno && ext.tag) {
+          const { data: nuevo } = await supabase.from("equipos_externos")
+            .insert({ tipo, tag: ext.tag, marca: ext.marca || null, modelo: ext.modelo || null, serie: ext.serie || null, capacidad: ext.capacidad || null, ubicacion: ext.ubicacion || null, created_by: user?.id ?? null })
+            .select("id").single();
+          if (nuevo?.id) extData = { ...extData, id: nuevo.id };
+        }
+      }
+    }
     setBusy(true);
     const payload = {
       tipo,
       equipo_id: modoExterno ? null : equipoId,
-      equipo_externo: modoExterno ? ext : null,
+      equipo_externo: extData,
       fecha: meta.fecha,
       tecnico: meta.tecnico || null,
       cargo: meta.cargo || null,
@@ -113,6 +129,7 @@ function NuevoMantPage() {
     toast.success(finalizar ? "Mantenimiento finalizado" : "Borrador guardado");
     nav({ to: "/mantenimiento/$id", params: { id: data!.id } });
   }
+
 
   // Progreso: cuántos ítems tienen valor
   const totalItems = plantilla.secciones.reduce((s, x) => s + x.items.length, 0);
