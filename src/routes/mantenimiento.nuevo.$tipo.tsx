@@ -168,15 +168,30 @@ function NuevoMantPage() {
             )}
           </>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
-            <Field label="TAG"><Input value={ext.tag} onChange={(e) => setExt({ ...ext, tag: e.target.value })} placeholder="UPS-EXT-01" /></Field>
-            <Field label="Modelo"><Input value={ext.modelo} onChange={(e) => setExt({ ...ext, modelo: e.target.value })} /></Field>
-            <Field label="Nº Serie"><Input value={ext.serie} onChange={(e) => setExt({ ...ext, serie: e.target.value })} /></Field>
-            <Field label="Marca"><Input value={ext.marca} onChange={(e) => setExt({ ...ext, marca: e.target.value })} /></Field>
-            <Field label="Capacidad"><Input value={ext.capacidad} onChange={(e) => setExt({ ...ext, capacidad: e.target.value })} /></Field>
-            <Field label="Ubicación"><Input value={ext.ubicacion} onChange={(e) => setExt({ ...ext, ubicacion: e.target.value })} /></Field>
+          <div className="space-y-2">
+            {equiposExt.length > 0 && (
+              <div className="space-y-1">
+                <Label className="text-[11px]">Equipo guardado (opcional)</Label>
+                <Select value={equipoExtId} onValueChange={pickEquipoExt}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder={`Elegir de ${equiposExt.length} guardados…`} /></SelectTrigger>
+                  <SelectContent>
+                    {equiposExt.map(e => <SelectItem key={e.id} value={e.id}>{e.tag}{e.modelo ? ` · ${e.modelo}` : ""}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Link to="/mantenimiento/equipos" className="text-[10px] text-primary hover:underline">Gestionar equipos no registrados →</Link>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="TAG"><Input value={ext.tag} onChange={(e) => setExt({ ...ext, tag: e.target.value })} placeholder="UPS-EXT-01" /></Field>
+              <Field label="Modelo"><Input value={ext.modelo} onChange={(e) => setExt({ ...ext, modelo: e.target.value })} /></Field>
+              <Field label="Nº Serie"><Input value={ext.serie} onChange={(e) => setExt({ ...ext, serie: e.target.value })} /></Field>
+              <Field label="Marca"><Input value={ext.marca} onChange={(e) => setExt({ ...ext, marca: e.target.value })} /></Field>
+              <Field label="Capacidad"><Input value={ext.capacidad} onChange={(e) => setExt({ ...ext, capacidad: e.target.value })} /></Field>
+              <Field label="Ubicación"><Input value={ext.ubicacion} onChange={(e) => setExt({ ...ext, ubicacion: e.target.value })} /></Field>
+            </div>
           </div>
         )}
+
       </section>
 
       {/* Datos generales */}
