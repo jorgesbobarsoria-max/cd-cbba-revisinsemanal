@@ -92,6 +92,9 @@ function DetallePage() {
         <Button size="sm" onClick={descargar} disabled={dl}>
           {dl ? <><Loader2 className="size-4 animate-spin" /> Generando…</> : <><FileDown className="size-4" /> Descargar</>}
         </Button>
+      </section>
+
+
 
       <section className="glass rounded-xl p-3.5 mb-4 text-xs space-y-1">
         <Linea l="Empresa" v={row.empresa} />
