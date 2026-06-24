@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Trash2, FileText } from "lucide-react";
+import { ChevronLeft, Trash2, FileText, FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPlantilla } from "@/lib/mantenimiento-plantillas";
+import { generarInformeMantenimientoWord } from "@/lib/reporte-mantenimiento.functions";
 
 export const Route = createFileRoute("/mantenimiento/$id")({
   component: DetallePage,
@@ -18,6 +20,8 @@ function DetallePage() {
   const nav = useNavigate();
   const [row, setRow] = useState<any>(null);
   const [busy, setBusy] = useState(true);
+  const [dl, setDl] = useState(false);
+  const generar = useServerFn(generarInformeMantenimientoWord);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -28,6 +32,22 @@ function DetallePage() {
       setRow(data); setBusy(false);
     })();
   }, [id]);
+
+  async function descargar() {
+    setDl(true);
+    try {
+      const { base64, filename } = await generar({ data: { ids: [id] } });
+      const bin = atob(base64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const blob = new Blob([arr], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Informe descargado");
+    } catch (e: any) { toast.error(e.message ?? "Error al generar"); }
+    setDl(false);
+  }
 
   async function eliminar() {
     if (!confirm("¿Eliminar este mantenimiento?")) return;
@@ -63,6 +83,18 @@ function DetallePage() {
         <p className="text-xs text-muted-foreground">{target} · {row.fecha} · {row.tecnico ?? "—"}</p>
         <span className={`inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold ${row.estado === "finalizado" ? "bg-ok/15 text-ok" : "bg-warn/15 text-warn"}`}>{row.estado}</span>
       </div>
+
+      <section className="glass rounded-xl p-3.5 mb-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold flex items-center gap-1.5"><FileDown className="size-4 text-primary" /> Informe técnico Word</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Incluye ficha del equipo, parámetros, tendencias históricas, conclusiones y recomendaciones.</p>
+        </div>
+        <Button size="sm" onClick={descargar} disabled={dl}>
+          {dl ? <><Loader2 className="size-4 animate-spin" /> Generando…</> : <><FileDown className="size-4" /> Descargar</>}
+        </Button>
+      </section>
+
+
 
       <section className="glass rounded-xl p-3.5 mb-4 text-xs space-y-1">
         <Linea l="Empresa" v={row.empresa} />
