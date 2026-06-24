@@ -20,6 +20,8 @@ function DetallePage() {
   const nav = useNavigate();
   const [row, setRow] = useState<any>(null);
   const [busy, setBusy] = useState(true);
+  const [dl, setDl] = useState(false);
+  const generar = useServerFn(generarInformeMantenimientoWord);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -30,6 +32,22 @@ function DetallePage() {
       setRow(data); setBusy(false);
     })();
   }, [id]);
+
+  async function descargar() {
+    setDl(true);
+    try {
+      const { base64, filename } = await generar({ data: { ids: [id] } });
+      const bin = atob(base64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const blob = new Blob([arr], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Informe descargado");
+    } catch (e: any) { toast.error(e.message ?? "Error al generar"); }
+    setDl(false);
+  }
 
   async function eliminar() {
     if (!confirm("¿Eliminar este mantenimiento?")) return;
