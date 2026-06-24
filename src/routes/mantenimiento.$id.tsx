@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Trash2, FileText } from "lucide-react";
+import { ChevronLeft, Trash2, FileText, FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPlantilla } from "@/lib/mantenimiento-plantillas";
+import { generarInformeMantenimientoWord } from "@/lib/reporte-mantenimiento.functions";
 
 export const Route = createFileRoute("/mantenimiento/$id")({
   component: DetallePage,
