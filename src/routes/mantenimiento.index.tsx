@@ -123,14 +123,17 @@ function MantenimientoListPage() {
         </div>
 
         {selMode && (
-          <div className="glass rounded-xl p-3 mb-2 flex items-center justify-between gap-2 sticky top-0 z-10">
-            <div className="text-xs">
-              <p className="font-semibold">{sel.size} seleccionado(s)</p>
-              <p className="text-[10px] text-muted-foreground">Informe Word consolidado con tendencias y recomendaciones</p>
+          <div className="glass rounded-xl p-3 mb-2 sticky top-0 z-10 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs">
+                <p className="font-semibold">{sel.size} seleccionado(s)</p>
+                <p className="text-[10px] text-muted-foreground">Informe Word consolidado con tendencias y recomendaciones</p>
+              </div>
+              <Button size="sm" disabled={!sel.size || dl} onClick={descargar}>
+                {dl ? <><Loader2 className="size-4 animate-spin" /> Generando…</> : <><FileDown className="size-4" /> Descargar</>}
+              </Button>
             </div>
-            <Button size="sm" disabled={!sel.size || dl} onClick={descargar}>
-              {dl ? <><Loader2 className="size-4 animate-spin" /> Generando…</> : <><FileDown className="size-4" /> Descargar</>}
-            </Button>
+            <PlantillaInformeSelector value={plantillaInforme} onChange={setPlantillaInforme} />
           </div>
         )}
 
