@@ -73,13 +73,39 @@ function equipoKey(row: any): string {
   return row.equipo_id ?? row.equipo_externo?.tag ?? row.equipo_externo?.modelo ?? "—";
 }
 
+export type PlantillaInforme =
+  | "completo"       // Estructura estándar: portada + antecedentes + ficha + parámetros + tendencias + conclusiones
+  | "ejecutivo"      // Resumen gerencial: portada + tabla resumen + hallazgos + conclusiones + recomendaciones
+  | "tecnico"        // Enfoque técnico: ficha + parámetros + tendencias + hallazgos (sin antecedentes ni objeto)
+  | "checklist"      // Formato lista de verificación por sección, sin gráficas
+  | "por-tipo";      // Auto-selecciona el formato según el tipo de cada equipo
+
 export const generarInformeMantenimientoWord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { ids: string[] }) => data)
+  .inputValidator((data: { ids: string[]; plantilla?: PlantillaInforme }) => data)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const ids = (data.ids ?? []).filter(Boolean);
+    const plantillaInforme: PlantillaInforme = data.plantilla ?? "completo";
     if (!ids.length) throw new Error("Sin mantenimientos seleccionados");
+
+    // Resuelve la plantilla efectiva para un tipo de equipo cuando el usuario elige "por-tipo"
+    const resolverPlantillaPorTipo = (tipo: string): Exclude<PlantillaInforme, "por-tipo"> => {
+      switch (tipo) {
+        case "ups":
+        case "ats":
+        case "generador":
+          return "tecnico";        // Énfasis eléctrico + tendencias
+        case "climatizacion":
+          return "completo";       // Requiere contexto térmico + histórico
+        case "supresor":
+          return "checklist";      // Verificación normativa
+        case "mdc":
+          return "ejecutivo";      // Vista consolidada
+        default:
+          return "completo";
+      }
+    };
 
     const { data: regs, error } = await supabase.from("mantenimientos")
       .select("*").in("id", ids).order("fecha", { ascending: true });
