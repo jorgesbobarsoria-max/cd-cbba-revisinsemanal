@@ -22,6 +22,7 @@ function DetallePage() {
   const [row, setRow] = useState<any>(null);
   const [busy, setBusy] = useState(true);
   const [dl, setDl] = useState(false);
+  const [plantillaInforme, setPlantillaInforme] = useState<PlantillaInforme>("completo");
   const generar = useServerFn(generarInformeMantenimientoWord);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
