@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Wrench, ChevronRight, Server, SlidersHorizontal, FileDown, Loader2, CheckSquare, Square } from "lucide-react";
 import { PLANTILLAS } from "@/lib/mantenimiento-plantillas";
-import { generarInformeMantenimientoWord } from "@/lib/reporte-mantenimiento.functions";
+import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/reporte-mantenimiento.functions";
+import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
 import { toast } from "sonner";
 
 
