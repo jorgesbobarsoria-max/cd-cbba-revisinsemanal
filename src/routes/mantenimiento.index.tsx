@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Wrench, ChevronRight, Server, SlidersHorizontal, FileDown, Loader2, CheckSquare, Square } from "lucide-react";
 import { PLANTILLAS } from "@/lib/mantenimiento-plantillas";
-import { generarInformeMantenimientoWord } from "@/lib/reporte-mantenimiento.functions";
+import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/reporte-mantenimiento.functions";
+import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
 import { toast } from "sonner";
 
 
@@ -29,6 +30,7 @@ function MantenimientoListPage() {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [selMode, setSelMode] = useState(false);
   const [dl, setDl] = useState(false);
+  const [plantillaInforme, setPlantillaInforme] = useState<PlantillaInforme>("por-tipo");
   const generar = useServerFn(generarInformeMantenimientoWord);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
@@ -51,7 +53,7 @@ function MantenimientoListPage() {
     if (!sel.size) { toast.error("Selecciona al menos un mantenimiento"); return; }
     setDl(true);
     try {
-      const { base64, filename } = await generar({ data: { ids: Array.from(sel) } });
+      const { base64, filename } = await generar({ data: { ids: Array.from(sel), plantilla: plantillaInforme } });
       const bin = atob(base64);
       const arr = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
@@ -121,14 +123,17 @@ function MantenimientoListPage() {
         </div>
 
         {selMode && (
-          <div className="glass rounded-xl p-3 mb-2 flex items-center justify-between gap-2 sticky top-0 z-10">
-            <div className="text-xs">
-              <p className="font-semibold">{sel.size} seleccionado(s)</p>
-              <p className="text-[10px] text-muted-foreground">Informe Word consolidado con tendencias y recomendaciones</p>
+          <div className="glass rounded-xl p-3 mb-2 sticky top-0 z-10 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs">
+                <p className="font-semibold">{sel.size} seleccionado(s)</p>
+                <p className="text-[10px] text-muted-foreground">Informe Word consolidado con tendencias y recomendaciones</p>
+              </div>
+              <Button size="sm" disabled={!sel.size || dl} onClick={descargar}>
+                {dl ? <><Loader2 className="size-4 animate-spin" /> Generando…</> : <><FileDown className="size-4" /> Descargar</>}
+              </Button>
             </div>
-            <Button size="sm" disabled={!sel.size || dl} onClick={descargar}>
-              {dl ? <><Loader2 className="size-4 animate-spin" /> Generando…</> : <><FileDown className="size-4" /> Descargar</>}
-            </Button>
+            <PlantillaInformeSelector value={plantillaInforme} onChange={setPlantillaInforme} />
           </div>
         )}
 

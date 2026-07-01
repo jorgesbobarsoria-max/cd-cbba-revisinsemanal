@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Trash2, FileText, FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPlantilla } from "@/lib/mantenimiento-plantillas";
-import { generarInformeMantenimientoWord } from "@/lib/reporte-mantenimiento.functions";
+import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/reporte-mantenimiento.functions";
+import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
 
 export const Route = createFileRoute("/mantenimiento/$id")({
   component: DetallePage,
@@ -21,6 +22,7 @@ function DetallePage() {
   const [row, setRow] = useState<any>(null);
   const [busy, setBusy] = useState(true);
   const [dl, setDl] = useState(false);
+  const [plantillaInforme, setPlantillaInforme] = useState<PlantillaInforme>("completo");
   const generar = useServerFn(generarInformeMantenimientoWord);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
@@ -36,7 +38,7 @@ function DetallePage() {
   async function descargar() {
     setDl(true);
     try {
-      const { base64, filename } = await generar({ data: { ids: [id] } });
+      const { base64, filename } = await generar({ data: { ids: [id], plantilla: plantillaInforme } });
       const bin = atob(base64);
       const arr = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
@@ -84,14 +86,17 @@ function DetallePage() {
         <span className={`inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold ${row.estado === "finalizado" ? "bg-ok/15 text-ok" : "bg-warn/15 text-warn"}`}>{row.estado}</span>
       </div>
 
-      <section className="glass rounded-xl p-3.5 mb-4 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold flex items-center gap-1.5"><FileDown className="size-4 text-primary" /> Informe técnico Word</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Incluye ficha del equipo, parámetros, tendencias históricas, conclusiones y recomendaciones.</p>
+      <section className="glass rounded-xl p-3.5 mb-4">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold flex items-center gap-1.5"><FileDown className="size-4 text-primary" /> Informe técnico Word</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Ajusta secciones y formato según la plantilla elegida.</p>
+          </div>
+          <Button size="sm" onClick={descargar} disabled={dl}>
+            {dl ? <><Loader2 className="size-4 animate-spin" /> Generando…</> : <><FileDown className="size-4" /> Descargar</>}
+          </Button>
         </div>
-        <Button size="sm" onClick={descargar} disabled={dl}>
-          {dl ? <><Loader2 className="size-4 animate-spin" /> Generando…</> : <><FileDown className="size-4" /> Descargar</>}
-        </Button>
+        <PlantillaInformeSelector value={plantillaInforme} onChange={setPlantillaInforme} />
       </section>
 
 
