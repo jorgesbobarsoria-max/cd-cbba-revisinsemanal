@@ -38,7 +38,7 @@ function DetallePage() {
   async function descargar() {
     setDl(true);
     try {
-      const { base64, filename } = await generar({ data: { ids: [id] } });
+      const { base64, filename } = await generar({ data: { ids: [id], plantilla: plantillaInforme } });
       const bin = atob(base64);
       const arr = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
