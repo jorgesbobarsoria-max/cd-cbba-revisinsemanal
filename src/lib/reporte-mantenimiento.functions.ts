@@ -268,17 +268,16 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
         }
       }
 
-      // Tendencias (charts) — variables numéricas con histórico
+      // Tendencias (charts) — solo si la plantilla lo permite y en modo desarrollo
       const gk = `${r.tipo}::${equipoKey(r)}`;
       const hist = histByGroup.get(gk) ?? [];
-      if (pl && hist.length >= 2) {
+      if (showDesarrollo && mostrarTendencias && pl && hist.length >= 2) {
         const numericItems: ItemPlantilla[] = [];
         for (const sec of pl.secciones) {
           for (const it of sec.items) {
             if (it.t === "numerico" || it.t === "trio") numericItems.push(it);
           }
         }
-        // Elegir hasta 6 con más cobertura
         const scored = numericItems.map((it) => ({
           it,
           count: hist.reduce((c, h) => c + (num(h.datos?.[it.k]) != null ? 1 : 0), 0),
@@ -309,11 +308,11 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
             ]}));
           }
         }
-      } else if (pl) {
+      } else if (showDesarrollo && mostrarTendencias && pl) {
         children.push(p("Sin histórico suficiente para gráfica de tendencia (se requieren ≥ 2 mantenimientos previos del mismo equipo).", { size: 18, color: "90A4AE" }));
       }
 
-      // Hallazgos binarios negativos
+      // Hallazgos binarios negativos (siempre se recolectan, aunque el bloque no se muestre)
       if (pl) {
         for (const sec of pl.secciones) {
           for (const it of sec.items) {
@@ -334,8 +333,8 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
         }
       }
 
-      // Observaciones del equipo
-      if (r.observaciones) {
+      // Observaciones del equipo (omitir en checklist para mantener compacto)
+      if (showDesarrollo && r.observaciones && eff !== "checklist") {
         children.push(p("Observaciones del técnico:", { bold: true, size: 22 }));
         children.push(p(r.observaciones, { size: 20 }));
       }
