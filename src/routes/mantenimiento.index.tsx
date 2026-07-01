@@ -30,6 +30,7 @@ function MantenimientoListPage() {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [selMode, setSelMode] = useState(false);
   const [dl, setDl] = useState(false);
+  const [plantillaInforme, setPlantillaInforme] = useState<PlantillaInforme>("por-tipo");
   const generar = useServerFn(generarInformeMantenimientoWord);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
