@@ -53,7 +53,7 @@ function MantenimientoListPage() {
     if (!sel.size) { toast.error("Selecciona al menos un mantenimiento"); return; }
     setDl(true);
     try {
-      const { base64, filename } = await generar({ data: { ids: Array.from(sel) } });
+      const { base64, filename } = await generar({ data: { ids: Array.from(sel), plantilla: plantillaInforme } });
       const bin = atob(base64);
       const arr = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
