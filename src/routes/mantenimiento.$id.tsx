@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Trash2, FileText, FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getPlantilla } from "@/lib/mantenimiento-plantillas";
-import { generarInformeMantenimientoWord } from "@/lib/reporte-mantenimiento.functions";
+import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/reporte-mantenimiento.functions";
+import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
 
 export const Route = createFileRoute("/mantenimiento/$id")({
   component: DetallePage,
