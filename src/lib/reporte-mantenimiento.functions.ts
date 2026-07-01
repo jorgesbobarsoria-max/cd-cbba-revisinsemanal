@@ -340,8 +340,11 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
       }
     }
 
-    // 4. Conclusiones
-    children.push(h("4. Conclusiones", HeadingLevel.HEADING_1));
+    // Conclusiones y Recomendaciones — numeración dinámica
+    const base = showAntecedentes ? 3 : (showDesarrollo ? 1 : 0);
+    const nConcl = base + 1;
+    const nReco = base + 2;
+    children.push(h(`${nConcl}. Conclusiones`, HeadingLevel.HEADING_1));
     const concl: string[] = [];
     concl.push(`Se ejecutaron ${M.length} actividad(es) de mantenimiento preventivo sobre ${groupKeys.length} equipo(s) distintos, cubriendo ${tipos.length} tipo(s) de infraestructura crítica.`);
     if (todosHallazgos.length === 0) {
@@ -354,8 +357,7 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
     concl.push("Los parámetros eléctricos, térmicos y de control registrados quedan trazados en la plataforma para su análisis histórico y comparativo en futuras intervenciones.");
     for (const c of concl) children.push(p("• " + c));
 
-    // 5. Recomendaciones
-    children.push(h("5. Recomendaciones", HeadingLevel.HEADING_1));
+    children.push(h(`${nReco}. Recomendaciones`, HeadingLevel.HEADING_1));
     if (todosHallazgos.length) {
       children.push(p("Hallazgos específicos:", { bold: true, size: 22 }));
       for (const f of todosHallazgos) {
