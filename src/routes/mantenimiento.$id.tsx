@@ -36,6 +36,7 @@ function DetallePage() {
       const { data, error } = await supabase.from("mantenimientos").select("*").eq("id", id).single();
       if (error) toast.error(error.message);
       setRow(data); setBusy(false);
+      reloadEv();
     })();
   }, [id]);
 
