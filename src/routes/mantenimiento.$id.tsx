@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { getPlantilla } from "@/lib/mantenimiento-plantillas";
 import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/reporte-mantenimiento.functions";
 import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
+import { PhotoCapture } from "@/components/photo-capture";
+import { listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
 
 export const Route = createFileRoute("/mantenimiento/$id")({
   component: DetallePage,
@@ -23,6 +25,8 @@ function DetallePage() {
   const [busy, setBusy] = useState(true);
   const [dl, setDl] = useState(false);
   const [plantillaInforme, setPlantillaInforme] = useState<PlantillaInforme>("completo");
+  const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
+  const reloadEv = async () => setEvidencias(await listEvidencias({ mantenimiento_id: id }));
   const generar = useServerFn(generarInformeMantenimientoWord);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
