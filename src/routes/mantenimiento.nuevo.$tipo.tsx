@@ -276,7 +276,17 @@ function NuevoMantPage() {
               </AccordionTrigger>
               <AccordionContent className="space-y-3 pb-3">
                 {sec.items.map(it => (
-                  <ItemControl key={it.k} item={it} value={datos[it.k]} onChange={(v) => setItem(it.k, v)} />
+                  <div key={it.k} className="space-y-1.5">
+                    <ItemControl item={it} value={datos[it.k]} onChange={(v) => setItem(it.k, v)} />
+                    <PhotoCapture
+                      mode="deferred"
+                      scope="parametro"
+                      paramKey={it.k}
+                      files={fotos[`parametro:${it.k}`] ?? []}
+                      onFilesChange={setFotoBucket(`parametro:${it.k}`)}
+                      compact
+                    />
+                  </div>
                 ))}
               </AccordionContent>
             </AccordionItem>
@@ -284,9 +294,22 @@ function NuevoMantPage() {
         })}
       </Accordion>
 
-      <section className="glass rounded-xl p-3.5 mt-4">
+      <section className="glass rounded-xl p-3.5 mt-4 space-y-2">
         <Label className="text-xs">Observaciones</Label>
         <Textarea rows={3} value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Notas, hallazgos, recomendaciones…" className="mt-1" />
+        <div>
+          <Label className="text-xs">Evidencia fotográfica general</Label>
+          <div className="mt-1">
+            <PhotoCapture
+              mode="deferred"
+              scope="general"
+              files={fotos["general:"] ?? []}
+              onFilesChange={setFotoBucket("general:")}
+              label="Foto general"
+              compact
+            />
+          </div>
+        </div>
       </section>
 
       <div className="sticky bottom-20 mt-4 flex gap-2">
