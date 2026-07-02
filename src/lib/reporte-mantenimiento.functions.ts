@@ -126,6 +126,19 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
       histByGroup.set(gk, filtered);
     }
 
+    // Evidencias fotográficas por mantenimiento
+    const { data: evAll } = await supabase.from("evidencias").select("*").in("mantenimiento_id", ids);
+    const EV = (evAll ?? []) as Array<{ id: string; mantenimiento_id: string; scope: string; equipo_ref: string | null; param_key: string | null; storage_path: string; caption: string | null }>;
+    const fotoBytes = new Map<string, Uint8Array>();
+    await Promise.all(EV.map(async (e) => {
+      const b = await fetchFotoBytes(supabase, e.storage_path);
+      if (b) fotoBytes.set(e.id, b);
+    }));
+    const binsForReg = (mid: string, pred: (e: typeof EV[number]) => boolean): FotoBin[] =>
+      EV.filter((e) => e.mantenimiento_id === mid && pred(e))
+        .map((e) => ({ bytes: fotoBytes.get(e.id)!, caption: e.caption }))
+        .filter((x) => x.bytes);
+
     const children: (Paragraph | Table)[] = [];
 
     // Plantilla efectiva por registro (para "por-tipo")
