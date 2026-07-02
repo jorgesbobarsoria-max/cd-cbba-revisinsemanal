@@ -8,6 +8,8 @@ import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermom
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { generarInformeWord } from "@/lib/reporte.functions";
+import { PhotoCapture } from "@/components/photo-capture";
+import { listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
 
 
 export const Route = createFileRoute("/inspeccion/$id")({
@@ -40,6 +42,12 @@ function InspeccionPage() {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const exportar = useServerFn(generarInformeWord);
+  const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
+
+  const reloadEvidencias = async () => {
+    setEvidencias(await listEvidencias({ inspeccion_id: id }));
+  };
+  useEffect(() => { reloadEvidencias(); }, [id]);
 
   const descargarWord = async () => {
     setExporting(true);
