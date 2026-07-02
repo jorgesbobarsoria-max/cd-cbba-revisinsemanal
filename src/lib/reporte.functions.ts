@@ -269,6 +269,14 @@ export const generarInformeWord = createServerFn({ method: "POST" })
       }
     }
 
+    // Fotos generales de la revisión
+    const genFotos = binsFor((e) => e.scope === "general");
+    if (genFotos.length) {
+      children.push(h("Evidencia fotográfica general", HeadingLevel.HEADING_2));
+      children.push(...renderFotosRow(genFotos));
+    }
+
+
     // 4. Conclusiones
     children.push(h("4. Conclusiones", HeadingLevel.HEADING_1));
     const conclusiones: string[] = [];
