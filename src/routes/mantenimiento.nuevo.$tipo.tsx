@@ -12,6 +12,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ChevronLeft, Save, Check, X, CircleDot } from "lucide-react";
 import { toast } from "sonner";
 import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
+import { PhotoCapture } from "@/components/photo-capture";
+import { uploadEvidencia } from "@/lib/photo-utils";
 
 export const Route = createFileRoute("/mantenimiento/nuevo/$tipo")({
   component: NuevoMantPage,
@@ -42,7 +44,9 @@ function NuevoMantPage() {
   });
   const [datos, setDatos] = useState<Record<string, any>>({});
   const [obs, setObs] = useState("");
+  const [fotos, setFotos] = useState<Record<string, File[]>>({});
   const [busy, setBusy] = useState(false);
+  const setFotoBucket = (k: string) => (files: File[]) => setFotos(f => ({ ...f, [k]: files }));
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
