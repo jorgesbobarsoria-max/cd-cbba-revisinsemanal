@@ -210,6 +210,16 @@ export const generarInformeWord = createServerFn({ method: "POST" })
       }
       children.push(new Table({ width: { size: 9360, type: WidthType.DXA }, columnWidths: [600, 4200, 1600, 1560, 1400], rows }));
 
+      // Fotos generales del equipo
+      const eqFotos = binsFor((e) => e.scope === "equipo" && e.equipo_ref === eq.id);
+      if (eqFotos.length) children.push(...renderFotosRow(eqFotos, `Evidencia fotográfica – ${eq.tag}`));
+
+      // Fotos por parámetro (intercaladas)
+      for (const pt of eqPuntos) {
+        const bins = binsFor((e) => e.scope === "parametro" && e.param_key === String(pt.id));
+        if (bins.length) children.push(...renderFotosRow(bins, `Punto ${pt.numero}. ${pt.descripcion}`));
+      }
+
       // observaciones
       const obs = eqItems.filter((i) => i.observaciones && i.observaciones.trim());
       if (obs.length) {
