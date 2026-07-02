@@ -128,10 +128,31 @@ function NuevoMantPage() {
       created_by: user?.id ?? null,
     };
     const { data, error } = await supabase.from("mantenimientos").insert(payload).select("id").single();
+    if (error) { setBusy(false); toast.error(error.message); return; }
+    const mantId = data!.id;
+
+    // Subir fotos capturadas (diferidas)
+    const equipoRef = modoExterno ? (extData?.tag ?? extData?.modelo ?? null) : equipoId;
+    try {
+      for (const [key, files] of Object.entries(fotos)) {
+        if (!files.length) continue;
+        const [scope, paramKey] = key.split(":") as ["general" | "parametro", string | undefined];
+        for (const f of files) {
+          await uploadEvidencia({
+            parent: { mantenimiento_id: mantId },
+            scope: scope === "parametro" ? "parametro" : "general",
+            equipo_ref: equipoRef,
+            param_key: paramKey ?? null,
+            file: f,
+            createdBy: user?.id ?? null,
+          });
+        }
+      }
+    } catch (e: any) { toast.error("Fotos: " + (e.message ?? "error al subir")); }
+
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
     toast.success(finalizar ? "Mantenimiento finalizado" : "Borrador guardado");
-    nav({ to: "/mantenimiento/$id", params: { id: data!.id } });
+    nav({ to: "/mantenimiento/$id", params: { id: mantId } });
   }
 
 
