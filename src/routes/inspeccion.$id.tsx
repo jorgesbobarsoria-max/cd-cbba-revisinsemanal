@@ -242,12 +242,26 @@ function InspeccionPage() {
                 <span className="text-[10px] font-mono text-muted-foreground">{idx + 1}/{equipos.length}</span>
               </div>
 
+              <div className="px-4 pt-3 pb-1 border-b border-border/40">
+                <PhotoCapture
+                  mode="immediate"
+                  parent={{ inspeccion_id: id }}
+                  scope="equipo"
+                  equipoRef={eq.id}
+                  existing={evidencias.filter((e) => e.scope === "equipo" && e.equipo_ref === eq.id)}
+                  onChange={reloadEvidencias}
+                  label="Foto general del equipo"
+                  compact
+                />
+              </div>
+
               <div className="p-4 space-y-3">
                 {eqPuntos.map((p) => {
                   const it = items[p.id];
                   return (
                     <div key={p.id} className="bg-surface-1 rounded-xl p-3">
                       <div className="flex items-start justify-between gap-2 mb-2">
+
                         <p className="text-sm font-medium leading-tight">
                           <span className="text-muted-foreground font-mono mr-1.5">{p.numero}.</span>
                           {p.descripcion}
