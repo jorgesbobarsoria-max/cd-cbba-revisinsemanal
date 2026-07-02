@@ -12,6 +12,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ChevronLeft, Save, Check, X, CircleDot } from "lucide-react";
 import { toast } from "sonner";
 import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
+import { PhotoCapture } from "@/components/photo-capture";
+import { uploadEvidencia } from "@/lib/photo-utils";
 
 export const Route = createFileRoute("/mantenimiento/nuevo/$tipo")({
   component: NuevoMantPage,
@@ -42,7 +44,9 @@ function NuevoMantPage() {
   });
   const [datos, setDatos] = useState<Record<string, any>>({});
   const [obs, setObs] = useState("");
+  const [fotos, setFotos] = useState<Record<string, File[]>>({});
   const [busy, setBusy] = useState(false);
+  const setFotoBucket = (k: string) => (files: File[]) => setFotos(f => ({ ...f, [k]: files }));
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -124,10 +128,31 @@ function NuevoMantPage() {
       created_by: user?.id ?? null,
     };
     const { data, error } = await supabase.from("mantenimientos").insert(payload).select("id").single();
+    if (error) { setBusy(false); toast.error(error.message); return; }
+    const mantId = data!.id;
+
+    // Subir fotos capturadas (diferidas)
+    const equipoRef = modoExterno ? (extData?.tag ?? extData?.modelo ?? null) : equipoId;
+    try {
+      for (const [key, files] of Object.entries(fotos)) {
+        if (!files.length) continue;
+        const [scope, paramKey] = key.split(":") as ["general" | "parametro", string | undefined];
+        for (const f of files) {
+          await uploadEvidencia({
+            parent: { mantenimiento_id: mantId },
+            scope: scope === "parametro" ? "parametro" : "general",
+            equipo_ref: equipoRef,
+            param_key: paramKey ?? null,
+            file: f,
+            createdBy: user?.id ?? null,
+          });
+        }
+      }
+    } catch (e: any) { toast.error("Fotos: " + (e.message ?? "error al subir")); }
+
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
     toast.success(finalizar ? "Mantenimiento finalizado" : "Borrador guardado");
-    nav({ to: "/mantenimiento/$id", params: { id: data!.id } });
+    nav({ to: "/mantenimiento/$id", params: { id: mantId } });
   }
 
 
@@ -251,7 +276,17 @@ function NuevoMantPage() {
               </AccordionTrigger>
               <AccordionContent className="space-y-3 pb-3">
                 {sec.items.map(it => (
-                  <ItemControl key={it.k} item={it} value={datos[it.k]} onChange={(v) => setItem(it.k, v)} />
+                  <div key={it.k} className="space-y-1.5">
+                    <ItemControl item={it} value={datos[it.k]} onChange={(v) => setItem(it.k, v)} />
+                    <PhotoCapture
+                      mode="deferred"
+                      scope="parametro"
+                      paramKey={it.k}
+                      files={fotos[`parametro:${it.k}`] ?? []}
+                      onFilesChange={setFotoBucket(`parametro:${it.k}`)}
+                      compact
+                    />
+                  </div>
                 ))}
               </AccordionContent>
             </AccordionItem>
@@ -259,9 +294,22 @@ function NuevoMantPage() {
         })}
       </Accordion>
 
-      <section className="glass rounded-xl p-3.5 mt-4">
+      <section className="glass rounded-xl p-3.5 mt-4 space-y-2">
         <Label className="text-xs">Observaciones</Label>
         <Textarea rows={3} value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Notas, hallazgos, recomendaciones…" className="mt-1" />
+        <div>
+          <Label className="text-xs">Evidencia fotográfica general</Label>
+          <div className="mt-1">
+            <PhotoCapture
+              mode="deferred"
+              scope="general"
+              files={fotos["general:"] ?? []}
+              onFilesChange={setFotoBucket("general:")}
+              label="Foto general"
+              compact
+            />
+          </div>
+        </div>
       </section>
 
       <div className="sticky bottom-20 mt-4 flex gap-2">

@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { getPlantilla } from "@/lib/mantenimiento-plantillas";
 import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/reporte-mantenimiento.functions";
 import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
+import { PhotoCapture } from "@/components/photo-capture";
+import { listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
 
 export const Route = createFileRoute("/mantenimiento/$id")({
   component: DetallePage,
@@ -23,6 +25,8 @@ function DetallePage() {
   const [busy, setBusy] = useState(true);
   const [dl, setDl] = useState(false);
   const [plantillaInforme, setPlantillaInforme] = useState<PlantillaInforme>("completo");
+  const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
+  const reloadEv = async () => setEvidencias(await listEvidencias({ mantenimiento_id: id }));
   const generar = useServerFn(generarInformeMantenimientoWord);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
@@ -32,6 +36,7 @@ function DetallePage() {
       const { data, error } = await supabase.from("mantenimientos").select("*").eq("id", id).single();
       if (error) toast.error(error.message);
       setRow(data); setBusy(false);
+      reloadEv();
     })();
   }, [id]);
 
@@ -110,18 +115,44 @@ function DetallePage() {
         <Linea l="Cargo" v={row.cargo} />
       </section>
 
+      <section className="glass rounded-xl p-3.5 mb-3">
+        <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">Evidencia fotográfica general</h3>
+        <PhotoCapture
+          mode="immediate"
+          parent={{ mantenimiento_id: id }}
+          scope="general"
+          existing={evidencias.filter(e => e.scope === "general")}
+          onChange={reloadEv}
+          label="Añadir foto"
+          compact
+        />
+      </section>
+
       {plantilla?.secciones.map(sec => (
         <section key={sec.titulo} className="glass rounded-xl p-3.5 mb-3">
           <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">{sec.titulo}</h3>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {sec.items.map(it => {
               const v = datos[it.k];
               const shown = Array.isArray(v) ? v.filter(Boolean).join(" / ") : (v ?? "");
               const empty = shown === "" || shown == null;
+              const fotosIt = evidencias.filter(e => e.scope === "parametro" && e.param_key === it.k);
               return (
-                <div key={it.k} className="flex items-start justify-between gap-3 text-xs border-b border-border/40 pb-1.5 last:border-0">
-                  <span className="text-muted-foreground flex-1">{it.l}</span>
-                  <span className={empty ? "text-muted-foreground/50" : "font-medium"}>{empty ? "—" : `${shown}${it.u ? ` ${it.u}` : ""}`}</span>
+                <div key={it.k} className="border-b border-border/40 pb-2 last:border-0 space-y-1.5">
+                  <div className="flex items-start justify-between gap-3 text-xs">
+                    <span className="text-muted-foreground flex-1">{it.l}</span>
+                    <span className={empty ? "text-muted-foreground/50" : "font-medium"}>{empty ? "—" : `${shown}${it.u ? ` ${it.u}` : ""}`}</span>
+                  </div>
+                  <PhotoCapture
+                    mode="immediate"
+                    parent={{ mantenimiento_id: id }}
+                    scope="parametro"
+                    paramKey={it.k}
+                    existing={fotosIt}
+                    onChange={reloadEv}
+                    label="Foto"
+                    compact
+                  />
                 </div>
               );
             })}

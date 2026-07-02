@@ -6,6 +6,7 @@ import {
   ImageRun, PageOrientation, Header, Footer, PageNumber,
 } from "docx";
 import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
+import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
 
 const border = { style: BorderStyle.SINGLE, size: 4, color: "B0BEC5" };
 const cellBorders = { top: border, bottom: border, left: border, right: border };
@@ -124,6 +125,19 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
       const filtered = (hist ?? []).filter((r: any) => equipoKey(r) === key);
       histByGroup.set(gk, filtered);
     }
+
+    // Evidencias fotográficas por mantenimiento
+    const { data: evAll } = await supabase.from("evidencias").select("*").in("mantenimiento_id", ids);
+    const EV = (evAll ?? []) as Array<{ id: string; mantenimiento_id: string; scope: string; equipo_ref: string | null; param_key: string | null; storage_path: string; caption: string | null }>;
+    const fotoBytes = new Map<string, Uint8Array>();
+    await Promise.all(EV.map(async (e) => {
+      const b = await fetchFotoBytes(supabase, e.storage_path);
+      if (b) fotoBytes.set(e.id, b);
+    }));
+    const binsForReg = (mid: string, pred: (e: typeof EV[number]) => boolean): FotoBin[] =>
+      EV.filter((e) => e.mantenimiento_id === mid && pred(e))
+        .map((e) => ({ bytes: fotoBytes.get(e.id)!, caption: e.caption }))
+        .filter((x) => x.bytes);
 
     const children: (Paragraph | Table)[] = [];
 
@@ -264,8 +278,17 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
             children.push(p(sec.titulo, { bold: true, size: 22, color: "0D3B66" }));
             children.push(new Table({ width: { size: 10360, type: WidthType.DXA }, columnWidths: [6360, 4000], rows }));
             if (!any) children.push(p("Sin registros en esta sección.", { size: 18, color: "90A4AE" }));
+            // Fotos por parámetro (intercaladas dentro de la sección)
+            for (const it of sec.items) {
+              const bins = binsForReg(r.id, (e) => e.scope === "parametro" && e.param_key === it.k);
+              if (bins.length) children.push(...renderFotosRow(bins, `Evidencia · ${it.l}`));
+            }
           }
         }
+
+        // Fotos generales del registro
+        const genBins = binsForReg(r.id, (e) => e.scope === "general");
+        if (genBins.length) children.push(...renderFotosRow(genBins, "Evidencia fotográfica general"));
       }
 
       // Tendencias (charts) — solo si la plantilla lo permite y en modo desarrollo

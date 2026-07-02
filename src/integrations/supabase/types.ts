@@ -110,6 +110,63 @@ export type Database = {
         }
         Relationships: []
       }
+      evidencias: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          equipo_ref: string | null
+          id: string
+          inspeccion_id: string | null
+          mantenimiento_id: string | null
+          orden: number
+          param_key: string | null
+          scope: string
+          storage_path: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipo_ref?: string | null
+          id?: string
+          inspeccion_id?: string | null
+          mantenimiento_id?: string | null
+          orden?: number
+          param_key?: string | null
+          scope: string
+          storage_path: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipo_ref?: string | null
+          id?: string
+          inspeccion_id?: string | null
+          mantenimiento_id?: string | null
+          orden?: number
+          param_key?: string | null
+          scope?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidencias_inspeccion_id_fkey"
+            columns: ["inspeccion_id"]
+            isOneToOne: false
+            referencedRelation: "inspecciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidencias_mantenimiento_id_fkey"
+            columns: ["mantenimiento_id"]
+            isOneToOne: false
+            referencedRelation: "mantenimientos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspeccion_items: {
         Row: {
           accion_correctiva: string | null

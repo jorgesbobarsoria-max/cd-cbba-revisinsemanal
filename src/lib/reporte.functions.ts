@@ -19,6 +19,7 @@ import {
   Footer,
   PageNumber,
 } from "docx";
+import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
 type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
@@ -97,6 +98,17 @@ export const generarInformeWord = createServerFn({ method: "POST" })
       ? await supabase.from("inspeccion_items").select("inspeccion_id,punto_id,valor,semaforo").in("inspeccion_id", histIds)
       : { data: [] };
     const HI = (histItems ?? []) as Array<{ inspeccion_id: string; punto_id: number; valor: string | null; semaforo: string | null }>;
+
+    // Evidencias fotográficas
+    const { data: evRows } = await supabase.from("evidencias").select("*").eq("inspeccion_id", inspeccionId);
+    const EV = (evRows ?? []) as Array<{ id: string; scope: string; equipo_ref: string | null; param_key: string | null; storage_path: string; caption: string | null }>;
+    const fotoBytes = new Map<string, Uint8Array>();
+    await Promise.all(EV.map(async (e) => {
+      const b = await fetchFotoBytes(supabase, e.storage_path);
+      if (b) fotoBytes.set(e.id, b);
+    }));
+    const binsFor = (pred: (e: typeof EV[number]) => boolean): FotoBin[] =>
+      EV.filter(pred).map((e) => ({ bytes: fotoBytes.get(e.id)!, caption: e.caption })).filter((x) => x.bytes);
 
     // Resumen
     const ok = IT.filter((i) => i.semaforo === "verde").length;
@@ -198,6 +210,16 @@ export const generarInformeWord = createServerFn({ method: "POST" })
       }
       children.push(new Table({ width: { size: 9360, type: WidthType.DXA }, columnWidths: [600, 4200, 1600, 1560, 1400], rows }));
 
+      // Fotos generales del equipo
+      const eqFotos = binsFor((e) => e.scope === "equipo" && e.equipo_ref === eq.id);
+      if (eqFotos.length) children.push(...renderFotosRow(eqFotos, `Evidencia fotográfica – ${eq.tag}`));
+
+      // Fotos por parámetro (intercaladas)
+      for (const pt of eqPuntos) {
+        const bins = binsFor((e) => e.scope === "parametro" && e.param_key === String(pt.id));
+        if (bins.length) children.push(...renderFotosRow(bins, `Punto ${pt.numero}. ${pt.descripcion}`));
+      }
+
       // observaciones
       const obs = eqItems.filter((i) => i.observaciones && i.observaciones.trim());
       if (obs.length) {
@@ -246,6 +268,14 @@ export const generarInformeWord = createServerFn({ method: "POST" })
         }
       }
     }
+
+    // Fotos generales de la revisión
+    const genFotos = binsFor((e) => e.scope === "general");
+    if (genFotos.length) {
+      children.push(h("Evidencia fotográfica general", HeadingLevel.HEADING_2));
+      children.push(...renderFotosRow(genFotos));
+    }
+
 
     // 4. Conclusiones
     children.push(h("4. Conclusiones", HeadingLevel.HEADING_1));
