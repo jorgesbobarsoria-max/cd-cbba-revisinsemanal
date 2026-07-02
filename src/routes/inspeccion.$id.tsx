@@ -315,7 +315,18 @@ function InspeccionPage() {
                         value={it?.observaciones ?? ""}
                         onChange={(e) => update(p, { observaciones: e.target.value })}
                         rows={2}
-                        className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary resize-none"
+                        className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary resize-none mb-2"
+                      />
+                      <PhotoCapture
+                        mode="immediate"
+                        parent={{ inspeccion_id: id }}
+                        scope="parametro"
+                        equipoRef={p.equipo_id}
+                        paramKey={String(p.id)}
+                        existing={evidencias.filter((e) => e.param_key === String(p.id))}
+                        onChange={reloadEvidencias}
+                        compact
+                        label="Foto"
                       />
                     </div>
                   );
