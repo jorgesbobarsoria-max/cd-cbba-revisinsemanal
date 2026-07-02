@@ -278,8 +278,17 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
             children.push(p(sec.titulo, { bold: true, size: 22, color: "0D3B66" }));
             children.push(new Table({ width: { size: 10360, type: WidthType.DXA }, columnWidths: [6360, 4000], rows }));
             if (!any) children.push(p("Sin registros en esta sección.", { size: 18, color: "90A4AE" }));
+            // Fotos por parámetro (intercaladas dentro de la sección)
+            for (const it of sec.items) {
+              const bins = binsForReg(r.id, (e) => e.scope === "parametro" && e.param_key === it.k);
+              if (bins.length) children.push(...renderFotosRow(bins, `Evidencia · ${it.l}`));
+            }
           }
         }
+
+        // Fotos generales del registro
+        const genBins = binsForReg(r.id, (e) => e.scope === "general");
+        if (genBins.length) children.push(...renderFotosRow(genBins, "Evidencia fotográfica general"));
       }
 
       // Tendencias (charts) — solo si la plantilla lo permite y en modo desarrollo
