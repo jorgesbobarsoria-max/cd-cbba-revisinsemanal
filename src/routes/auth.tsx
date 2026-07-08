@@ -13,10 +13,8 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const nav = useNavigate();
   const { user, loading } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -27,21 +25,8 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { full_name: name },
-          },
-        });
-        if (error) throw error;
-        toast.success("Cuenta creada. Sesión iniciada.");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error de autenticación";
       toast.error(msg);
@@ -62,27 +47,14 @@ function AuthPage() {
         </div>
 
         <div className="glass rounded-2xl p-5">
-          <div className="grid grid-cols-2 gap-1 p-1 bg-surface-1 rounded-xl mb-5">
-            {(["login", "signup"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`py-2 text-sm rounded-lg font-medium transition ${
-                  mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-                }`}
-              >
-                {m === "login" ? "Iniciar sesión" : "Crear cuenta"}
-              </button>
-            ))}
+          <div className="mb-4 text-center">
+            <h2 className="text-base font-semibold">Iniciar sesión</h2>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Acceso restringido al personal autorizado. Solicita una cuenta al administrador.
+            </p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-3">
-            {mode === "signup" && (
-              <Field label="Nombre">
-                <input value={name} onChange={(e) => setName(e.target.value)} required
-                  className="input" placeholder="Juan Pérez" />
-              </Field>
-            )}
             <Field label="Email">
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
                 className="input" placeholder="tecnico@dc.bo" />
@@ -95,7 +67,7 @@ function AuthPage() {
             <button type="submit" disabled={busy}
               className="w-full mt-2 h-11 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 shadow-[0_0_30px_oklch(0.78_0.17_175_/_0.35)] disabled:opacity-60">
               {busy && <Loader2 className="size-4 animate-spin" />}
-              {mode === "login" ? "Entrar" : "Registrarme"}
+              Entrar
             </button>
           </form>
         </div>
