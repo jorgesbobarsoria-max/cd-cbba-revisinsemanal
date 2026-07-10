@@ -20,6 +20,7 @@ import {
   PageNumber,
 } from "docx";
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
+import { endesycLogoBytes } from "@/lib/endesyc-logo";
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
 type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
@@ -334,7 +335,10 @@ export const generarInformeWord = createServerFn({ method: "POST" })
           },
         },
         headers: {
-          default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `Informe Semanal · S${I.semana} · ${I.fecha}`, size: 18, color: "78909C", font: "Calibri" })] })] }),
+          default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [
+            new ImageRun({ type: "jpg", data: endesycLogoBytes(), transformation: { width: 90, height: 55 }, altText: { title: "ENDESYC", description: "Logotipo ENDESYC", name: "endesyc" } }),
+            new TextRun({ text: `  Informe Semanal · S${I.semana} · ${I.fecha}`, size: 18, color: "78909C", font: "Calibri" }),
+          ] })] }),
         },
         footers: {
           default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [
