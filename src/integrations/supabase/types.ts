@@ -459,7 +459,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_owns_evidencia_parent: {
+        Args: { _inspeccion_id: string; _mantenimiento_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
