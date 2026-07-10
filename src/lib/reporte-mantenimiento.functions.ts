@@ -7,6 +7,7 @@ import {
 } from "docx";
 import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
+import { endesycLogoBytes } from "@/lib/endesyc-logo";
 
 const border = { style: BorderStyle.SINGLE, size: 4, color: "B0BEC5" };
 const cellBorders = { top: border, bottom: border, left: border, right: border };
