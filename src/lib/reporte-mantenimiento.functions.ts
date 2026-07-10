@@ -422,7 +422,10 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
           },
         },
         headers: {
-          default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: "Informe de Mantenimiento Preventivo", size: 18, color: "78909C", font: "Calibri" })] })] }),
+          default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [
+            new ImageRun({ type: "jpg", data: endesycLogoBytes(), transformation: { width: 90, height: 55 }, altText: { title: "ENDESYC", description: "Logotipo ENDESYC", name: "endesyc" } }),
+            new TextRun({ text: "  Informe de Mantenimiento Preventivo", size: 18, color: "78909C", font: "Calibri" }),
+          ] })] }),
         },
         footers: {
           default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [
