@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
@@ -84,10 +85,15 @@ export type PlantillaInforme =
 
 export const generarInformeMantenimientoWord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { ids: string[]; plantilla?: PlantillaInforme }) => data)
+  .inputValidator((data: unknown) =>
+    z.object({
+      ids: z.array(z.string().uuid()).min(1).max(50),
+      plantilla: z.enum(["completo", "ejecutivo", "tecnico", "checklist", "por-tipo"]).optional(),
+    }).parse(data),
+  )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const ids = (data.ids ?? []).filter(Boolean);
+    const ids = data.ids;
     const plantillaInforme: PlantillaInforme = data.plantilla ?? "completo";
     if (!ids.length) throw new Error("Sin mantenimientos seleccionados");
 
@@ -111,7 +117,10 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
 
     const { data: regs, error } = await supabase.from("mantenimientos")
       .select("*").in("id", ids).order("fecha", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[generarInformeMantenimientoWord] fetch mantenimientos error", error);
+      throw new Error("No se pudieron cargar los mantenimientos");
+    }
     const M = (regs ?? []) as any[];
     if (!M.length) throw new Error("No se encontraron registros");
 

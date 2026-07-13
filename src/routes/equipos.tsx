@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Settings2, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyDbError } from "@/lib/friendly-errors";
 
 export const Route = createFileRoute("/equipos")({
   component: EquiposPage,
@@ -64,7 +65,7 @@ function EquiposPage() {
       observaciones: editing.observaciones ?? null,
     };
     const { error } = await supabase.from("equipos").upsert(payload);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyDbError(error)); return; }
     toast.success("Equipo guardado");
     setEditing(null);
     load();
@@ -74,7 +75,7 @@ function EquiposPage() {
     if (!confirm(`¿Eliminar equipo ${id}? También se borrarán sus puntos de inspección.`)) return;
     await supabase.from("puntos_inspeccion").delete().eq("equipo_id", id);
     const { error } = await supabase.from("equipos").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyDbError(error)); return; }
     toast.success("Equipo eliminado");
     load();
   }
@@ -198,7 +199,7 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
       ? supabase.from("puntos_inspeccion").update(payload).eq("id", editing.id)
       : supabase.from("puntos_inspeccion").insert(payload);
     const { error } = await q;
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyDbError(error)); return; }
     toast.success("Parámetro guardado");
     setEditing(null);
     load();
@@ -207,7 +208,7 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
   async function del(id: number) {
     if (!confirm("¿Eliminar este parámetro?")) return;
     const { error } = await supabase.from("puntos_inspeccion").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyDbError(error)); return; }
     toast.success("Eliminado");
     load();
   }
