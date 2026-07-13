@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Trash2, FileText, FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyDbError } from "@/lib/friendly-errors";
 import { getPlantilla } from "@/lib/mantenimiento-plantillas";
 import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/reporte-mantenimiento.functions";
 import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
@@ -34,7 +35,7 @@ function DetallePage() {
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase.from("mantenimientos").select("*").eq("id", id).single();
-      if (error) toast.error(error.message);
+      if (error) toast.error(friendlyDbError(error));
       setRow(data); setBusy(false);
       reloadEv();
     })();
@@ -59,7 +60,7 @@ function DetallePage() {
   async function eliminar() {
     if (!confirm("¿Eliminar este mantenimiento?")) return;
     const { error } = await supabase.from("mantenimientos").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyDbError(error)); return; }
     toast.success("Eliminado");
     nav({ to: "/mantenimiento" });
   }

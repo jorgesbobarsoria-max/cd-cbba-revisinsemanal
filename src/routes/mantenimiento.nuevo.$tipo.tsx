@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ChevronLeft, Save, Check, X, CircleDot } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyDbError } from "@/lib/friendly-errors";
 import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
 import { PhotoCapture } from "@/components/photo-capture";
 import { uploadEvidencia } from "@/lib/photo-utils";
@@ -128,7 +129,7 @@ function NuevoMantPage() {
       created_by: user?.id ?? null,
     };
     const { data, error } = await supabase.from("mantenimientos").insert(payload).select("id").single();
-    if (error) { setBusy(false); toast.error(error.message); return; }
+    if (error) { setBusy(false); toast.error(friendlyDbError(error)); return; }
     const mantId = data!.id;
 
     // Subir fotos capturadas (diferidas)
