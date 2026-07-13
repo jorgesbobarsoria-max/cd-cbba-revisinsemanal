@@ -73,7 +73,7 @@ async function fetchChartPng(config: object): Promise<Uint8Array | null> {
 
 export const generarInformeWord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { inspeccionId: string }) => data)
+  .inputValidator((data: unknown) => z.object({ inspeccionId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { inspeccionId } = data;
