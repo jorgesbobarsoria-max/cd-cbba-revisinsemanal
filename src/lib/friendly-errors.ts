@@ -3,12 +3,13 @@
 
 type MaybeError = { message?: string; code?: string } | null | undefined;
 
-export function friendlyDbError(err: MaybeError, fallback = "No se pudo completar la operación. Inténtalo de nuevo."): string {
+export function friendlyDbError(err: unknown, fallback = "No se pudo completar la operación. Inténtalo de nuevo."): string {
   if (!err) return fallback;
   // Log detallado sólo en consola (no visible al usuario final en producción)
   try { console.error("[db-error]", err); } catch { /* noop */ }
 
-  const code = err.code;
+  const e = err as MaybeError;
+  const code = e?.code;
   switch (code) {
     case "23505": return "Ya existe un registro con esos datos.";
     case "23503": return "No se puede completar: hay datos relacionados.";
@@ -18,6 +19,9 @@ export function friendlyDbError(err: MaybeError, fallback = "No se pudo completa
     case "PGRST301":
       return "No tienes permisos para realizar esta acción.";
     case "PGRST116": return "No se encontró el registro.";
-    default: return fallback;
   }
+  // Mensajes custom lanzados desde server functions (validaciones de negocio)
+  const msg = e?.message;
+  if (msg && !/postgres|jwt|supabase|constraint/i.test(msg)) return msg;
+  return fallback;
 }
