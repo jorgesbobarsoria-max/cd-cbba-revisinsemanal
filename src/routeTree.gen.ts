@@ -13,6 +13,7 @@ import { Route as MantenimientoRouteImport } from './routes/mantenimiento'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EquiposRouteImport } from './routes/equipos'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MantenimientoIndexRouteImport } from './routes/mantenimiento.index'
 import { Route as MantenimientoParametrosRouteImport } from './routes/mantenimiento.parametros'
@@ -39,6 +40,11 @@ const EquiposRoute = EquiposRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -80,6 +86,7 @@ const MantenimientoNuevoTipoRoute = MantenimientoNuevoTipoRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/auth'
     | '/equipos'
     | '/historial'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/auth'
     | '/equipos'
     | '/historial'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/auth'
     | '/equipos'
     | '/historial'
@@ -160,6 +172,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   EquiposRoute: typeof EquiposRoute
   HistorialRoute: typeof HistorialRoute
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -271,6 +291,7 @@ const MantenimientoRouteWithChildren = MantenimientoRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   EquiposRoute: EquiposRoute,
   HistorialRoute: HistorialRoute,
