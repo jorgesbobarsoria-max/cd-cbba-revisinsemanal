@@ -19,6 +19,9 @@ export function friendlyDbError(err: unknown, fallback = "No se pudo completar l
     case "PGRST301":
       return "No tienes permisos para realizar esta acción.";
     case "PGRST116": return "No se encontró el registro.";
-    default: return fallback;
   }
+  // Mensajes custom lanzados desde server functions (validaciones de negocio)
+  const msg = e?.message;
+  if (msg && !/postgres|jwt|supabase|constraint/i.test(msg)) return msg;
+  return fallback;
 }
