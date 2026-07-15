@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Semaforo, evaluar } from "@/components/semaforo";
-import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown, Power } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { generarInformeWord } from "@/lib/reporte.functions";
@@ -37,12 +37,15 @@ function InspeccionPage() {
   const [puntos, setPuntos] = useState<Punto[]>([]);
   const [items, setItems] = useState<Record<number, Item>>({});
   const [insp, setInsp] = useState<{ fecha: string; semana: number; tecnico: string | null; turno: string | null; estado: string } | null>(null);
+  const [standby, setStandby] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const exportar = useServerFn(generarInformeWord);
   const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
+
+  const isAcCategoria = (c: string) => /aire/i.test(c);
 
   const reloadEvidencias = async () => {
     setEvidencias(await listEvidencias({ inspeccion_id: id }));
@@ -77,12 +80,13 @@ function InspeccionPage() {
       const [eq, pt, ins, it] = await Promise.all([
         supabase.from("equipos").select("*").order("orden"),
         supabase.from("puntos_inspeccion").select("*").order("numero"),
-        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,estado").eq("id", id).single(),
+        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,estado,standby_equipos").eq("id", id).single(),
         supabase.from("inspeccion_items").select("*").eq("inspeccion_id", id),
       ]);
       setEquipos(eq.data ?? []);
       setPuntos(pt.data ?? []);
       setInsp(ins.data);
+      setStandby(new Set(((ins.data as any)?.standby_equipos ?? []) as string[]));
       const map: Record<number, Item> = {};
       (it.data ?? []).forEach((r) => {
         map[r.punto_id] = { id: r.id, punto_id: r.punto_id, equipo_id: r.equipo_id, estado: r.estado ?? undefined, valor: r.valor ?? undefined, semaforo: r.semaforo ?? undefined, observaciones: r.observaciones ?? undefined, accion_correctiva: r.accion_correctiva ?? undefined };
@@ -92,6 +96,24 @@ function InspeccionPage() {
       setLoading(false);
     })();
   }, [id]);
+
+  const toggleStandby = (equipoId: string) => {
+    setStandby((cur) => {
+      const next = new Set(cur);
+      if (next.has(equipoId)) next.delete(equipoId);
+      else next.add(equipoId);
+      return next;
+    });
+    // limpiar items del equipo cuando entra en stand by
+    setItems((cur) => {
+      const willBeStandby = !standby.has(equipoId);
+      if (!willBeStandby) return cur;
+      const eqPuntos = puntos.filter((p) => p.equipo_id === equipoId).map((p) => p.id);
+      const next = { ...cur };
+      for (const pid of eqPuntos) delete next[pid];
+      return next;
+    });
+  };
 
   const update = (punto: Punto, patch: Partial<Item>) => {
     setItems((cur) => {
@@ -105,23 +127,28 @@ function InspeccionPage() {
   const guardar = async (finalizar = false) => {
     setSaving(true);
     try {
-      const rows = Object.values(items).map((it) => ({
-        inspeccion_id: id,
-        punto_id: it.punto_id,
-        equipo_id: it.equipo_id,
-        estado: it.estado ?? null,
-        valor: it.valor ?? null,
-        semaforo: it.semaforo ?? null,
-        observaciones: it.observaciones ?? null,
-        accion_correctiva: it.accion_correctiva ?? null,
-      }));
+      const standbyArr = Array.from(standby);
+      const rows = Object.values(items)
+        .filter((it) => !standby.has(it.equipo_id))
+        .map((it) => ({
+          inspeccion_id: id,
+          punto_id: it.punto_id,
+          equipo_id: it.equipo_id,
+          estado: it.estado ?? null,
+          valor: it.valor ?? null,
+          semaforo: it.semaforo ?? null,
+          observaciones: it.observaciones ?? null,
+          accion_correctiva: it.accion_correctiva ?? null,
+        }));
       await supabase.from("inspeccion_items").delete().eq("inspeccion_id", id);
       if (rows.length) {
         const { error } = await supabase.from("inspeccion_items").insert(rows);
         if (error) throw error;
       }
+      const updatePayload: Record<string, unknown> = { standby_equipos: standbyArr, updated_at: new Date().toISOString() };
+      if (finalizar) updatePayload.estado = "finalizado";
+      await supabase.from("inspecciones").update(updatePayload as never).eq("id", id);
       if (finalizar) {
-        await supabase.from("inspecciones").update({ estado: "finalizado", updated_at: new Date().toISOString() }).eq("id", id);
         toast.success("Inspección finalizada y guardada");
         nav({ to: "/historial" });
       } else {
@@ -143,13 +170,15 @@ function InspeccionPage() {
 
   if (loading) return <AppShell title="Cargando..."><div className="grid place-items-center py-20"><Loader2 className="animate-spin text-primary" /></div></AppShell>;
 
-  // resumen
-  const all = Object.values(items);
+  // resumen — se excluyen equipos en Stand By
+  const activePuntos = puntos.filter((p) => !standby.has(p.equipo_id));
+  const activePuntoIds = new Set(activePuntos.map((p) => p.id));
+  const all = Object.values(items).filter((i) => activePuntoIds.has(i.punto_id));
   const ok = all.filter((i) => i.semaforo === "verde").length;
   const al = all.filter((i) => i.semaforo === "amarillo").length;
   const fa = all.filter((i) => i.semaforo === "rojo").length;
   const na = all.filter((i) => i.semaforo === "gris").length;
-  const totalPuntos = puntos.length;
+  const totalPuntos = activePuntos.length;
   const disp = totalPuntos ? Math.round((ok / totalPuntos) * 100) : 0;
 
   return (
@@ -198,6 +227,7 @@ function InspeccionPage() {
             const eqAlert = eqItems.filter((i) => i?.semaforo === "amarillo").length;
             const isActive = open === eq.id;
             const Icon = iconCat[eq.categoria] ?? Activity;
+            const isSb = standby.has(eq.id);
             return (
               <button
                 key={eq.id}
@@ -205,14 +235,22 @@ function InspeccionPage() {
                 className={`shrink-0 flex items-center gap-2 px-3 h-10 rounded-xl border text-xs font-semibold transition ${
                   isActive
                     ? "bg-primary text-primary-foreground border-primary shadow-[0_0_18px_oklch(0.78_0.17_175_/_0.35)]"
+                    : isSb
+                    ? "bg-muted/40 border-muted-foreground/30 text-muted-foreground"
                     : "bg-surface-1 border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="size-3.5" />
                 <span className="truncate max-w-[120px]">{eq.tag}</span>
-                <span className={`font-mono text-[10px] ${isActive ? "opacity-80" : "opacity-60"}`}>{done}/{eqPuntos.length}</span>
-                {eqFail > 0 && <span className="size-1.5 rounded-full bg-fail" />}
-                {eqAlert > 0 && !eqFail && <span className="size-1.5 rounded-full bg-warn" />}
+                {isSb ? (
+                  <span className="font-mono text-[9px] px-1 py-0.5 rounded bg-warn/20 text-warn">STAND BY</span>
+                ) : (
+                  <>
+                    <span className={`font-mono text-[10px] ${isActive ? "opacity-80" : "opacity-60"}`}>{done}/{eqPuntos.length}</span>
+                    {eqFail > 0 && <span className="size-1.5 rounded-full bg-fail" />}
+                    {eqAlert > 0 && !eqFail && <span className="size-1.5 rounded-full bg-warn" />}
+                  </>
+                )}
               </button>
             );
           })}
@@ -229,6 +267,8 @@ function InspeccionPage() {
           const idx = equipos.findIndex((e) => e.id === eq.id);
           const prev = equipos[idx - 1];
           const next = equipos[idx + 1];
+          const isSb = standby.has(eq.id);
+          const showStandbyToggle = isAcCategoria(eq.categoria);
           return (
             <div className="glass rounded-2xl overflow-hidden">
               <div className="p-4 flex items-center gap-3 border-b border-border/40">
@@ -242,6 +282,36 @@ function InspeccionPage() {
                 <span className="text-[10px] font-mono text-muted-foreground">{idx + 1}/{equipos.length}</span>
               </div>
 
+              {showStandbyToggle && (
+                <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between gap-3 bg-surface-1/40">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Power className={`size-4 ${isSb ? "text-warn" : "text-muted-foreground"}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold">Equipo en Stand By</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">Si está activo, no se registran parámetros y se indica en el informe.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleStandby(eq.id)}
+                    role="switch"
+                    aria-checked={isSb}
+                    className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition ${isSb ? "bg-warn" : "bg-muted"}`}
+                  >
+                    <span className={`inline-block size-5 rounded-full bg-background shadow transition ${isSb ? "translate-x-5" : "translate-x-0.5"}`} />
+                  </button>
+                </div>
+              )}
+
+              {isSb ? (
+                <div className="p-6 text-center space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-warn/15 text-warn text-xs font-semibold uppercase tracking-wider">
+                    <Power className="size-3.5" /> Stand By
+                  </div>
+                  <p className="text-sm text-muted-foreground">Este equipo está fuera de servicio en esta revisión. Sus parámetros no se registran y aparecerá como <span className="text-warn font-semibold">STAND BY</span> en el informe.</p>
+                </div>
+              ) : (
+              <>
               <div className="px-4 pt-3 pb-1 border-b border-border/40">
                 <PhotoCapture
                   mode="immediate"
@@ -346,6 +416,10 @@ function InspeccionPage() {
                   );
                 })}
               </div>
+              </>
+              )}
+
+
 
               {/* Navegación entre equipos */}
               <div className="grid grid-cols-2 gap-2 p-3 border-t border-border/40">

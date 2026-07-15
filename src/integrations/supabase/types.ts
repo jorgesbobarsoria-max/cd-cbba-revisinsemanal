@@ -242,6 +242,7 @@ export type Database = {
           proxima_revision: string | null
           pue: number | null
           semana: number
+          standby_equipos: string[]
           supervisor: string | null
           tecnico: string | null
           temp_sala: number | null
@@ -262,6 +263,7 @@ export type Database = {
           proxima_revision?: string | null
           pue?: number | null
           semana: number
+          standby_equipos?: string[]
           supervisor?: string | null
           tecnico?: string | null
           temp_sala?: number | null
@@ -282,6 +284,7 @@ export type Database = {
           proxima_revision?: string | null
           pue?: number | null
           semana?: number
+          standby_equipos?: string[]
           supervisor?: string | null
           tecnico?: string | null
           temp_sala?: number | null
