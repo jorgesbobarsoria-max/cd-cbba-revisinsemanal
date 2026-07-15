@@ -267,6 +267,8 @@ function InspeccionPage() {
           const idx = equipos.findIndex((e) => e.id === eq.id);
           const prev = equipos[idx - 1];
           const next = equipos[idx + 1];
+          const isSb = standby.has(eq.id);
+          const showStandbyToggle = isAcCategoria(eq.categoria);
           return (
             <div className="glass rounded-2xl overflow-hidden">
               <div className="p-4 flex items-center gap-3 border-b border-border/40">
@@ -280,6 +282,36 @@ function InspeccionPage() {
                 <span className="text-[10px] font-mono text-muted-foreground">{idx + 1}/{equipos.length}</span>
               </div>
 
+              {showStandbyToggle && (
+                <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between gap-3 bg-surface-1/40">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Power className={`size-4 ${isSb ? "text-warn" : "text-muted-foreground"}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold">Equipo en Stand By</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">Si está activo, no se registran parámetros y se indica en el informe.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleStandby(eq.id)}
+                    role="switch"
+                    aria-checked={isSb}
+                    className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition ${isSb ? "bg-warn" : "bg-muted"}`}
+                  >
+                    <span className={`inline-block size-5 rounded-full bg-background shadow transition ${isSb ? "translate-x-5" : "translate-x-0.5"}`} />
+                  </button>
+                </div>
+              )}
+
+              {isSb ? (
+                <div className="p-6 text-center space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-warn/15 text-warn text-xs font-semibold uppercase tracking-wider">
+                    <Power className="size-3.5" /> Stand By
+                  </div>
+                  <p className="text-sm text-muted-foreground">Este equipo está fuera de servicio en esta revisión. Sus parámetros no se registran y aparecerá como <span className="text-warn font-semibold">STAND BY</span> en el informe.</p>
+                </div>
+              ) : (
+              <>
               <div className="px-4 pt-3 pb-1 border-b border-border/40">
                 <PhotoCapture
                   mode="immediate"
