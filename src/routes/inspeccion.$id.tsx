@@ -170,13 +170,15 @@ function InspeccionPage() {
 
   if (loading) return <AppShell title="Cargando..."><div className="grid place-items-center py-20"><Loader2 className="animate-spin text-primary" /></div></AppShell>;
 
-  // resumen
-  const all = Object.values(items);
+  // resumen — se excluyen equipos en Stand By
+  const activePuntos = puntos.filter((p) => !standby.has(p.equipo_id));
+  const activePuntoIds = new Set(activePuntos.map((p) => p.id));
+  const all = Object.values(items).filter((i) => activePuntoIds.has(i.punto_id));
   const ok = all.filter((i) => i.semaforo === "verde").length;
   const al = all.filter((i) => i.semaforo === "amarillo").length;
   const fa = all.filter((i) => i.semaforo === "rojo").length;
   const na = all.filter((i) => i.semaforo === "gris").length;
-  const totalPuntos = puntos.length;
+  const totalPuntos = activePuntos.length;
   const disp = totalPuntos ? Math.round((ok / totalPuntos) * 100) : 0;
 
   return (
