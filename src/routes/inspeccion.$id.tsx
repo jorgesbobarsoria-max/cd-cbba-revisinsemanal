@@ -227,6 +227,7 @@ function InspeccionPage() {
             const eqAlert = eqItems.filter((i) => i?.semaforo === "amarillo").length;
             const isActive = open === eq.id;
             const Icon = iconCat[eq.categoria] ?? Activity;
+            const isSb = standby.has(eq.id);
             return (
               <button
                 key={eq.id}
@@ -234,14 +235,22 @@ function InspeccionPage() {
                 className={`shrink-0 flex items-center gap-2 px-3 h-10 rounded-xl border text-xs font-semibold transition ${
                   isActive
                     ? "bg-primary text-primary-foreground border-primary shadow-[0_0_18px_oklch(0.78_0.17_175_/_0.35)]"
+                    : isSb
+                    ? "bg-muted/40 border-muted-foreground/30 text-muted-foreground"
                     : "bg-surface-1 border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="size-3.5" />
                 <span className="truncate max-w-[120px]">{eq.tag}</span>
-                <span className={`font-mono text-[10px] ${isActive ? "opacity-80" : "opacity-60"}`}>{done}/{eqPuntos.length}</span>
-                {eqFail > 0 && <span className="size-1.5 rounded-full bg-fail" />}
-                {eqAlert > 0 && !eqFail && <span className="size-1.5 rounded-full bg-warn" />}
+                {isSb ? (
+                  <span className="font-mono text-[9px] px-1 py-0.5 rounded bg-warn/20 text-warn">STAND BY</span>
+                ) : (
+                  <>
+                    <span className={`font-mono text-[10px] ${isActive ? "opacity-80" : "opacity-60"}`}>{done}/{eqPuntos.length}</span>
+                    {eqFail > 0 && <span className="size-1.5 rounded-full bg-fail" />}
+                    {eqAlert > 0 && !eqFail && <span className="size-1.5 rounded-full bg-warn" />}
+                  </>
+                )}
               </button>
             );
           })}
