@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Semaforo, evaluar } from "@/components/semaforo";
-import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown, Power } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { generarInformeWord } from "@/lib/reporte.functions";
