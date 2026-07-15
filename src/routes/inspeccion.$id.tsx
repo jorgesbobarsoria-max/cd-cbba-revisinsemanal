@@ -127,23 +127,28 @@ function InspeccionPage() {
   const guardar = async (finalizar = false) => {
     setSaving(true);
     try {
-      const rows = Object.values(items).map((it) => ({
-        inspeccion_id: id,
-        punto_id: it.punto_id,
-        equipo_id: it.equipo_id,
-        estado: it.estado ?? null,
-        valor: it.valor ?? null,
-        semaforo: it.semaforo ?? null,
-        observaciones: it.observaciones ?? null,
-        accion_correctiva: it.accion_correctiva ?? null,
-      }));
+      const standbyArr = Array.from(standby);
+      const rows = Object.values(items)
+        .filter((it) => !standby.has(it.equipo_id))
+        .map((it) => ({
+          inspeccion_id: id,
+          punto_id: it.punto_id,
+          equipo_id: it.equipo_id,
+          estado: it.estado ?? null,
+          valor: it.valor ?? null,
+          semaforo: it.semaforo ?? null,
+          observaciones: it.observaciones ?? null,
+          accion_correctiva: it.accion_correctiva ?? null,
+        }));
       await supabase.from("inspeccion_items").delete().eq("inspeccion_id", id);
       if (rows.length) {
         const { error } = await supabase.from("inspeccion_items").insert(rows);
         if (error) throw error;
       }
+      const updatePayload: Record<string, unknown> = { standby_equipos: standbyArr, updated_at: new Date().toISOString() };
+      if (finalizar) updatePayload.estado = "finalizado";
+      await supabase.from("inspecciones").update(updatePayload).eq("id", id);
       if (finalizar) {
-        await supabase.from("inspecciones").update({ estado: "finalizado", updated_at: new Date().toISOString() }).eq("id", id);
         toast.success("Inspección finalizada y guardada");
         nav({ to: "/historial" });
       } else {
