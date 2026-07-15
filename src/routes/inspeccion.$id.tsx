@@ -37,12 +37,15 @@ function InspeccionPage() {
   const [puntos, setPuntos] = useState<Punto[]>([]);
   const [items, setItems] = useState<Record<number, Item>>({});
   const [insp, setInsp] = useState<{ fecha: string; semana: number; tecnico: string | null; turno: string | null; estado: string } | null>(null);
+  const [standby, setStandby] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const exportar = useServerFn(generarInformeWord);
   const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
+
+  const isAcCategoria = (c: string) => /aire/i.test(c);
 
   const reloadEvidencias = async () => {
     setEvidencias(await listEvidencias({ inspeccion_id: id }));
