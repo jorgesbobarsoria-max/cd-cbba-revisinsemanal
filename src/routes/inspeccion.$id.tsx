@@ -416,6 +416,10 @@ function InspeccionPage() {
                   );
                 })}
               </div>
+              </>
+              )}
+
+
 
               {/* Navegación entre equipos */}
               <div className="grid grid-cols-2 gap-2 p-3 border-t border-border/40">
