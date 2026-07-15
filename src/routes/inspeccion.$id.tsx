@@ -147,7 +147,7 @@ function InspeccionPage() {
       }
       const updatePayload: Record<string, unknown> = { standby_equipos: standbyArr, updated_at: new Date().toISOString() };
       if (finalizar) updatePayload.estado = "finalizado";
-      await supabase.from("inspecciones").update(updatePayload).eq("id", id);
+      await supabase.from("inspecciones").update(updatePayload as never).eq("id", id);
       if (finalizar) {
         toast.success("Inspección finalizada y guardada");
         nav({ to: "/historial" });
