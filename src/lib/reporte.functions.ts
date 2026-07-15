@@ -26,7 +26,7 @@ import { endesycLogoBytes } from "@/lib/endesyc-logo";
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
 type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
 type Item = { punto_id: number; equipo_id: string; estado: string | null; valor: string | null; semaforo: string | null; observaciones: string | null; accion_correctiva: string | null };
-type Insp = { id: string; fecha: string; semana: number; tecnico: string | null; turno: string | null; supervisor: string | null; cargo: string | null; condicion_clima: string | null; temp_sala: number | null; hr_sala: number | null; pue: number | null; carga_it: number | null; estado: string };
+type Insp = { id: string; fecha: string; semana: number; tecnico: string | null; turno: string | null; supervisor: string | null; cargo: string | null; condicion_clima: string | null; temp_sala: number | null; hr_sala: number | null; pue: number | null; carga_it: number | null; estado: string; standby_equipos: string[] | null };
 
 const semaforoLabel: Record<string, string> = { verde: "OK", amarillo: "ALERTA", rojo: "FALLA", gris: "N/A" };
 const semaforoFill: Record<string, string> = { verde: "C8E6C9", amarillo: "FFE0B2", rojo: "FFCDD2", gris: "ECEFF1" };
