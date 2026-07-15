@@ -80,12 +80,13 @@ function InspeccionPage() {
       const [eq, pt, ins, it] = await Promise.all([
         supabase.from("equipos").select("*").order("orden"),
         supabase.from("puntos_inspeccion").select("*").order("numero"),
-        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,estado").eq("id", id).single(),
+        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,estado,standby_equipos").eq("id", id).single(),
         supabase.from("inspeccion_items").select("*").eq("inspeccion_id", id),
       ]);
       setEquipos(eq.data ?? []);
       setPuntos(pt.data ?? []);
       setInsp(ins.data);
+      setStandby(new Set(((ins.data as any)?.standby_equipos ?? []) as string[]));
       const map: Record<number, Item> = {};
       (it.data ?? []).forEach((r) => {
         map[r.punto_id] = { id: r.id, punto_id: r.punto_id, equipo_id: r.equipo_id, estado: r.estado ?? undefined, valor: r.valor ?? undefined, semaforo: r.semaforo ?? undefined, observaciones: r.observaciones ?? undefined, accion_correctiva: r.accion_correctiva ?? undefined };
@@ -95,6 +96,24 @@ function InspeccionPage() {
       setLoading(false);
     })();
   }, [id]);
+
+  const toggleStandby = (equipoId: string) => {
+    setStandby((cur) => {
+      const next = new Set(cur);
+      if (next.has(equipoId)) next.delete(equipoId);
+      else next.add(equipoId);
+      return next;
+    });
+    // limpiar items del equipo cuando entra en stand by
+    setItems((cur) => {
+      const willBeStandby = !standby.has(equipoId);
+      if (!willBeStandby) return cur;
+      const eqPuntos = puntos.filter((p) => p.equipo_id === equipoId).map((p) => p.id);
+      const next = { ...cur };
+      for (const pid of eqPuntos) delete next[pid];
+      return next;
+    });
+  };
 
   const update = (punto: Punto, patch: Partial<Item>) => {
     setItems((cur) => {
