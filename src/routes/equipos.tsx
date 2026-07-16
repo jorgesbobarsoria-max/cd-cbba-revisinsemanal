@@ -225,6 +225,8 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
 
   async function save() {
     if (!editing?.descripcion || !editing?.tipo) { toast.error("Descripción y tipo son obligatorios"); return; }
+    const vc = Math.max(1, Math.min(6, Number(editing.valores_count ?? 1) || 1));
+    const etiquetas = (editing.etiquetas_valores ?? []).map((s) => (s ?? "").toString().trim()).filter((s) => s !== "");
     const payload = {
       equipo_id: equipo.id,
       numero: editing.numero ?? pts.length + 1,
@@ -233,6 +235,8 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
       unidad: editing.unidad ?? null,
       min_ok: numOrNull(editing.min_ok), max_ok: numOrNull(editing.max_ok),
       min_alerta: numOrNull(editing.min_alerta), max_alerta: numOrNull(editing.max_alerta),
+      valores_count: editing.tipo === "numerico" ? vc : 1,
+      etiquetas_valores: editing.tipo === "numerico" && vc > 1 && etiquetas.length > 0 ? etiquetas.slice(0, vc) : null,
     };
     const q = editing.id
       ? supabase.from("puntos_inspeccion").update(payload).eq("id", editing.id)
