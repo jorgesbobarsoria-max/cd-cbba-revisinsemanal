@@ -65,6 +65,7 @@ function EquiposPage() {
       estado: editing.estado ?? "Operativo", orden: editing.orden ?? eq.length + 1,
       fecha_instalacion: editing.fecha_instalacion || null,
       observaciones: editing.observaciones ?? null,
+      datos_adicionales: editing.datos_adicionales ?? {},
     };
     const { error } = await supabase.from("equipos").upsert(payload);
     if (error) { toast.error(friendlyDbError(error)); return; }
