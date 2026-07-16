@@ -22,6 +22,7 @@ type Equipo = {
   capacidad: string | null; ubicacion: string | null; criticidad: string | null;
   redundancia: string | null; estado: string | null; orden: number;
   fecha_instalacion: string | null; observaciones: string | null;
+  datos_adicionales?: Record<string, string> | null;
 };
 
 type Punto = {
@@ -29,6 +30,7 @@ type Punto = {
   tipo: string; unidad: string | null;
   min_ok: number | null; max_ok: number | null;
   min_alerta: number | null; max_alerta: number | null;
+  valores_count?: number | null; etiquetas_valores?: string[] | null;
 };
 
 const CATEGORIAS = ["Aire de Precisión", "UPS", "ATS", "Grupo Generador", "Sup. Incendios", "Sensores Sala"];
