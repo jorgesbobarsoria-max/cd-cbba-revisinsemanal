@@ -20,6 +20,7 @@ export type Database = {
           categoria: string
           created_at: string
           criticidad: string | null
+          datos_adicionales: Json
           estado: string | null
           fecha_instalacion: string | null
           id: string
@@ -36,6 +37,7 @@ export type Database = {
           categoria: string
           created_at?: string
           criticidad?: string | null
+          datos_adicionales?: Json
           estado?: string | null
           fecha_instalacion?: string | null
           id: string
@@ -52,6 +54,7 @@ export type Database = {
           categoria?: string
           created_at?: string
           criticidad?: string | null
+          datos_adicionales?: Json
           estado?: string | null
           fecha_instalacion?: string | null
           id?: string
@@ -444,6 +447,7 @@ export type Database = {
         Row: {
           descripcion: string
           equipo_id: string
+          etiquetas_valores: string[] | null
           id: number
           max_alerta: number | null
           max_ok: number | null
@@ -452,10 +456,12 @@ export type Database = {
           numero: number
           tipo: string
           unidad: string | null
+          valores_count: number
         }
         Insert: {
           descripcion: string
           equipo_id: string
+          etiquetas_valores?: string[] | null
           id?: number
           max_alerta?: number | null
           max_ok?: number | null
@@ -464,10 +470,12 @@ export type Database = {
           numero: number
           tipo?: string
           unidad?: string | null
+          valores_count?: number
         }
         Update: {
           descripcion?: string
           equipo_id?: string
+          etiquetas_valores?: string[] | null
           id?: number
           max_alerta?: number | null
           max_ok?: number | null
@@ -476,6 +484,7 @@ export type Database = {
           numero?: number
           tipo?: string
           unidad?: string | null
+          valores_count?: number
         }
         Relationships: [
           {

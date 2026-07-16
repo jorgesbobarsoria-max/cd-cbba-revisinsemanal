@@ -17,7 +17,7 @@ export const Route = createFileRoute("/inspeccion/$id")({
 });
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
-type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
+type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null };
 type Item = { id?: string; punto_id: number; equipo_id: string; estado?: string; valor?: string; semaforo?: string; observaciones?: string; accion_correctiva?: string };
 
 const iconCat: Record<string, React.ElementType> = {
@@ -357,16 +357,48 @@ function InspeccionPage() {
                         ))}
                       </div>
 
-                      {p.tipo === "numerico" && (
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
-                          value={it?.valor ?? ""}
-                          onChange={(e) => update(p, { valor: e.target.value })}
-                          className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
-                        />
-                      )}
+                      {p.tipo === "numerico" && (() => {
+                        const count = Math.max(1, Math.min(6, p.valores_count ?? 1));
+                        if (count === 1) {
+                          return (
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
+                              value={it?.valor ?? ""}
+                              onChange={(e) => update(p, { valor: e.target.value })}
+                              className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
+                            />
+                          );
+                        }
+                        const defaults = ["R/U", "S/V", "T/W", "N", "V4", "V5"];
+                        const labels = (p.etiquetas_valores && p.etiquetas_valores.length > 0)
+                          ? p.etiquetas_valores
+                          : defaults;
+                        const arr = (it?.valor ?? "").split("|");
+                        while (arr.length < count) arr.push("");
+                        return (
+                          <div className={`grid gap-1.5 mb-2`} style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
+                            {Array.from({ length: count }).map((_, i) => (
+                              <div key={i}>
+                                <p className="text-[10px] text-muted-foreground text-center mb-0.5 font-mono">{labels[i] ?? `V${i + 1}`}</p>
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  placeholder={labels[i] ?? `V${i + 1}`}
+                                  value={arr[i] ?? ""}
+                                  onChange={(e) => {
+                                    const next = [...arr];
+                                    next[i] = e.target.value;
+                                    update(p, { valor: next.slice(0, count).join("|") });
+                                  }}
+                                  className="w-full h-9 px-2 rounded-lg bg-background border border-border text-sm font-mono text-center focus:outline-none focus:border-primary"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
 
                       {p.tipo === "binario" && (
                         <div className="grid grid-cols-2 gap-1 mb-2">
