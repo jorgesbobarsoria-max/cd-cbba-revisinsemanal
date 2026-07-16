@@ -181,6 +181,38 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <div className="space-y-1"><Label className="text-xs">{label}</Label>{children}</div>;
 }
 
+function DatosAdicionalesEditor({ value, onChange }: { value: Record<string, string>; onChange: (v: Record<string, string>) => void }) {
+  const entries = Object.entries(value ?? {});
+  const setKey = (oldKey: string, newKey: string) => {
+    const next: Record<string, string> = {};
+    for (const [k, v] of entries) next[k === oldKey ? newKey : k] = v;
+    onChange(next);
+  };
+  const setVal = (k: string, v: string) => onChange({ ...value, [k]: v });
+  const remove = (k: string) => { const next = { ...value }; delete next[k]; onChange(next); };
+  const add = () => {
+    let base = "Campo", i = 1, key = base;
+    while (key in value) { i += 1; key = `${base} ${i}`; }
+    onChange({ ...value, [key]: "" });
+  };
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Datos adicionales de identificación</Label>
+        <Button type="button" size="sm" variant="outline" onClick={add}><Plus className="size-3.5" /> Añadir</Button>
+      </div>
+      {entries.length === 0 && <p className="text-[11px] text-muted-foreground">Sin campos personalizados. Añade por ejemplo Nº de serie, Voltaje nominal, Año, etc.</p>}
+      {entries.map(([k, v]) => (
+        <div key={k} className="grid grid-cols-[1fr_1fr_auto] gap-1.5 items-center">
+          <Input value={k} onChange={(e) => setKey(k, e.target.value)} placeholder="Etiqueta" className="h-9 text-sm" />
+          <Input value={v} onChange={(e) => setVal(k, e.target.value)} placeholder="Valor" className="h-9 text-sm" />
+          <Button type="button" size="sm" variant="outline" onClick={() => remove(k)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) {
   const [pts, setPts] = useState<Punto[]>([]);
   const [editing, setEditing] = useState<Partial<Punto> | null>(null);
