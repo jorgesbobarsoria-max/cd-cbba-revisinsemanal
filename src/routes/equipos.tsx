@@ -317,6 +317,27 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
               <Field label="Unidad (°C, %, V, A...)"><Input value={editing.unidad ?? ""} onChange={(e) => setEditing({ ...editing, unidad: e.target.value })} /></Field>
               {editing.tipo === "numerico" && (
                 <>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold pt-2">Valores a medir</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Field label="Cantidad de valores (1-6)">
+                      <Input
+                        type="number" min={1} max={6}
+                        value={editing.valores_count ?? 1}
+                        onChange={(e) => {
+                          const n = Math.max(1, Math.min(6, Number(e.target.value) || 1));
+                          setEditing({ ...editing, valores_count: n });
+                        }}
+                      />
+                    </Field>
+                    <Field label="Etiquetas (separadas por coma)">
+                      <Input
+                        value={(editing.etiquetas_valores ?? []).join(", ")}
+                        onChange={(e) => setEditing({ ...editing, etiquetas_valores: e.target.value.split(",").map((s) => s.trim()) })}
+                        placeholder="R/U, S/V, T/W"
+                      />
+                    </Field>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Ej. equipos trifásicos: 3 valores con etiquetas R/U, S/V, T/W. Los rangos aplican a cada valor.</p>
                   <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold pt-2">Rangos de alerta</p>
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Mín OK"><Input type="number" step="any" value={editing.min_ok ?? ""} onChange={(e) => setEditing({ ...editing, min_ok: e.target.value === "" ? null : +e.target.value })} /></Field>
