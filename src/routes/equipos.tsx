@@ -160,6 +160,10 @@ function EquiposPage() {
                 </Field>
                 <Field label="Redundancia"><Input value={editing.redundancia ?? ""} onChange={(e) => setEditing({ ...editing, redundancia: e.target.value })} placeholder="N+1" /></Field>
               </div>
+              <DatosAdicionalesEditor
+                value={(editing.datos_adicionales ?? {}) as Record<string, string>}
+                onChange={(v) => setEditing({ ...editing, datos_adicionales: v })}
+              />
               <Field label="Observaciones"><Textarea value={editing.observaciones ?? ""} onChange={(e) => setEditing({ ...editing, observaciones: e.target.value })} rows={2} /></Field>
             </div>
           )}
