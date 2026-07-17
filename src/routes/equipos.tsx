@@ -225,7 +225,7 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
 
   async function save() {
     if (!editing?.descripcion || !editing?.tipo) { toast.error("Descripción y tipo son obligatorios"); return; }
-    const vc = Math.max(1, Math.min(6, Number(editing.valores_count ?? 1) || 1));
+    const vc = Math.max(1, Math.min(3, Number(editing.valores_count ?? 1) || 1));
     const etiquetas = (editing.etiquetas_valores ?? []).map((s) => (s ?? "").toString().trim()).filter((s) => s !== "");
     const payload = {
       equipo_id: equipo.id,
@@ -319,12 +319,12 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
                 <>
                   <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold pt-2">Valores a medir</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <Field label="Cantidad de valores (1-6)">
+                    <Field label="Cantidad de valores (1-3)">
                       <Input
-                        type="number" min={1} max={6}
+                        type="number" min={1} max={3}
                         value={editing.valores_count ?? 1}
                         onChange={(e) => {
-                          const n = Math.max(1, Math.min(6, Number(e.target.value) || 1));
+                          const n = Math.max(1, Math.min(3, Number(e.target.value) || 1));
                           setEditing({ ...editing, valores_count: n });
                         }}
                       />
@@ -333,11 +333,11 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
                       <Input
                         value={(editing.etiquetas_valores ?? []).join(", ")}
                         onChange={(e) => setEditing({ ...editing, etiquetas_valores: e.target.value.split(",").map((s) => s.trim()) })}
-                        placeholder="R/U, S/V, T/W"
+                        placeholder="R, S, T"
                       />
                     </Field>
                   </div>
-                  <p className="text-[10px] text-muted-foreground">Ej. equipos trifásicos: 3 valores con etiquetas R/U, S/V, T/W. Los rangos aplican a cada valor.</p>
+                  <p className="text-[10px] text-muted-foreground">Ej. equipos trifásicos: 3 valores con etiquetas R, S, T. Los rangos aplican a cada valor.</p>
                   <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold pt-2">Rangos de alerta</p>
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Mín OK"><Input type="number" step="any" value={editing.min_ok ?? ""} onChange={(e) => setEditing({ ...editing, min_ok: e.target.value === "" ? null : +e.target.value })} /></Field>
