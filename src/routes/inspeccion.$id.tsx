@@ -124,7 +124,70 @@ function InspeccionPage() {
     });
   };
 
+  // Valida un punto numérico (mono o multi-valor). Devuelve errores por índice y un error global.
+  const validarNumerico = (p: Punto, raw: string | undefined): { perValue: string[]; global: string; hasBlocking: boolean } => {
+    const count = Math.max(1, Math.min(6, p.valores_count ?? 1));
+    const parts = (raw ?? "").split("|").slice(0, count);
+    while (parts.length < count) parts.push("");
+    const perValue: string[] = new Array(count).fill("");
+    let filled = 0;
+    let blocking = false;
+    for (let i = 0; i < count; i++) {
+      const v = (parts[i] ?? "").trim();
+      if (v === "") continue;
+      filled++;
+      if (!/^-?\d+([.,]\d+)?$/.test(v)) {
+        perValue[i] = "Formato numérico inválido";
+        blocking = true;
+        continue;
+      }
+      const n = parseFloat(v.replace(",", "."));
+      if (!isFinite(n)) { perValue[i] = "Valor no numérico"; blocking = true; continue; }
+      if (p.min_alerta != null && p.max_alerta != null) {
+        const span = Math.max(1, p.max_alerta - p.min_alerta);
+        const lo = p.min_alerta - span * 2;
+        const hi = p.max_alerta + span * 2;
+        if (n < lo || n > hi) {
+          perValue[i] = `Fuera de rango razonable (${p.min_alerta}–${p.max_alerta}${p.unidad ? " " + p.unidad : ""})`;
+          blocking = true;
+        }
+      }
+    }
+    let global = "";
+    if (count > 1 && filled > 0 && filled < count) {
+      global = `Faltan valores: se esperan ${count} lecturas (${filled} completadas)`;
+      blocking = true;
+    }
+    return { perValue, global, hasBlocking: blocking };
+  };
+
+  // Recolecta todos los errores bloqueantes de la inspección (excluye equipos en stand by).
+  const recolectarErrores = (): { punto: Punto; msg: string }[] => {
+    const errs: { punto: Punto; msg: string }[] = [];
+    for (const p of puntos) {
+      if (standby.has(p.equipo_id)) continue;
+      if (p.tipo !== "numerico") continue;
+      const it = items[p.id];
+      if (!it?.valor) continue;
+      const v = validarNumerico(p, it.valor);
+      if (!v.hasBlocking) continue;
+      if (v.global) errs.push({ punto: p, msg: v.global });
+      v.perValue.forEach((m, i) => { if (m) errs.push({ punto: p, msg: `Valor ${i + 1}: ${m}` }); });
+    }
+    return errs;
+  };
+
   const guardar = async (finalizar = false) => {
+    const errs = recolectarErrores();
+    if (errs.length > 0) {
+      const first = errs[0];
+      const eq = equipos.find((e) => e.id === first.punto.equipo_id);
+      if (eq) setOpen(eq.id);
+      toast.error(`Hay ${errs.length} error(es) en los valores registrados`, {
+        description: `${eq?.tag ?? ""} · ${first.punto.descripcion}: ${first.msg}`,
+      });
+      return;
+    }
     setSaving(true);
     try {
       const standbyArr = Array.from(standby);
@@ -359,46 +422,63 @@ function InspeccionPage() {
 
                       {p.tipo === "numerico" && (() => {
                         const count = Math.max(1, Math.min(6, p.valores_count ?? 1));
+                        const val = it?.valor ?? "";
+                        const vres = validarNumerico(p, val);
                         if (count === 1) {
+                          const err = vres.perValue[0];
                           return (
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
-                              value={it?.valor ?? ""}
-                              onChange={(e) => update(p, { valor: e.target.value })}
-                              className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
-                            />
+                            <div className="mb-2">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
+                                value={it?.valor ?? ""}
+                                onChange={(e) => update(p, { valor: e.target.value })}
+                                aria-invalid={!!err}
+                                className={`w-full h-9 px-3 rounded-lg bg-background border text-sm font-mono focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
+                              />
+                              {err && <p className="text-[10px] text-fail mt-1">{err}</p>}
+                            </div>
                           );
                         }
                         const defaults = ["R/U", "S/V", "T/W", "N", "V4", "V5"];
                         const labels = (p.etiquetas_valores && p.etiquetas_valores.length > 0)
                           ? p.etiquetas_valores
                           : defaults;
-                        const arr = (it?.valor ?? "").split("|");
+                        const arr = val.split("|");
                         while (arr.length < count) arr.push("");
                         return (
-                          <div className={`grid gap-1.5 mb-2`} style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
-                            {Array.from({ length: count }).map((_, i) => (
-                              <div key={i}>
-                                <p className="text-[10px] text-muted-foreground text-center mb-0.5 font-mono">{labels[i] ?? `V${i + 1}`}</p>
-                                <input
-                                  type="text"
-                                  inputMode="decimal"
-                                  placeholder={labels[i] ?? `V${i + 1}`}
-                                  value={arr[i] ?? ""}
-                                  onChange={(e) => {
-                                    const next = [...arr];
-                                    next[i] = e.target.value;
-                                    update(p, { valor: next.slice(0, count).join("|") });
-                                  }}
-                                  className="w-full h-9 px-2 rounded-lg bg-background border border-border text-sm font-mono text-center focus:outline-none focus:border-primary"
-                                />
-                              </div>
-                            ))}
+                          <div className="mb-2">
+                            <div className={`grid gap-1.5`} style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
+                              {Array.from({ length: count }).map((_, i) => {
+                                const err = vres.perValue[i];
+                                return (
+                                  <div key={i}>
+                                    <p className="text-[10px] text-muted-foreground text-center mb-0.5 font-mono">{labels[i] ?? `V${i + 1}`}</p>
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      placeholder={labels[i] ?? `V${i + 1}`}
+                                      value={arr[i] ?? ""}
+                                      onChange={(e) => {
+                                        const next = [...arr];
+                                        next[i] = e.target.value;
+                                        update(p, { valor: next.slice(0, count).join("|") });
+                                      }}
+                                      aria-invalid={!!err}
+                                      className={`w-full h-9 px-2 rounded-lg bg-background border text-sm font-mono text-center focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
+                                    />
+                                    {err && <p className="text-[10px] text-fail mt-0.5 leading-tight">{err}</p>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {vres.global && <p className="text-[10px] text-fail mt-1">{vres.global}</p>}
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Se esperan {count} lecturas. Rango OK: {p.min_ok ?? "—"}–{p.max_ok ?? "—"}{p.unidad ? ` ${p.unidad}` : ""}.</p>
                           </div>
                         );
                       })()}
+
 
                       {p.tipo === "binario" && (
                         <div className="grid grid-cols-2 gap-1 mb-2">
