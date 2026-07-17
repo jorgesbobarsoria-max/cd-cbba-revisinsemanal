@@ -124,6 +124,59 @@ function InspeccionPage() {
     });
   };
 
+  // Valida un punto numérico (mono o multi-valor). Devuelve errores por índice y un error global.
+  const validarNumerico = (p: Punto, raw: string | undefined): { perValue: string[]; global: string; hasBlocking: boolean } => {
+    const count = Math.max(1, Math.min(6, p.valores_count ?? 1));
+    const parts = (raw ?? "").split("|").slice(0, count);
+    while (parts.length < count) parts.push("");
+    const perValue: string[] = new Array(count).fill("");
+    let filled = 0;
+    let blocking = false;
+    for (let i = 0; i < count; i++) {
+      const v = (parts[i] ?? "").trim();
+      if (v === "") continue;
+      filled++;
+      if (!/^-?\d+([.,]\d+)?$/.test(v)) {
+        perValue[i] = "Formato numérico inválido";
+        blocking = true;
+        continue;
+      }
+      const n = parseFloat(v.replace(",", "."));
+      if (!isFinite(n)) { perValue[i] = "Valor no numérico"; blocking = true; continue; }
+      if (p.min_alerta != null && p.max_alerta != null) {
+        const span = Math.max(1, p.max_alerta - p.min_alerta);
+        const lo = p.min_alerta - span * 2;
+        const hi = p.max_alerta + span * 2;
+        if (n < lo || n > hi) {
+          perValue[i] = `Fuera de rango razonable (${p.min_alerta}–${p.max_alerta}${p.unidad ? " " + p.unidad : ""})`;
+          blocking = true;
+        }
+      }
+    }
+    let global = "";
+    if (count > 1 && filled > 0 && filled < count) {
+      global = `Faltan valores: se esperan ${count} lecturas (${filled} completadas)`;
+      blocking = true;
+    }
+    return { perValue, global, hasBlocking: blocking };
+  };
+
+  // Recolecta todos los errores bloqueantes de la inspección (excluye equipos en stand by).
+  const recolectarErrores = (): { punto: Punto; msg: string }[] => {
+    const errs: { punto: Punto; msg: string }[] = [];
+    for (const p of puntos) {
+      if (standby.has(p.equipo_id)) continue;
+      if (p.tipo !== "numerico") continue;
+      const it = items[p.id];
+      if (!it?.valor) continue;
+      const v = validarNumerico(p, it.valor);
+      if (!v.hasBlocking) continue;
+      if (v.global) errs.push({ punto: p, msg: v.global });
+      v.perValue.forEach((m, i) => { if (m) errs.push({ punto: p, msg: `Valor ${i + 1}: ${m}` }); });
+    }
+    return errs;
+  };
+
   const guardar = async (finalizar = false) => {
     setSaving(true);
     try {
