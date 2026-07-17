@@ -422,46 +422,63 @@ function InspeccionPage() {
 
                       {p.tipo === "numerico" && (() => {
                         const count = Math.max(1, Math.min(6, p.valores_count ?? 1));
+                        const val = it?.valor ?? "";
+                        const vres = validarNumerico(p, val);
                         if (count === 1) {
+                          const err = vres.perValue[0];
                           return (
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
-                              value={it?.valor ?? ""}
-                              onChange={(e) => update(p, { valor: e.target.value })}
-                              className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
-                            />
+                            <div className="mb-2">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
+                                value={it?.valor ?? ""}
+                                onChange={(e) => update(p, { valor: e.target.value })}
+                                aria-invalid={!!err}
+                                className={`w-full h-9 px-3 rounded-lg bg-background border text-sm font-mono focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
+                              />
+                              {err && <p className="text-[10px] text-fail mt-1">{err}</p>}
+                            </div>
                           );
                         }
                         const defaults = ["R/U", "S/V", "T/W", "N", "V4", "V5"];
                         const labels = (p.etiquetas_valores && p.etiquetas_valores.length > 0)
                           ? p.etiquetas_valores
                           : defaults;
-                        const arr = (it?.valor ?? "").split("|");
+                        const arr = val.split("|");
                         while (arr.length < count) arr.push("");
                         return (
-                          <div className={`grid gap-1.5 mb-2`} style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
-                            {Array.from({ length: count }).map((_, i) => (
-                              <div key={i}>
-                                <p className="text-[10px] text-muted-foreground text-center mb-0.5 font-mono">{labels[i] ?? `V${i + 1}`}</p>
-                                <input
-                                  type="text"
-                                  inputMode="decimal"
-                                  placeholder={labels[i] ?? `V${i + 1}`}
-                                  value={arr[i] ?? ""}
-                                  onChange={(e) => {
-                                    const next = [...arr];
-                                    next[i] = e.target.value;
-                                    update(p, { valor: next.slice(0, count).join("|") });
-                                  }}
-                                  className="w-full h-9 px-2 rounded-lg bg-background border border-border text-sm font-mono text-center focus:outline-none focus:border-primary"
-                                />
-                              </div>
-                            ))}
+                          <div className="mb-2">
+                            <div className={`grid gap-1.5`} style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
+                              {Array.from({ length: count }).map((_, i) => {
+                                const err = vres.perValue[i];
+                                return (
+                                  <div key={i}>
+                                    <p className="text-[10px] text-muted-foreground text-center mb-0.5 font-mono">{labels[i] ?? `V${i + 1}`}</p>
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      placeholder={labels[i] ?? `V${i + 1}`}
+                                      value={arr[i] ?? ""}
+                                      onChange={(e) => {
+                                        const next = [...arr];
+                                        next[i] = e.target.value;
+                                        update(p, { valor: next.slice(0, count).join("|") });
+                                      }}
+                                      aria-invalid={!!err}
+                                      className={`w-full h-9 px-2 rounded-lg bg-background border text-sm font-mono text-center focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
+                                    />
+                                    {err && <p className="text-[10px] text-fail mt-0.5 leading-tight">{err}</p>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {vres.global && <p className="text-[10px] text-fail mt-1">{vres.global}</p>}
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Se esperan {count} lecturas. Rango OK: {p.min_ok ?? "—"}–{p.max_ok ?? "—"}{p.unidad ? ` ${p.unidad}` : ""}.</p>
                           </div>
                         );
                       })()}
+
 
                       {p.tipo === "binario" && (
                         <div className="grid grid-cols-2 gap-1 mb-2">
