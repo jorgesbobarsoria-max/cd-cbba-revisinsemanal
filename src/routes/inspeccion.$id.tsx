@@ -178,6 +178,16 @@ function InspeccionPage() {
   };
 
   const guardar = async (finalizar = false) => {
+    const errs = recolectarErrores();
+    if (errs.length > 0) {
+      const first = errs[0];
+      const eq = equipos.find((e) => e.id === first.punto.equipo_id);
+      if (eq) setOpen(eq.id);
+      toast.error(`Hay ${errs.length} error(es) en los valores registrados`, {
+        description: `${eq?.tag ?? ""} · ${first.punto.descripcion}: ${first.msg}`,
+      });
+      return;
+    }
     setSaving(true);
     try {
       const standbyArr = Array.from(standby);
