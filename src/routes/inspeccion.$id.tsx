@@ -126,7 +126,7 @@ function InspeccionPage() {
 
   // Valida un punto numérico (mono o multi-valor). Devuelve errores por índice y un error global.
   const validarNumerico = (p: Punto, raw: string | undefined): { perValue: string[]; global: string; hasBlocking: boolean } => {
-    const count = Math.max(1, Math.min(6, p.valores_count ?? 1));
+    const count = Math.max(1, Math.min(3, p.valores_count ?? 1));
     const parts = (raw ?? "").split("|").slice(0, count);
     while (parts.length < count) parts.push("");
     const perValue: string[] = new Array(count).fill("");
@@ -421,7 +421,7 @@ function InspeccionPage() {
                       </div>
 
                       {p.tipo === "numerico" && (() => {
-                        const count = Math.max(1, Math.min(6, p.valores_count ?? 1));
+                        const count = Math.max(1, Math.min(3, p.valores_count ?? 1));
                         const val = it?.valor ?? "";
                         const vres = validarNumerico(p, val);
                         if (count === 1) {
@@ -441,7 +441,7 @@ function InspeccionPage() {
                             </div>
                           );
                         }
-                        const defaults = ["R/U", "S/V", "T/W", "N", "V4", "V5"];
+                        const defaults = ["R", "S", "T"];
                         const labels = (p.etiquetas_valores && p.etiquetas_valores.length > 0)
                           ? p.etiquetas_valores
                           : defaults;
