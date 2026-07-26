@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   Document,
@@ -21,12 +20,11 @@ import {
   PageNumber,
 } from "docx";
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
-import { endesycLogoBytes } from "@/lib/endesyc-logo";
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
 type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
 type Item = { punto_id: number; equipo_id: string; estado: string | null; valor: string | null; semaforo: string | null; observaciones: string | null; accion_correctiva: string | null };
-type Insp = { id: string; fecha: string; semana: number; tecnico: string | null; turno: string | null; supervisor: string | null; cargo: string | null; condicion_clima: string | null; temp_sala: number | null; hr_sala: number | null; pue: number | null; carga_it: number | null; estado: string; standby_equipos: string[] | null };
+type Insp = { id: string; fecha: string; semana: number; tecnico: string | null; turno: string | null; supervisor: string | null; cargo: string | null; condicion_clima: string | null; temp_sala: number | null; hr_sala: number | null; pue: number | null; carga_it: number | null; estado: string };
 
 const semaforoLabel: Record<string, string> = { verde: "OK", amarillo: "ALERTA", rojo: "FALLA", gris: "N/A" };
 const semaforoFill: Record<string, string> = { verde: "C8E6C9", amarillo: "FFE0B2", rojo: "FFCDD2", gris: "ECEFF1" };
@@ -73,7 +71,7 @@ async function fetchChartPng(config: object): Promise<Uint8Array | null> {
 
 export const generarInformeWord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ inspeccionId: z.string().uuid() }).parse(data))
+  .inputValidator((data: { inspeccionId: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { inspeccionId } = data;
@@ -167,18 +165,15 @@ export const generarInformeWord = createServerFn({ method: "POST" })
     children.push(h("3. Desarrollo", HeadingLevel.HEADING_1));
     children.push(p("A continuación se detalla el estado individual de cada equipo, los parámetros registrados durante la inspección y la tendencia histórica de las variables numéricas relevantes."));
 
-    const standbySet = new Set((I.standby_equipos ?? []) as string[]);
-
     for (const eq of E) {
       const eqPuntos = P.filter((x) => x.equipo_id === eq.id);
       if (!eqPuntos.length) continue;
-      const isStandby = standbySet.has(eq.id);
       const eqItems = IT.filter((i) => i.equipo_id === eq.id);
       const eqOk = eqItems.filter((i) => i.semaforo === "verde").length;
       const eqAl = eqItems.filter((i) => i.semaforo === "amarillo").length;
       const eqFa = eqItems.filter((i) => i.semaforo === "rojo").length;
-      const estadoGeneral = isStandby ? "STAND BY" : eqFa > 0 ? "FALLA" : eqAl > 0 ? "ALERTA" : eqOk > 0 ? "OPERATIVO" : "SIN DATOS";
-      const colorEstado = isStandby ? "6D4C41" : eqFa > 0 ? "C62828" : eqAl > 0 ? "EF6C00" : "2E7D32";
+      const estadoGeneral = eqFa > 0 ? "FALLA" : eqAl > 0 ? "ALERTA" : eqOk > 0 ? "OPERATIVO" : "SIN DATOS";
+      const colorEstado = eqFa > 0 ? "C62828" : eqAl > 0 ? "EF6C00" : "2E7D32";
 
       children.push(h(`3.${E.indexOf(eq) + 1} ${eq.categoria} – ${eq.tag}`, HeadingLevel.HEADING_2));
       children.push(new Paragraph({ children: [
@@ -189,18 +184,6 @@ export const generarInformeWord = createServerFn({ method: "POST" })
         new TextRun({ text: `   |   Estado: `, bold: true, size: 22, font: "Calibri" }),
         new TextRun({ text: estadoGeneral, bold: true, size: 22, font: "Calibri", color: colorEstado }),
       ]}));
-
-      if (isStandby) {
-        children.push(new Table({
-          width: { size: 9360, type: WidthType.DXA },
-          columnWidths: [9360],
-          rows: [new TableRow({ children: [
-            cell("Equipo en STAND BY — fuera de servicio en esta revisión. No se registraron parámetros operativos.", { fill: "FFF3E0", bold: true, align: AlignmentType.CENTER, color: "6D4C41", width: 9360 }),
-          ]})],
-        }));
-        continue;
-      }
-
 
       // tabla de parámetros
       const rows: TableRow[] = [
@@ -351,10 +334,7 @@ export const generarInformeWord = createServerFn({ method: "POST" })
           },
         },
         headers: {
-          default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [
-            new ImageRun({ type: "jpg", data: endesycLogoBytes(), transformation: { width: 90, height: 55 }, altText: { title: "ENDESYC", description: "Logotipo ENDESYC", name: "endesyc" } }),
-            new TextRun({ text: `  Informe Semanal · S${I.semana} · ${I.fecha}`, size: 18, color: "78909C", font: "Calibri" }),
-          ] })] }),
+          default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `Informe Semanal · S${I.semana} · ${I.fecha}`, size: 18, color: "78909C", font: "Calibri" })] })] }),
         },
         footers: {
           default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [

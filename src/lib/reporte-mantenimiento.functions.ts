@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
@@ -8,7 +7,6 @@ import {
 } from "docx";
 import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
-import { endesycLogoBytes } from "@/lib/endesyc-logo";
 
 const border = { style: BorderStyle.SINGLE, size: 4, color: "B0BEC5" };
 const cellBorders = { top: border, bottom: border, left: border, right: border };
@@ -85,15 +83,10 @@ export type PlantillaInforme =
 
 export const generarInformeMantenimientoWord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
-    z.object({
-      ids: z.array(z.string().uuid()).min(1).max(50),
-      plantilla: z.enum(["completo", "ejecutivo", "tecnico", "checklist", "por-tipo"]).optional(),
-    }).parse(data),
-  )
+  .inputValidator((data: { ids: string[]; plantilla?: PlantillaInforme }) => data)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const ids = data.ids;
+    const ids = (data.ids ?? []).filter(Boolean);
     const plantillaInforme: PlantillaInforme = data.plantilla ?? "completo";
     if (!ids.length) throw new Error("Sin mantenimientos seleccionados");
 
@@ -117,10 +110,7 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
 
     const { data: regs, error } = await supabase.from("mantenimientos")
       .select("*").in("id", ids).order("fecha", { ascending: true });
-    if (error) {
-      console.error("[generarInformeMantenimientoWord] fetch mantenimientos error", error);
-      throw new Error("No se pudieron cargar los mantenimientos");
-    }
+    if (error) throw new Error(error.message);
     const M = (regs ?? []) as any[];
     if (!M.length) throw new Error("No se encontraron registros");
 
@@ -431,10 +421,7 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
           },
         },
         headers: {
-          default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [
-            new ImageRun({ type: "jpg", data: endesycLogoBytes(), transformation: { width: 90, height: 55 }, altText: { title: "ENDESYC", description: "Logotipo ENDESYC", name: "endesyc" } }),
-            new TextRun({ text: "  Informe de Mantenimiento Preventivo", size: 18, color: "78909C", font: "Calibri" }),
-          ] })] }),
+          default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: "Informe de Mantenimiento Preventivo", size: 18, color: "78909C", font: "Calibri" })] })] }),
         },
         footers: {
           default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [

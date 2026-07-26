@@ -21,6 +21,7 @@ export function evaluar(valor: string | undefined, p: { tipo: string; min_ok?: n
   if (estadoManual === "FALLA") return "rojo";
   if (estadoManual === "OK") return "verde";
   if (estadoManual === "ALERTA") return "amarillo";
+  // Binario: para "Alertas Presentes" => No = verde, Sí = rojo
   if (p.tipo === "binario") {
     if (valor === "No") return "verde";
     if (valor === "Sí") return "rojo";
@@ -30,20 +31,10 @@ export function evaluar(valor: string | undefined, p: { tipo: string; min_ok?: n
     return valor && valor.trim() !== "" ? "verde" : "gris";
   }
   if (valor == null || valor === "") return "gris";
-  // Soporte multivaluado: "v1|v2|v3" — devuelve el peor semáforo.
-  const partes = String(valor).split("|").map((v) => v.trim()).filter((v) => v !== "");
-  if (partes.length === 0) return "gris";
-  const rank: Record<string, number> = { rojo: 3, amarillo: 2, verde: 1, gris: 0 };
-  let worst = "gris";
-  for (const raw of partes) {
-    const n = parseFloat(raw.replace(",", "."));
-    let s: string;
-    if (isNaN(n)) s = "gris";
-    else if (p.min_ok != null && p.max_ok != null && n >= p.min_ok && n <= p.max_ok) s = "verde";
-    else if (p.min_alerta != null && p.max_alerta != null && n >= p.min_alerta && n <= p.max_alerta) s = "amarillo";
-    else s = "rojo";
-    if (rank[s] > rank[worst]) worst = s;
-  }
-  return worst;
+  const n = parseFloat(valor.replace(",", "."));
+  if (isNaN(n)) return "gris";
+  if (p.min_ok != null && p.max_ok != null && n >= p.min_ok && n <= p.max_ok) return "verde";
+  if (p.min_alerta != null && p.max_alerta != null && n >= p.min_alerta && n <= p.max_alerta) return "amarillo";
+  return "rojo";
 }
 

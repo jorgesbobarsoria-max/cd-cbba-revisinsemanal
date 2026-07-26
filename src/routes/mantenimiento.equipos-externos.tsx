@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ChevronLeft, Plus, Pencil, Trash2, Server } from "lucide-react";
 import { toast } from "sonner";
-import { friendlyDbError } from "@/lib/friendly-errors";
 import { PLANTILLAS } from "@/lib/mantenimiento-plantillas";
 
 export const Route = createFileRoute("/mantenimiento/equipos-externos")({
@@ -66,14 +65,14 @@ function EquiposExternosPage() {
       ? supabase.from("equipos_externos").update(payload).eq("id", editing.id)
       : supabase.from("equipos_externos").insert({ ...payload, created_by: user?.id ?? null });
     const { error } = await q;
-    if (error) { toast.error(friendlyDbError(error)); return; }
+    if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Equipo actualizado" : "Equipo creado");
     setOpen(false); load();
   }
 
   async function remove(id: string) {
     const { error } = await supabase.from("equipos_externos").delete().eq("id", id);
-    if (error) { toast.error(friendlyDbError(error)); return; }
+    if (error) { toast.error(error.message); return; }
     toast.success("Equipo eliminado"); load();
   }
 

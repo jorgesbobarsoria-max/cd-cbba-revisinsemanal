@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Settings2, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { friendlyDbError } from "@/lib/friendly-errors";
 
 export const Route = createFileRoute("/equipos")({
   component: EquiposPage,
@@ -22,7 +21,6 @@ type Equipo = {
   capacidad: string | null; ubicacion: string | null; criticidad: string | null;
   redundancia: string | null; estado: string | null; orden: number;
   fecha_instalacion: string | null; observaciones: string | null;
-  datos_adicionales?: Record<string, string> | null;
 };
 
 type Punto = {
@@ -30,7 +28,6 @@ type Punto = {
   tipo: string; unidad: string | null;
   min_ok: number | null; max_ok: number | null;
   min_alerta: number | null; max_alerta: number | null;
-  valores_count?: number | null; etiquetas_valores?: string[] | null;
 };
 
 const CATEGORIAS = ["Aire de Precisión", "UPS", "ATS", "Grupo Generador", "Sup. Incendios", "Sensores Sala"];
@@ -65,10 +62,9 @@ function EquiposPage() {
       estado: editing.estado ?? "Operativo", orden: editing.orden ?? eq.length + 1,
       fecha_instalacion: editing.fecha_instalacion || null,
       observaciones: editing.observaciones ?? null,
-      datos_adicionales: editing.datos_adicionales ?? {},
     };
     const { error } = await supabase.from("equipos").upsert(payload);
-    if (error) { toast.error(friendlyDbError(error)); return; }
+    if (error) { toast.error(error.message); return; }
     toast.success("Equipo guardado");
     setEditing(null);
     load();
@@ -78,7 +74,7 @@ function EquiposPage() {
     if (!confirm(`¿Eliminar equipo ${id}? También se borrarán sus puntos de inspección.`)) return;
     await supabase.from("puntos_inspeccion").delete().eq("equipo_id", id);
     const { error } = await supabase.from("equipos").delete().eq("id", id);
-    if (error) { toast.error(friendlyDbError(error)); return; }
+    if (error) { toast.error(error.message); return; }
     toast.success("Equipo eliminado");
     load();
   }
@@ -160,10 +156,6 @@ function EquiposPage() {
                 </Field>
                 <Field label="Redundancia"><Input value={editing.redundancia ?? ""} onChange={(e) => setEditing({ ...editing, redundancia: e.target.value })} placeholder="N+1" /></Field>
               </div>
-              <DatosAdicionalesEditor
-                value={(editing.datos_adicionales ?? {}) as Record<string, string>}
-                onChange={(v) => setEditing({ ...editing, datos_adicionales: v })}
-              />
               <Field label="Observaciones"><Textarea value={editing.observaciones ?? ""} onChange={(e) => setEditing({ ...editing, observaciones: e.target.value })} rows={2} /></Field>
             </div>
           )}
@@ -181,38 +173,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <div className="space-y-1"><Label className="text-xs">{label}</Label>{children}</div>;
 }
 
-function DatosAdicionalesEditor({ value, onChange }: { value: Record<string, string>; onChange: (v: Record<string, string>) => void }) {
-  const entries = Object.entries(value ?? {});
-  const setKey = (oldKey: string, newKey: string) => {
-    const next: Record<string, string> = {};
-    for (const [k, v] of entries) next[k === oldKey ? newKey : k] = v;
-    onChange(next);
-  };
-  const setVal = (k: string, v: string) => onChange({ ...value, [k]: v });
-  const remove = (k: string) => { const next = { ...value }; delete next[k]; onChange(next); };
-  const add = () => {
-    let base = "Campo", i = 1, key = base;
-    while (key in value) { i += 1; key = `${base} ${i}`; }
-    onChange({ ...value, [key]: "" });
-  };
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <Label className="text-xs">Datos adicionales de identificación</Label>
-        <Button type="button" size="sm" variant="outline" onClick={add}><Plus className="size-3.5" /> Añadir</Button>
-      </div>
-      {entries.length === 0 && <p className="text-[11px] text-muted-foreground">Sin campos personalizados. Añade por ejemplo Nº de serie, Voltaje nominal, Año, etc.</p>}
-      {entries.map(([k, v]) => (
-        <div key={k} className="grid grid-cols-[1fr_1fr_auto] gap-1.5 items-center">
-          <Input value={k} onChange={(e) => setKey(k, e.target.value)} placeholder="Etiqueta" className="h-9 text-sm" />
-          <Input value={v} onChange={(e) => setVal(k, e.target.value)} placeholder="Valor" className="h-9 text-sm" />
-          <Button type="button" size="sm" variant="outline" onClick={() => remove(k)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) {
   const [pts, setPts] = useState<Punto[]>([]);
   const [editing, setEditing] = useState<Partial<Punto> | null>(null);
@@ -225,8 +185,6 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
 
   async function save() {
     if (!editing?.descripcion || !editing?.tipo) { toast.error("Descripción y tipo son obligatorios"); return; }
-    const vc = Math.max(1, Math.min(3, Number(editing.valores_count ?? 1) || 1));
-    const etiquetas = (editing.etiquetas_valores ?? []).map((s) => (s ?? "").toString().trim()).filter((s) => s !== "");
     const payload = {
       equipo_id: equipo.id,
       numero: editing.numero ?? pts.length + 1,
@@ -235,14 +193,12 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
       unidad: editing.unidad ?? null,
       min_ok: numOrNull(editing.min_ok), max_ok: numOrNull(editing.max_ok),
       min_alerta: numOrNull(editing.min_alerta), max_alerta: numOrNull(editing.max_alerta),
-      valores_count: editing.tipo === "numerico" ? vc : 1,
-      etiquetas_valores: editing.tipo === "numerico" && vc > 1 && etiquetas.length > 0 ? etiquetas.slice(0, vc) : null,
     };
     const q = editing.id
       ? supabase.from("puntos_inspeccion").update(payload).eq("id", editing.id)
       : supabase.from("puntos_inspeccion").insert(payload);
     const { error } = await q;
-    if (error) { toast.error(friendlyDbError(error)); return; }
+    if (error) { toast.error(error.message); return; }
     toast.success("Parámetro guardado");
     setEditing(null);
     load();
@@ -251,7 +207,7 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
   async function del(id: number) {
     if (!confirm("¿Eliminar este parámetro?")) return;
     const { error } = await supabase.from("puntos_inspeccion").delete().eq("id", id);
-    if (error) { toast.error(friendlyDbError(error)); return; }
+    if (error) { toast.error(error.message); return; }
     toast.success("Eliminado");
     load();
   }
@@ -317,27 +273,6 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
               <Field label="Unidad (°C, %, V, A...)"><Input value={editing.unidad ?? ""} onChange={(e) => setEditing({ ...editing, unidad: e.target.value })} /></Field>
               {editing.tipo === "numerico" && (
                 <>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold pt-2">Valores a medir</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Field label="Cantidad de valores (1-3)">
-                      <Input
-                        type="number" min={1} max={3}
-                        value={editing.valores_count ?? 1}
-                        onChange={(e) => {
-                          const n = Math.max(1, Math.min(3, Number(e.target.value) || 1));
-                          setEditing({ ...editing, valores_count: n });
-                        }}
-                      />
-                    </Field>
-                    <Field label="Etiquetas (separadas por coma)">
-                      <Input
-                        value={(editing.etiquetas_valores ?? []).join(", ")}
-                        onChange={(e) => setEditing({ ...editing, etiquetas_valores: e.target.value.split(",").map((s) => s.trim()) })}
-                        placeholder="R, S, T"
-                      />
-                    </Field>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">Ej. equipos trifásicos: 3 valores con etiquetas R, S, T. Los rangos aplican a cada valor.</p>
                   <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold pt-2">Rangos de alerta</p>
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Mín OK"><Input type="number" step="any" value={editing.min_ok ?? ""} onChange={(e) => setEditing({ ...editing, min_ok: e.target.value === "" ? null : +e.target.value })} /></Field>

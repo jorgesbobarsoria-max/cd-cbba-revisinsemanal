@@ -1,1 +1,0 @@
-ALTER TABLE public.inspecciones ADD COLUMN IF NOT EXISTS standby_equipos uuid[] NOT NULL DEFAULT '{}'::uuid[];

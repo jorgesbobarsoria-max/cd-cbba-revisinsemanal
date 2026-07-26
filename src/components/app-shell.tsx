@@ -1,11 +1,9 @@
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { Home, History, Server, LogOut, Wrench, Shield } from "lucide-react";
+import { Link, useLocation } from "@tanstack/react-router";
+import { Home, History, Server, LogOut, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/hooks/use-profile";
 import { cn } from "@/lib/utils";
 
-const baseItems = [
+const items = [
   { to: "/", icon: Home, label: "Inicio" },
   { to: "/equipos", icon: Server, label: "Equipos" },
   { to: "/mantenimiento", icon: Wrench, label: "Mant." },
@@ -14,21 +12,6 @@ const baseItems = [
 
 export function AppShell({ children, title }: { children: React.ReactNode; title?: string }) {
   const loc = useLocation();
-  const nav = useNavigate();
-  const { isAdmin, mustChangePassword, loading, user } = useProfile();
-
-  // Forzar cambio de contraseña en el primer inicio de sesión
-  useEffect(() => {
-    if (loading || !user) return;
-    if (mustChangePassword && loc.pathname !== "/cambiar-password") {
-      nav({ to: "/cambiar-password" });
-    }
-  }, [mustChangePassword, loading, user, loc.pathname, nav]);
-
-  const items = isAdmin
-    ? [...baseItems, { to: "/admin", icon: Shield, label: "Admin" }]
-    : baseItems;
-
   return (
     <div className="min-h-screen flex flex-col pb-20">
       <header className="sticky top-0 z-30 glass px-4 py-3 flex items-center justify-between">
@@ -53,7 +36,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
       <main className="flex-1 px-4 py-5">{children}</main>
 
       <nav className="fixed bottom-0 inset-x-0 z-30 glass border-t border-border/60">
-        <div className={cn("max-w-md mx-auto grid", items.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+        <div className="max-w-md mx-auto grid grid-cols-4">
           {items.map((it) => {
             const active = loc.pathname === it.to || (it.to !== "/" && loc.pathname.startsWith(it.to));
             return (

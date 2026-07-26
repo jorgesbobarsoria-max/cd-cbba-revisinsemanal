@@ -12,9 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as MantenimientoRouteImport } from './routes/mantenimiento'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EquiposRouteImport } from './routes/equipos'
-import { Route as CambiarPasswordRouteImport } from './routes/cambiar-password'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MantenimientoIndexRouteImport } from './routes/mantenimiento.index'
 import { Route as MantenimientoParametrosRouteImport } from './routes/mantenimiento.parametros'
@@ -38,19 +36,9 @@ const EquiposRoute = EquiposRouteImport.update({
   path: '/equipos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CambiarPasswordRoute = CambiarPasswordRouteImport.update({
-  id: '/cambiar-password',
-  path: '/cambiar-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -92,9 +80,7 @@ const MantenimientoNuevoTipoRoute = MantenimientoNuevoTipoRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
-  '/cambiar-password': typeof CambiarPasswordRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
   '/mantenimiento': typeof MantenimientoRouteWithChildren
@@ -107,9 +93,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
-  '/cambiar-password': typeof CambiarPasswordRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
   '/inspeccion/$id': typeof InspeccionIdRoute
@@ -122,9 +106,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
-  '/cambiar-password': typeof CambiarPasswordRoute
   '/equipos': typeof EquiposRoute
   '/historial': typeof HistorialRoute
   '/mantenimiento': typeof MantenimientoRouteWithChildren
@@ -139,9 +121,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
     | '/auth'
-    | '/cambiar-password'
     | '/equipos'
     | '/historial'
     | '/mantenimiento'
@@ -154,9 +134,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/auth'
-    | '/cambiar-password'
     | '/equipos'
     | '/historial'
     | '/inspeccion/$id'
@@ -168,9 +146,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/admin'
     | '/auth'
-    | '/cambiar-password'
     | '/equipos'
     | '/historial'
     | '/mantenimiento'
@@ -184,9 +160,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
-  CambiarPasswordRoute: typeof CambiarPasswordRoute
   EquiposRoute: typeof EquiposRoute
   HistorialRoute: typeof HistorialRoute
   MantenimientoRoute: typeof MantenimientoRouteWithChildren
@@ -216,25 +190,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EquiposRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cambiar-password': {
-      id: '/cambiar-password'
-      path: '/cambiar-password'
-      fullPath: '/cambiar-password'
-      preLoaderRoute: typeof CambiarPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -311,9 +271,7 @@ const MantenimientoRouteWithChildren = MantenimientoRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
-  CambiarPasswordRoute: CambiarPasswordRoute,
   EquiposRoute: EquiposRoute,
   HistorialRoute: HistorialRoute,
   MantenimientoRoute: MantenimientoRouteWithChildren,
@@ -322,13 +280,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
