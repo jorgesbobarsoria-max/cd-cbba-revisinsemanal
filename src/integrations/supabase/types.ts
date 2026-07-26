@@ -20,6 +20,7 @@ export type Database = {
           categoria: string
           created_at: string
           criticidad: string | null
+          datos_adicionales: Json
           estado: string | null
           fecha_instalacion: string | null
           id: string
@@ -36,6 +37,7 @@ export type Database = {
           categoria: string
           created_at?: string
           criticidad?: string | null
+          datos_adicionales?: Json
           estado?: string | null
           fecha_instalacion?: string | null
           id: string
@@ -52,6 +54,7 @@ export type Database = {
           categoria?: string
           created_at?: string
           criticidad?: string | null
+          datos_adicionales?: Json
           estado?: string | null
           fecha_instalacion?: string | null
           id?: string
@@ -242,6 +245,7 @@ export type Database = {
           proxima_revision: string | null
           pue: number | null
           semana: number
+          standby_equipos: string[]
           supervisor: string | null
           tecnico: string | null
           temp_sala: number | null
@@ -262,6 +266,7 @@ export type Database = {
           proxima_revision?: string | null
           pue?: number | null
           semana: number
+          standby_equipos?: string[]
           supervisor?: string | null
           tecnico?: string | null
           temp_sala?: number | null
@@ -282,6 +287,7 @@ export type Database = {
           proxima_revision?: string | null
           pue?: number | null
           semana?: number
+          standby_equipos?: string[]
           supervisor?: string | null
           tecnico?: string | null
           temp_sala?: number | null
@@ -407,10 +413,41 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean
+          must_change_password: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          is_active?: boolean
+          must_change_password?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          must_change_password?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       puntos_inspeccion: {
         Row: {
           descripcion: string
           equipo_id: string
+          etiquetas_valores: string[] | null
           id: number
           max_alerta: number | null
           max_ok: number | null
@@ -419,10 +456,12 @@ export type Database = {
           numero: number
           tipo: string
           unidad: string | null
+          valores_count: number
         }
         Insert: {
           descripcion: string
           equipo_id: string
+          etiquetas_valores?: string[] | null
           id?: number
           max_alerta?: number | null
           max_ok?: number | null
@@ -431,10 +470,12 @@ export type Database = {
           numero: number
           tipo?: string
           unidad?: string | null
+          valores_count?: number
         }
         Update: {
           descripcion?: string
           equipo_id?: string
+          etiquetas_valores?: string[] | null
           id?: number
           max_alerta?: number | null
           max_ok?: number | null
@@ -443,6 +484,7 @@ export type Database = {
           numero?: number
           tipo?: string
           unidad?: string | null
+          valores_count?: number
         }
         Relationships: [
           {
@@ -454,15 +496,46 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      user_owns_evidencia_parent: {
+        Args: { _inspeccion_id: string; _mantenimiento_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "tecnico" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -589,6 +662,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "tecnico", "viewer"],
+    },
   },
 } as const

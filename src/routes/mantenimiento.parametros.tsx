@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ChevronLeft, Plus, Pencil, Trash2, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyDbError } from "@/lib/friendly-errors";
 import { PLANTILLAS, getPlantilla } from "@/lib/mantenimiento-plantillas";
 
 export const Route = createFileRoute("/mantenimiento/parametros")({
@@ -85,14 +86,14 @@ function ParametrosPage() {
       ? supabase.from("plantilla_parametros").update(payload).eq("id", editing.id)
       : supabase.from("plantilla_parametros").insert({ ...payload, created_by: user?.id ?? null });
     const { error } = await q;
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyDbError(error)); return; }
     toast.success(editing ? "Parámetro actualizado" : "Parámetro creado");
     setOpen(false); load();
   }
 
   async function remove(id: string) {
     const { error } = await supabase.from("plantilla_parametros").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyDbError(error)); return; }
     toast.success("Parámetro eliminado"); load();
   }
 

@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Semaforo, evaluar } from "@/components/semaforo";
-import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown, Power } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { generarInformeWord } from "@/lib/reporte.functions";
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/inspeccion/$id")({
 });
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
-type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
+type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null };
 type Item = { id?: string; punto_id: number; equipo_id: string; estado?: string; valor?: string; semaforo?: string; observaciones?: string; accion_correctiva?: string };
 
 const iconCat: Record<string, React.ElementType> = {
@@ -37,12 +37,15 @@ function InspeccionPage() {
   const [puntos, setPuntos] = useState<Punto[]>([]);
   const [items, setItems] = useState<Record<number, Item>>({});
   const [insp, setInsp] = useState<{ fecha: string; semana: number; tecnico: string | null; turno: string | null; estado: string } | null>(null);
+  const [standby, setStandby] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const exportar = useServerFn(generarInformeWord);
   const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
+
+  const isAcCategoria = (c: string) => /aire/i.test(c);
 
   const reloadEvidencias = async () => {
     setEvidencias(await listEvidencias({ inspeccion_id: id }));
@@ -77,12 +80,13 @@ function InspeccionPage() {
       const [eq, pt, ins, it] = await Promise.all([
         supabase.from("equipos").select("*").order("orden"),
         supabase.from("puntos_inspeccion").select("*").order("numero"),
-        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,estado").eq("id", id).single(),
+        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,estado,standby_equipos").eq("id", id).single(),
         supabase.from("inspeccion_items").select("*").eq("inspeccion_id", id),
       ]);
       setEquipos(eq.data ?? []);
       setPuntos(pt.data ?? []);
       setInsp(ins.data);
+      setStandby(new Set(((ins.data as any)?.standby_equipos ?? []) as string[]));
       const map: Record<number, Item> = {};
       (it.data ?? []).forEach((r) => {
         map[r.punto_id] = { id: r.id, punto_id: r.punto_id, equipo_id: r.equipo_id, estado: r.estado ?? undefined, valor: r.valor ?? undefined, semaforo: r.semaforo ?? undefined, observaciones: r.observaciones ?? undefined, accion_correctiva: r.accion_correctiva ?? undefined };
@@ -93,6 +97,24 @@ function InspeccionPage() {
     })();
   }, [id]);
 
+  const toggleStandby = (equipoId: string) => {
+    setStandby((cur) => {
+      const next = new Set(cur);
+      if (next.has(equipoId)) next.delete(equipoId);
+      else next.add(equipoId);
+      return next;
+    });
+    // limpiar items del equipo cuando entra en stand by
+    setItems((cur) => {
+      const willBeStandby = !standby.has(equipoId);
+      if (!willBeStandby) return cur;
+      const eqPuntos = puntos.filter((p) => p.equipo_id === equipoId).map((p) => p.id);
+      const next = { ...cur };
+      for (const pid of eqPuntos) delete next[pid];
+      return next;
+    });
+  };
+
   const update = (punto: Punto, patch: Partial<Item>) => {
     setItems((cur) => {
       const prev = cur[punto.id] ?? { punto_id: punto.id, equipo_id: punto.equipo_id };
@@ -102,26 +124,94 @@ function InspeccionPage() {
     });
   };
 
+  // Valida un punto numérico (mono o multi-valor). Devuelve errores por índice y un error global.
+  const validarNumerico = (p: Punto, raw: string | undefined): { perValue: string[]; global: string; hasBlocking: boolean } => {
+    const count = Math.max(1, Math.min(3, p.valores_count ?? 1));
+    const parts = (raw ?? "").split("|").slice(0, count);
+    while (parts.length < count) parts.push("");
+    const perValue: string[] = new Array(count).fill("");
+    let filled = 0;
+    let blocking = false;
+    for (let i = 0; i < count; i++) {
+      const v = (parts[i] ?? "").trim();
+      if (v === "") continue;
+      filled++;
+      if (!/^-?\d+([.,]\d+)?$/.test(v)) {
+        perValue[i] = "Formato numérico inválido";
+        blocking = true;
+        continue;
+      }
+      const n = parseFloat(v.replace(",", "."));
+      if (!isFinite(n)) { perValue[i] = "Valor no numérico"; blocking = true; continue; }
+      if (p.min_alerta != null && p.max_alerta != null) {
+        const span = Math.max(1, p.max_alerta - p.min_alerta);
+        const lo = p.min_alerta - span * 2;
+        const hi = p.max_alerta + span * 2;
+        if (n < lo || n > hi) {
+          perValue[i] = `Fuera de rango razonable (${p.min_alerta}–${p.max_alerta}${p.unidad ? " " + p.unidad : ""})`;
+          blocking = true;
+        }
+      }
+    }
+    let global = "";
+    if (count > 1 && filled > 0 && filled < count) {
+      global = `Faltan valores: se esperan ${count} lecturas (${filled} completadas)`;
+      blocking = true;
+    }
+    return { perValue, global, hasBlocking: blocking };
+  };
+
+  // Recolecta todos los errores bloqueantes de la inspección (excluye equipos en stand by).
+  const recolectarErrores = (): { punto: Punto; msg: string }[] => {
+    const errs: { punto: Punto; msg: string }[] = [];
+    for (const p of puntos) {
+      if (standby.has(p.equipo_id)) continue;
+      if (p.tipo !== "numerico") continue;
+      const it = items[p.id];
+      if (!it?.valor) continue;
+      const v = validarNumerico(p, it.valor);
+      if (!v.hasBlocking) continue;
+      if (v.global) errs.push({ punto: p, msg: v.global });
+      v.perValue.forEach((m, i) => { if (m) errs.push({ punto: p, msg: `Valor ${i + 1}: ${m}` }); });
+    }
+    return errs;
+  };
+
   const guardar = async (finalizar = false) => {
+    const errs = recolectarErrores();
+    if (errs.length > 0) {
+      const first = errs[0];
+      const eq = equipos.find((e) => e.id === first.punto.equipo_id);
+      if (eq) setOpen(eq.id);
+      toast.error(`Hay ${errs.length} error(es) en los valores registrados`, {
+        description: `${eq?.tag ?? ""} · ${first.punto.descripcion}: ${first.msg}`,
+      });
+      return;
+    }
     setSaving(true);
     try {
-      const rows = Object.values(items).map((it) => ({
-        inspeccion_id: id,
-        punto_id: it.punto_id,
-        equipo_id: it.equipo_id,
-        estado: it.estado ?? null,
-        valor: it.valor ?? null,
-        semaforo: it.semaforo ?? null,
-        observaciones: it.observaciones ?? null,
-        accion_correctiva: it.accion_correctiva ?? null,
-      }));
+      const standbyArr = Array.from(standby);
+      const rows = Object.values(items)
+        .filter((it) => !standby.has(it.equipo_id))
+        .map((it) => ({
+          inspeccion_id: id,
+          punto_id: it.punto_id,
+          equipo_id: it.equipo_id,
+          estado: it.estado ?? null,
+          valor: it.valor ?? null,
+          semaforo: it.semaforo ?? null,
+          observaciones: it.observaciones ?? null,
+          accion_correctiva: it.accion_correctiva ?? null,
+        }));
       await supabase.from("inspeccion_items").delete().eq("inspeccion_id", id);
       if (rows.length) {
         const { error } = await supabase.from("inspeccion_items").insert(rows);
         if (error) throw error;
       }
+      const updatePayload: Record<string, unknown> = { standby_equipos: standbyArr, updated_at: new Date().toISOString() };
+      if (finalizar) updatePayload.estado = "finalizado";
+      await supabase.from("inspecciones").update(updatePayload as never).eq("id", id);
       if (finalizar) {
-        await supabase.from("inspecciones").update({ estado: "finalizado", updated_at: new Date().toISOString() }).eq("id", id);
         toast.success("Inspección finalizada y guardada");
         nav({ to: "/historial" });
       } else {
@@ -143,13 +233,15 @@ function InspeccionPage() {
 
   if (loading) return <AppShell title="Cargando..."><div className="grid place-items-center py-20"><Loader2 className="animate-spin text-primary" /></div></AppShell>;
 
-  // resumen
-  const all = Object.values(items);
+  // resumen — se excluyen equipos en Stand By
+  const activePuntos = puntos.filter((p) => !standby.has(p.equipo_id));
+  const activePuntoIds = new Set(activePuntos.map((p) => p.id));
+  const all = Object.values(items).filter((i) => activePuntoIds.has(i.punto_id));
   const ok = all.filter((i) => i.semaforo === "verde").length;
   const al = all.filter((i) => i.semaforo === "amarillo").length;
   const fa = all.filter((i) => i.semaforo === "rojo").length;
   const na = all.filter((i) => i.semaforo === "gris").length;
-  const totalPuntos = puntos.length;
+  const totalPuntos = activePuntos.length;
   const disp = totalPuntos ? Math.round((ok / totalPuntos) * 100) : 0;
 
   return (
@@ -198,6 +290,7 @@ function InspeccionPage() {
             const eqAlert = eqItems.filter((i) => i?.semaforo === "amarillo").length;
             const isActive = open === eq.id;
             const Icon = iconCat[eq.categoria] ?? Activity;
+            const isSb = standby.has(eq.id);
             return (
               <button
                 key={eq.id}
@@ -205,14 +298,22 @@ function InspeccionPage() {
                 className={`shrink-0 flex items-center gap-2 px-3 h-10 rounded-xl border text-xs font-semibold transition ${
                   isActive
                     ? "bg-primary text-primary-foreground border-primary shadow-[0_0_18px_oklch(0.78_0.17_175_/_0.35)]"
+                    : isSb
+                    ? "bg-muted/40 border-muted-foreground/30 text-muted-foreground"
                     : "bg-surface-1 border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="size-3.5" />
                 <span className="truncate max-w-[120px]">{eq.tag}</span>
-                <span className={`font-mono text-[10px] ${isActive ? "opacity-80" : "opacity-60"}`}>{done}/{eqPuntos.length}</span>
-                {eqFail > 0 && <span className="size-1.5 rounded-full bg-fail" />}
-                {eqAlert > 0 && !eqFail && <span className="size-1.5 rounded-full bg-warn" />}
+                {isSb ? (
+                  <span className="font-mono text-[9px] px-1 py-0.5 rounded bg-warn/20 text-warn">STAND BY</span>
+                ) : (
+                  <>
+                    <span className={`font-mono text-[10px] ${isActive ? "opacity-80" : "opacity-60"}`}>{done}/{eqPuntos.length}</span>
+                    {eqFail > 0 && <span className="size-1.5 rounded-full bg-fail" />}
+                    {eqAlert > 0 && !eqFail && <span className="size-1.5 rounded-full bg-warn" />}
+                  </>
+                )}
               </button>
             );
           })}
@@ -229,6 +330,8 @@ function InspeccionPage() {
           const idx = equipos.findIndex((e) => e.id === eq.id);
           const prev = equipos[idx - 1];
           const next = equipos[idx + 1];
+          const isSb = standby.has(eq.id);
+          const showStandbyToggle = isAcCategoria(eq.categoria);
           return (
             <div className="glass rounded-2xl overflow-hidden">
               <div className="p-4 flex items-center gap-3 border-b border-border/40">
@@ -242,6 +345,36 @@ function InspeccionPage() {
                 <span className="text-[10px] font-mono text-muted-foreground">{idx + 1}/{equipos.length}</span>
               </div>
 
+              {showStandbyToggle && (
+                <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between gap-3 bg-surface-1/40">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Power className={`size-4 ${isSb ? "text-warn" : "text-muted-foreground"}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold">Equipo en Stand By</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">Si está activo, no se registran parámetros y se indica en el informe.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleStandby(eq.id)}
+                    role="switch"
+                    aria-checked={isSb}
+                    className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition ${isSb ? "bg-warn" : "bg-muted"}`}
+                  >
+                    <span className={`inline-block size-5 rounded-full bg-background shadow transition ${isSb ? "translate-x-5" : "translate-x-0.5"}`} />
+                  </button>
+                </div>
+              )}
+
+              {isSb ? (
+                <div className="p-6 text-center space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-warn/15 text-warn text-xs font-semibold uppercase tracking-wider">
+                    <Power className="size-3.5" /> Stand By
+                  </div>
+                  <p className="text-sm text-muted-foreground">Este equipo está fuera de servicio en esta revisión. Sus parámetros no se registran y aparecerá como <span className="text-warn font-semibold">STAND BY</span> en el informe.</p>
+                </div>
+              ) : (
+              <>
               <div className="px-4 pt-3 pb-1 border-b border-border/40">
                 <PhotoCapture
                   mode="immediate"
@@ -287,16 +420,65 @@ function InspeccionPage() {
                         ))}
                       </div>
 
-                      {p.tipo === "numerico" && (
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
-                          value={it?.valor ?? ""}
-                          onChange={(e) => update(p, { valor: e.target.value })}
-                          className="w-full h-9 px-3 rounded-lg bg-background border border-border text-sm font-mono focus:outline-none focus:border-primary mb-2"
-                        />
-                      )}
+                      {p.tipo === "numerico" && (() => {
+                        const count = Math.max(1, Math.min(3, p.valores_count ?? 1));
+                        const val = it?.valor ?? "";
+                        const vres = validarNumerico(p, val);
+                        if (count === 1) {
+                          const err = vres.perValue[0];
+                          return (
+                            <div className="mb-2">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
+                                value={it?.valor ?? ""}
+                                onChange={(e) => update(p, { valor: e.target.value })}
+                                aria-invalid={!!err}
+                                className={`w-full h-9 px-3 rounded-lg bg-background border text-sm font-mono focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
+                              />
+                              {err && <p className="text-[10px] text-fail mt-1">{err}</p>}
+                            </div>
+                          );
+                        }
+                        const defaults = ["R", "S", "T"];
+                        const labels = (p.etiquetas_valores && p.etiquetas_valores.length > 0)
+                          ? p.etiquetas_valores
+                          : defaults;
+                        const arr = val.split("|");
+                        while (arr.length < count) arr.push("");
+                        return (
+                          <div className="mb-2">
+                            <div className={`grid gap-1.5`} style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
+                              {Array.from({ length: count }).map((_, i) => {
+                                const err = vres.perValue[i];
+                                return (
+                                  <div key={i}>
+                                    <p className="text-[10px] text-muted-foreground text-center mb-0.5 font-mono">{labels[i] ?? `V${i + 1}`}</p>
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      placeholder={labels[i] ?? `V${i + 1}`}
+                                      value={arr[i] ?? ""}
+                                      onChange={(e) => {
+                                        const next = [...arr];
+                                        next[i] = e.target.value;
+                                        update(p, { valor: next.slice(0, count).join("|") });
+                                      }}
+                                      aria-invalid={!!err}
+                                      className={`w-full h-9 px-2 rounded-lg bg-background border text-sm font-mono text-center focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
+                                    />
+                                    {err && <p className="text-[10px] text-fail mt-0.5 leading-tight">{err}</p>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {vres.global && <p className="text-[10px] text-fail mt-1">{vres.global}</p>}
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Se esperan {count} lecturas. Rango OK: {p.min_ok ?? "—"}–{p.max_ok ?? "—"}{p.unidad ? ` ${p.unidad}` : ""}.</p>
+                          </div>
+                        );
+                      })()}
+
 
                       {p.tipo === "binario" && (
                         <div className="grid grid-cols-2 gap-1 mb-2">
@@ -346,6 +528,10 @@ function InspeccionPage() {
                   );
                 })}
               </div>
+              </>
+              )}
+
+
 
               {/* Navegación entre equipos */}
               <div className="grid grid-cols-2 gap-2 p-3 border-t border-border/40">
