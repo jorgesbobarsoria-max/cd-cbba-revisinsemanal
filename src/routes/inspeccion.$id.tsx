@@ -570,19 +570,31 @@ function InspeccionPage() {
       </div>
 
       {/* Botones */}
-      <div className="sticky bottom-20 grid grid-cols-3 gap-2">
-        <button onClick={eliminar} className="h-12 rounded-xl bg-fail/15 text-fail font-semibold flex items-center justify-center gap-1.5">
-          <Trash2 className="size-4" />
-        </button>
-        <button onClick={() => guardar(false)} disabled={saving} className="h-12 rounded-xl bg-secondary font-semibold flex items-center justify-center gap-1.5">
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          Guardar
-        </button>
-        <button onClick={() => guardar(true)} disabled={saving} className="h-12 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-1.5 shadow-[0_0_24px_oklch(0.78_0.17_175_/_0.4)]">
-          <CheckCircle2 className="size-4" />
-          Finalizar
-        </button>
-      </div>
+      {soloLectura ? (
+        <div className="sticky bottom-20 glass rounded-xl p-3 flex items-center gap-2 border border-border">
+          <Lock className="size-4 text-muted-foreground shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            {insp?.estado === "finalizado"
+              ? "Esta revisión está finalizada. Solo un administrador puede modificarla."
+              : "Tu perfil es de consulta: puedes revisar y descargar el informe, pero no editar."}
+          </p>
+        </div>
+      ) : (
+        <div className="sticky bottom-20 grid grid-cols-3 gap-2">
+          <button onClick={eliminar} className="h-12 rounded-xl bg-fail/15 text-fail font-semibold flex items-center justify-center gap-1.5">
+            <Trash2 className="size-4" />
+          </button>
+          <button onClick={() => guardar(false)} disabled={saving} className="h-12 rounded-xl bg-secondary font-semibold flex items-center justify-center gap-1.5">
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            Guardar
+          </button>
+          <button onClick={() => guardar(true)} disabled={saving} className="h-12 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-1.5 shadow-[0_0_24px_oklch(0.78_0.17_175_/_0.4)]">
+            <CheckCircle2 className="size-4" />
+            Finalizar
+          </button>
+        </div>
+      )}
+
 
     </AppShell>
   );
