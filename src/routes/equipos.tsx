@@ -92,12 +92,25 @@ function EquiposPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold">Catálogo</h2>
-          <p className="text-xs text-muted-foreground">{eq.length} equipos · toca para editar parámetros</p>
+          <p className="text-xs text-muted-foreground">
+            {eq.length} equipos · {puedeGestionar ? "toca para editar parámetros" : "solo lectura"}
+          </p>
         </div>
-        <Button size="sm" onClick={() => setEditing({ orden: eq.length + 1, estado: "Operativo" })}>
-          <Plus className="size-4" /> Nuevo
-        </Button>
+        {puedeGestionar && (
+          <Button size="sm" onClick={() => setEditing({ orden: eq.length + 1, estado: "Operativo" })}>
+            <Plus className="size-4" /> Nuevo
+          </Button>
+        )}
       </div>
+
+      {!puedeGestionar && (
+        <div className="glass rounded-xl p-3 mb-4 flex items-start gap-2 border border-warn/30">
+          <Lock className="size-4 text-warn mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Solo los administradores pueden crear, editar o eliminar equipos y parámetros de medición.
+          </p>
+        </div>
+      )}
 
       {Object.entries(groups).map(([cat, items]) => (
         <section key={cat} className="mb-5">
@@ -119,15 +132,20 @@ function EquiposPage() {
                   <Button size="sm" variant="outline" className="flex-1" onClick={() => setParamsOf(e)}>
                     <Settings2 className="size-3.5" /> Parámetros
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditing(e)}>
-                    <Pencil className="size-3.5" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => delEquipo(e.id)} className="text-fail hover:text-fail">
-                    <Trash2 className="size-3.5" />
-                  </Button>
+                  {puedeGestionar && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => setEditing(e)}>
+                        <Pencil className="size-3.5" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => delEquipo(e.id)} className="text-fail hover:text-fail">
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
+
           </div>
         </section>
       ))}
