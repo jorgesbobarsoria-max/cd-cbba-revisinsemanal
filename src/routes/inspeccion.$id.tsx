@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
 import { supabase } from "@/integrations/supabase/client";
-import { Semaforo, evaluar } from "@/components/semaforo";
+import { Semaforo } from "@/components/semaforo";
+import { evaluarPunto, resumir, validarNumerico as validarNumericoBase, cantidadValores } from "@/lib/evaluacion";
 import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown, Power } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -32,7 +33,7 @@ const iconCat: Record<string, React.ElementType> = {
 function InspeccionPage() {
   const { id } = Route.useParams();
   const nav = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, permisos } = useProfile();
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [puntos, setPuntos] = useState<Punto[]>([]);
   const [items, setItems] = useState<Record<number, Item>>({});
@@ -44,6 +45,10 @@ function InspeccionPage() {
   const [exporting, setExporting] = useState(false);
   const exportar = useServerFn(generarInformeWord);
   const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
+
+  // Un registro finalizado queda bloqueado salvo para administradores.
+  const soloLectura =
+    !permisos.puedeCapturar || (insp?.estado === "finalizado" && !permisos.puedeEditarFinalizado);
 
   const isAcCategoria = (c: string) => /aire/i.test(c);
 
@@ -119,46 +124,15 @@ function InspeccionPage() {
     setItems((cur) => {
       const prev = cur[punto.id] ?? { punto_id: punto.id, equipo_id: punto.equipo_id };
       const next = { ...prev, ...patch };
-      next.semaforo = evaluar(next.valor, punto, next.estado);
+      next.semaforo = evaluarPunto(next.valor, punto, next.estado);
       return { ...cur, [punto.id]: next };
     });
   };
 
-  // Valida un punto numérico (mono o multi-valor). Devuelve errores por índice y un error global.
-  const validarNumerico = (p: Punto, raw: string | undefined): { perValue: string[]; global: string; hasBlocking: boolean } => {
-    const count = Math.max(1, Math.min(3, p.valores_count ?? 1));
-    const parts = (raw ?? "").split("|").slice(0, count);
-    while (parts.length < count) parts.push("");
-    const perValue: string[] = new Array(count).fill("");
-    let filled = 0;
-    let blocking = false;
-    for (let i = 0; i < count; i++) {
-      const v = (parts[i] ?? "").trim();
-      if (v === "") continue;
-      filled++;
-      if (!/^-?\d+([.,]\d+)?$/.test(v)) {
-        perValue[i] = "Formato numérico inválido";
-        blocking = true;
-        continue;
-      }
-      const n = parseFloat(v.replace(",", "."));
-      if (!isFinite(n)) { perValue[i] = "Valor no numérico"; blocking = true; continue; }
-      if (p.min_alerta != null && p.max_alerta != null) {
-        const span = Math.max(1, p.max_alerta - p.min_alerta);
-        const lo = p.min_alerta - span * 2;
-        const hi = p.max_alerta + span * 2;
-        if (n < lo || n > hi) {
-          perValue[i] = `Fuera de rango razonable (${p.min_alerta}–${p.max_alerta}${p.unidad ? " " + p.unidad : ""})`;
-          blocking = true;
-        }
-      }
-    }
-    let global = "";
-    if (count > 1 && filled > 0 && filled < count) {
-      global = `Faltan valores: se esperan ${count} lecturas (${filled} completadas)`;
-      blocking = true;
-    }
-    return { perValue, global, hasBlocking: blocking };
+  // Valida un punto numérico (mono o multi-valor) usando el motor compartido.
+  const validarNumerico = (p: Punto, raw: string | undefined) => {
+    const r = validarNumericoBase(p, raw);
+    return { perValue: r.porValor, global: r.global, hasBlocking: r.bloqueante };
   };
 
   // Recolecta todos los errores bloqueantes de la inspección (excluye equipos en stand by).
@@ -237,12 +211,9 @@ function InspeccionPage() {
   const activePuntos = puntos.filter((p) => !standby.has(p.equipo_id));
   const activePuntoIds = new Set(activePuntos.map((p) => p.id));
   const all = Object.values(items).filter((i) => activePuntoIds.has(i.punto_id));
-  const ok = all.filter((i) => i.semaforo === "verde").length;
-  const al = all.filter((i) => i.semaforo === "amarillo").length;
-  const fa = all.filter((i) => i.semaforo === "rojo").length;
-  const na = all.filter((i) => i.semaforo === "gris").length;
   const totalPuntos = activePuntos.length;
-  const disp = totalPuntos ? Math.round((ok / totalPuntos) * 100) : 0;
+  const resumen = resumir(all, totalPuntos, standby);
+  const { ok, alerta: al, falla: fa, na, disponibilidad: disp } = resumen;
 
   return (
     <AppShell title={`Semana ${insp?.semana ?? "—"}`}>
