@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { resumir } from "@/lib/evaluacion";
 import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -96,16 +97,18 @@ function HomePage() {
   }, [selectedId, insps]);
 
   const stats = useMemo(() => {
-    const ok = items.filter(i => i.semaforo === "verde").length;
-    const alerta = items.filter(i => i.semaforo === "amarillo").length;
-    const falla = items.filter(i => i.semaforo === "rojo").length;
-    const total = items.length;
+    // Motor compartido: misma regla que el formulario y los informes Word.
+    const r = resumir(items, items.length);
+    const ok = r.ok;
+    const alerta = r.alerta;
+    const falla = r.falla;
+    const total = r.total;
     const equiposOk = equipos.filter(e => {
       const its = items.filter(i => i.equipo_id === e.id);
       return its.length > 0 && its.every(i => i.semaforo === "verde" || i.semaforo === "gris" || !i.semaforo);
     }).length;
     const evaluados = equipos.filter(e => items.some(i => i.equipo_id === e.id)).length;
-    const disponibilidad = total > 0 ? Math.round((ok / total) * 100) : null;
+    const disponibilidad = ok + alerta + falla > 0 ? r.disponibilidad : null;
     // Temp promedio: puntos con "temp" en descripcion
     const tempPts = puntos.filter(p => /temp/i.test(p.descripcion) && p.tipo === "numerico");
     const tempVals = items
