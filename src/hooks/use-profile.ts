@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { permisosDe, ETIQUETA_ROL, type AppRole } from "@/lib/permisos";
 
-export type AppRole = "admin" | "tecnico" | "viewer";
+export type { AppRole };
+
 
 export function useProfile() {
   const { user, loading: authLoading } = useAuth();
@@ -41,14 +43,20 @@ export function useProfile() {
     };
   }, [user, authLoading]);
 
+  const permisos = permisosDe(roles);
+
   return {
     user,
     roles,
-    isAdmin: roles.includes("admin"),
-    isTecnico: roles.includes("tecnico") || roles.includes("admin"),
+    permisos,
+    rol: permisos.rol,
+    etiquetaRol: ETIQUETA_ROL[permisos.rol],
+    isAdmin: permisos.esAdmin,
+    isTecnico: permisos.esTecnico,
     isViewer: roles.length > 0,
     mustChangePassword,
     isActive,
     loading: authLoading || loading,
   };
+
 }

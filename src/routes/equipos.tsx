@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Settings2, ChevronLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, Settings2, ChevronLeft, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
 
@@ -38,7 +38,8 @@ const CRITICIDADES = ["Crítica", "Alta", "Media", "Baja"];
 const TIPOS = ["estado", "numerico", "texto", "binario"];
 
 function EquiposPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, permisos } = useProfile();
+  const puedeGestionar = permisos.puedeGestionarCatalogo;
   const nav = useNavigate();
   const [eq, setEq] = useState<Equipo[]>([]);
   const [editing, setEditing] = useState<Partial<Equipo> | null>(null);
@@ -83,7 +84,7 @@ function EquiposPage() {
     load();
   }
 
-  if (paramsOf) return <ParamsView equipo={paramsOf} onBack={() => setParamsOf(null)} />;
+  if (paramsOf) return <ParamsView equipo={paramsOf} puedeGestionar={puedeGestionar} onBack={() => setParamsOf(null)} />;
 
   const groups = eq.reduce<Record<string, Equipo[]>>((acc, e) => { (acc[e.categoria] ||= []).push(e); return acc; }, {});
 
@@ -92,12 +93,25 @@ function EquiposPage() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold">Catálogo</h2>
-          <p className="text-xs text-muted-foreground">{eq.length} equipos · toca para editar parámetros</p>
+          <p className="text-xs text-muted-foreground">
+            {eq.length} equipos · {puedeGestionar ? "toca para editar parámetros" : "solo lectura"}
+          </p>
         </div>
-        <Button size="sm" onClick={() => setEditing({ orden: eq.length + 1, estado: "Operativo" })}>
-          <Plus className="size-4" /> Nuevo
-        </Button>
+        {puedeGestionar && (
+          <Button size="sm" onClick={() => setEditing({ orden: eq.length + 1, estado: "Operativo" })}>
+            <Plus className="size-4" /> Nuevo
+          </Button>
+        )}
       </div>
+
+      {!puedeGestionar && (
+        <div className="glass rounded-xl p-3 mb-4 flex items-start gap-2 border border-warn/30">
+          <Lock className="size-4 text-warn mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Solo los administradores pueden crear, editar o eliminar equipos y parámetros de medición.
+          </p>
+        </div>
+      )}
 
       {Object.entries(groups).map(([cat, items]) => (
         <section key={cat} className="mb-5">
@@ -119,15 +133,20 @@ function EquiposPage() {
                   <Button size="sm" variant="outline" className="flex-1" onClick={() => setParamsOf(e)}>
                     <Settings2 className="size-3.5" /> Parámetros
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditing(e)}>
-                    <Pencil className="size-3.5" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => delEquipo(e.id)} className="text-fail hover:text-fail">
-                    <Trash2 className="size-3.5" />
-                  </Button>
+                  {puedeGestionar && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => setEditing(e)}>
+                        <Pencil className="size-3.5" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => delEquipo(e.id)} className="text-fail hover:text-fail">
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
+
           </div>
         </section>
       ))}
@@ -213,7 +232,7 @@ function DatosAdicionalesEditor({ value, onChange }: { value: Record<string, str
   );
 }
 
-function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) {
+function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack: () => void; puedeGestionar: boolean }) {
   const [pts, setPts] = useState<Punto[]>([]);
   const [editing, setEditing] = useState<Partial<Punto> | null>(null);
 
@@ -262,9 +281,11 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
         <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="size-4" /> Volver
         </button>
-        <Button size="sm" onClick={() => setEditing({ numero: pts.length + 1, tipo: "numerico" })}>
-          <Plus className="size-4" /> Nuevo
-        </Button>
+        {puedeGestionar && (
+          <Button size="sm" onClick={() => setEditing({ numero: pts.length + 1, tipo: "numerico" })}>
+            <Plus className="size-4" /> Nuevo
+          </Button>
+        )}
       </div>
 
       <div className="mb-4">
@@ -288,8 +309,12 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
                 </p>
               </div>
               <div className="flex gap-1">
-                <Button size="sm" variant="outline" onClick={() => setEditing(p)}><Pencil className="size-3.5" /></Button>
-                <Button size="sm" variant="outline" onClick={() => del(p.id)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
+                {puedeGestionar && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => setEditing(p)}><Pencil className="size-3.5" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => del(p.id)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

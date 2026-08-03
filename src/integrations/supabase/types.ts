@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          accion: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          datos_antes: Json | null
+          datos_despues: Json | null
+          detalle: string | null
+          entidad: string
+          entidad_id: string | null
+          id: string
+        }
+        Insert: {
+          accion: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          datos_antes?: Json | null
+          datos_despues?: Json | null
+          detalle?: string | null
+          entidad: string
+          entidad_id?: string | null
+          id?: string
+        }
+        Update: {
+          accion?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          datos_antes?: Json | null
+          datos_despues?: Json | null
+          detalle?: string | null
+          entidad?: string
+          entidad_id?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       equipos: {
         Row: {
           capacidad: string | null
@@ -118,6 +157,7 @@ export type Database = {
           caption: string | null
           created_at: string
           created_by: string | null
+          descripcion: string | null
           equipo_ref: string | null
           id: string
           inspeccion_id: string | null
@@ -131,6 +171,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           created_by?: string | null
+          descripcion?: string | null
           equipo_ref?: string | null
           id?: string
           inspeccion_id?: string | null
@@ -144,6 +185,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           created_by?: string | null
+          descripcion?: string | null
           equipo_ref?: string | null
           id?: string
           inspeccion_id?: string | null
@@ -176,11 +218,16 @@ export type Database = {
           created_at: string
           equipo_id: string
           estado: string | null
+          excepcion_en: string | null
+          excepcion_motivo: string | null
+          excepcion_por: string | null
           id: string
           inspeccion_id: string
+          na_motivo: string | null
           observaciones: string | null
           punto_id: number
           semaforo: string | null
+          semaforo_auto: string | null
           valor: string | null
         }
         Insert: {
@@ -188,11 +235,16 @@ export type Database = {
           created_at?: string
           equipo_id: string
           estado?: string | null
+          excepcion_en?: string | null
+          excepcion_motivo?: string | null
+          excepcion_por?: string | null
           id?: string
           inspeccion_id: string
+          na_motivo?: string | null
           observaciones?: string | null
           punto_id: number
           semaforo?: string | null
+          semaforo_auto?: string | null
           valor?: string | null
         }
         Update: {
@@ -200,11 +252,16 @@ export type Database = {
           created_at?: string
           equipo_id?: string
           estado?: string | null
+          excepcion_en?: string | null
+          excepcion_motivo?: string | null
+          excepcion_por?: string | null
           id?: string
           inspeccion_id?: string
+          na_motivo?: string | null
           observaciones?: string | null
           punto_id?: number
           semaforo?: string | null
+          semaforo_auto?: string | null
           valor?: string | null
         }
         Relationships: [
@@ -246,12 +303,14 @@ export type Database = {
           pue: number | null
           semana: number
           standby_equipos: string[]
+          standby_observaciones: Json
           supervisor: string | null
           tecnico: string | null
           temp_sala: number | null
           turno: string | null
           updated_at: string
           user_id: string
+          version: number
         }
         Insert: {
           carga_it?: number | null
@@ -267,12 +326,14 @@ export type Database = {
           pue?: number | null
           semana: number
           standby_equipos?: string[]
+          standby_observaciones?: Json
           supervisor?: string | null
           tecnico?: string | null
           temp_sala?: number | null
           turno?: string | null
           updated_at?: string
           user_id: string
+          version?: number
         }
         Update: {
           carga_it?: number | null
@@ -288,12 +349,14 @@ export type Database = {
           pue?: number | null
           semana?: number
           standby_equipos?: string[]
+          standby_observaciones?: Json
           supervisor?: string | null
           tecnico?: string | null
           temp_sala?: number | null
           turno?: string | null
           updated_at?: string
           user_id?: string
+          version?: number
         }
         Relationships: []
       }
@@ -317,6 +380,7 @@ export type Database = {
           tecnico: string | null
           tipo: string
           updated_at: string
+          version: number
         }
         Insert: {
           actividad?: string | null
@@ -337,6 +401,7 @@ export type Database = {
           tecnico?: string | null
           tipo: string
           updated_at?: string
+          version?: number
         }
         Update: {
           actividad?: string | null
@@ -357,6 +422,7 @@ export type Database = {
           tecnico?: string | null
           tipo?: string
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -375,9 +441,12 @@ export type Database = {
           created_by: string | null
           id: string
           label: string
+          obligatorio: boolean
           opciones: string[] | null
           orden: number
+          respuesta_esperada: string | null
           seccion: string
+          severidad: string
           tipo: string
           tipo_dato: string
           unidad: string | null
@@ -389,9 +458,12 @@ export type Database = {
           created_by?: string | null
           id?: string
           label: string
+          obligatorio?: boolean
           opciones?: string[] | null
           orden?: number
+          respuesta_esperada?: string | null
           seccion: string
+          severidad?: string
           tipo: string
           tipo_dato?: string
           unidad?: string | null
@@ -403,9 +475,12 @@ export type Database = {
           created_by?: string | null
           id?: string
           label?: string
+          obligatorio?: boolean
           opciones?: string[] | null
           orden?: number
+          respuesta_esperada?: string | null
           seccion?: string
+          severidad?: string
           tipo?: string
           tipo_dato?: string
           unidad?: string | null
@@ -454,6 +529,9 @@ export type Database = {
           min_alerta: number | null
           min_ok: number | null
           numero: number
+          obligatorio: boolean
+          respuesta_esperada: string | null
+          severidad: string
           tipo: string
           unidad: string | null
           valores_count: number
@@ -468,6 +546,9 @@ export type Database = {
           min_alerta?: number | null
           min_ok?: number | null
           numero: number
+          obligatorio?: boolean
+          respuesta_esperada?: string | null
+          severidad?: string
           tipo?: string
           unidad?: string | null
           valores_count?: number
@@ -482,6 +563,9 @@ export type Database = {
           min_alerta?: number | null
           min_ok?: number | null
           numero?: number
+          obligatorio?: boolean
+          respuesta_esperada?: string | null
+          severidad?: string
           tipo?: string
           unidad?: string | null
           valores_count?: number
@@ -522,12 +606,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_read_inspeccion: {
+        Args: { _inspeccion_id: string }
+        Returns: boolean
+      }
+      can_write_inspeccion: {
+        Args: { _inspeccion_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      log_audit: {
+        Args: {
+          _accion: string
+          _datos_antes?: Json
+          _datos_despues?: Json
+          _detalle?: string
+          _entidad: string
+          _entidad_id: string
+        }
+        Returns: undefined
       }
       user_owns_evidencia_parent: {
         Args: { _inspeccion_id: string; _mantenimiento_id: string }

@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
 import { supabase } from "@/integrations/supabase/client";
-import { Semaforo, evaluar } from "@/components/semaforo";
-import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown, Power } from "lucide-react";
+import { Semaforo } from "@/components/semaforo";
+import { evaluarPunto, resumir, validarNumerico as validarNumericoBase, cantidadValores } from "@/lib/evaluacion";
+import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermometer, Battery, Zap, Flame, Activity, Wind, FileDown, Power, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { generarInformeWord } from "@/lib/reporte.functions";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/inspeccion/$id")({
 });
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
-type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null };
+type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null; respuesta_esperada?: string | null; severidad?: string | null; obligatorio?: boolean | null };
 type Item = { id?: string; punto_id: number; equipo_id: string; estado?: string; valor?: string; semaforo?: string; observaciones?: string; accion_correctiva?: string };
 
 const iconCat: Record<string, React.ElementType> = {
@@ -32,7 +33,7 @@ const iconCat: Record<string, React.ElementType> = {
 function InspeccionPage() {
   const { id } = Route.useParams();
   const nav = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, permisos } = useProfile();
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [puntos, setPuntos] = useState<Punto[]>([]);
   const [items, setItems] = useState<Record<number, Item>>({});
@@ -44,6 +45,10 @@ function InspeccionPage() {
   const [exporting, setExporting] = useState(false);
   const exportar = useServerFn(generarInformeWord);
   const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
+
+  // Un registro finalizado queda bloqueado salvo para administradores.
+  const soloLectura =
+    !permisos.puedeCapturar || (insp?.estado === "finalizado" && !permisos.puedeEditarFinalizado);
 
   const isAcCategoria = (c: string) => /aire/i.test(c);
 
@@ -119,46 +124,15 @@ function InspeccionPage() {
     setItems((cur) => {
       const prev = cur[punto.id] ?? { punto_id: punto.id, equipo_id: punto.equipo_id };
       const next = { ...prev, ...patch };
-      next.semaforo = evaluar(next.valor, punto, next.estado);
+      next.semaforo = evaluarPunto(next.valor, punto, next.estado);
       return { ...cur, [punto.id]: next };
     });
   };
 
-  // Valida un punto numérico (mono o multi-valor). Devuelve errores por índice y un error global.
-  const validarNumerico = (p: Punto, raw: string | undefined): { perValue: string[]; global: string; hasBlocking: boolean } => {
-    const count = Math.max(1, Math.min(3, p.valores_count ?? 1));
-    const parts = (raw ?? "").split("|").slice(0, count);
-    while (parts.length < count) parts.push("");
-    const perValue: string[] = new Array(count).fill("");
-    let filled = 0;
-    let blocking = false;
-    for (let i = 0; i < count; i++) {
-      const v = (parts[i] ?? "").trim();
-      if (v === "") continue;
-      filled++;
-      if (!/^-?\d+([.,]\d+)?$/.test(v)) {
-        perValue[i] = "Formato numérico inválido";
-        blocking = true;
-        continue;
-      }
-      const n = parseFloat(v.replace(",", "."));
-      if (!isFinite(n)) { perValue[i] = "Valor no numérico"; blocking = true; continue; }
-      if (p.min_alerta != null && p.max_alerta != null) {
-        const span = Math.max(1, p.max_alerta - p.min_alerta);
-        const lo = p.min_alerta - span * 2;
-        const hi = p.max_alerta + span * 2;
-        if (n < lo || n > hi) {
-          perValue[i] = `Fuera de rango razonable (${p.min_alerta}–${p.max_alerta}${p.unidad ? " " + p.unidad : ""})`;
-          blocking = true;
-        }
-      }
-    }
-    let global = "";
-    if (count > 1 && filled > 0 && filled < count) {
-      global = `Faltan valores: se esperan ${count} lecturas (${filled} completadas)`;
-      blocking = true;
-    }
-    return { perValue, global, hasBlocking: blocking };
+  // Valida un punto numérico (mono o multi-valor) usando el motor compartido.
+  const validarNumerico = (p: Punto, raw: string | undefined) => {
+    const r = validarNumericoBase(p, raw);
+    return { perValue: r.porValor, global: r.global, hasBlocking: r.bloqueante };
   };
 
   // Recolecta todos los errores bloqueantes de la inspección (excluye equipos en stand by).
@@ -178,6 +152,28 @@ function InspeccionPage() {
   };
 
   const guardar = async (finalizar = false) => {
+    if (soloLectura) {
+      toast.error("No tienes permisos para modificar esta revisión");
+      return;
+    }
+    // Al finalizar no se admiten puntos obligatorios sin registrar.
+    if (finalizar) {
+      const pendientes = puntos.filter(
+        (p) =>
+          !standby.has(p.equipo_id) &&
+          (p.obligatorio ?? true) &&
+          !items[p.id]?.estado &&
+          !(items[p.id]?.valor ?? "").trim(),
+      );
+      if (pendientes.length > 0) {
+        const eqp = equipos.find((e) => e.id === pendientes[0].equipo_id);
+        if (eqp) setOpen(eqp.id);
+        toast.error(`Faltan ${pendientes.length} punto(s) obligatorio(s) por registrar`, {
+          description: `${eqp?.tag ?? ""} · ${pendientes[0].descripcion}`,
+        });
+        return;
+      }
+    }
     const errs = recolectarErrores();
     if (errs.length > 0) {
       const first = errs[0];
@@ -237,12 +233,9 @@ function InspeccionPage() {
   const activePuntos = puntos.filter((p) => !standby.has(p.equipo_id));
   const activePuntoIds = new Set(activePuntos.map((p) => p.id));
   const all = Object.values(items).filter((i) => activePuntoIds.has(i.punto_id));
-  const ok = all.filter((i) => i.semaforo === "verde").length;
-  const al = all.filter((i) => i.semaforo === "amarillo").length;
-  const fa = all.filter((i) => i.semaforo === "rojo").length;
-  const na = all.filter((i) => i.semaforo === "gris").length;
   const totalPuntos = activePuntos.length;
-  const disp = totalPuntos ? Math.round((ok / totalPuntos) * 100) : 0;
+  const resumen = resumir(all, totalPuntos, standby);
+  const { ok, alerta: al, falla: fa, na, disponibilidad: disp } = resumen;
 
   return (
     <AppShell title={`Semana ${insp?.semana ?? "—"}`}>
@@ -356,6 +349,7 @@ function InspeccionPage() {
                   </div>
                   <button
                     type="button"
+                    disabled={soloLectura}
                     onClick={() => toggleStandby(eq.id)}
                     role="switch"
                     aria-checked={isSb}
@@ -407,6 +401,7 @@ function InspeccionPage() {
                         {(["OK", "ALERTA", "FALLA", "NA"] as const).map((s) => (
                           <button
                             key={s}
+                            disabled={soloLectura}
                             onClick={() => update(p, { estado: s })}
                             className={`py-2 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition ${
                               it?.estado === s
@@ -421,7 +416,7 @@ function InspeccionPage() {
                       </div>
 
                       {p.tipo === "numerico" && (() => {
-                        const count = Math.max(1, Math.min(3, p.valores_count ?? 1));
+                        const count = cantidadValores(p);
                         const val = it?.valor ?? "";
                         const vres = validarNumerico(p, val);
                         if (count === 1) {
@@ -434,6 +429,7 @@ function InspeccionPage() {
                                 placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
                                 value={it?.valor ?? ""}
                                 onChange={(e) => update(p, { valor: e.target.value })}
+                                readOnly={soloLectura}
                                 aria-invalid={!!err}
                                 className={`w-full h-9 px-3 rounded-lg bg-background border text-sm font-mono focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
                               />
@@ -465,6 +461,7 @@ function InspeccionPage() {
                                         next[i] = e.target.value;
                                         update(p, { valor: next.slice(0, count).join("|") });
                                       }}
+                                      readOnly={soloLectura}
                                       aria-invalid={!!err}
                                       className={`w-full h-9 px-2 rounded-lg bg-background border text-sm font-mono text-center focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
                                     />
@@ -480,21 +477,37 @@ function InspeccionPage() {
                       })()}
 
 
-                      {p.tipo === "binario" && (
-                        <div className="grid grid-cols-2 gap-1 mb-2">
-                          {(["No", "Sí"] as const).map((v) => (
-                            <button
-                              key={v}
-                              onClick={() => update(p, { valor: v })}
-                              className={`py-2 text-xs font-semibold rounded-lg transition ${
-                                it?.valor === v
-                                  ? v === "No" ? "bg-ok text-ok-foreground" : "bg-fail text-fail-foreground"
-                                  : "bg-background/40 text-muted-foreground hover:text-foreground"
-                              }`}
-                            >{v === "No" ? "✓ Sin alertas" : "⚠ Con alertas"}</button>
-                          ))}
-                        </div>
-                      )}
+                      {p.tipo === "binario" && (() => {
+                        // La respuesta correcta se define por parámetro (por defecto "No").
+                        const esperada = (p.respuesta_esperada ?? "No").trim();
+                        const grave = (p.severidad ?? "falla") === "falla";
+                        return (
+                          <div className="grid grid-cols-2 gap-1 mb-2">
+                            {(["No", "Sí"] as const).map((v) => {
+                              const conforme = v.toLowerCase() === esperada.toLowerCase();
+                              const activo = it?.valor === v;
+                              return (
+                                <button
+                                  key={v}
+                                  disabled={soloLectura}
+                                  onClick={() => update(p, { valor: v })}
+                                  className={`py-2 text-xs font-semibold rounded-lg transition disabled:opacity-60 ${
+                                    activo
+                                      ? conforme
+                                        ? "bg-ok text-ok-foreground"
+                                        : grave
+                                          ? "bg-fail text-fail-foreground"
+                                          : "bg-warn text-warn-foreground"
+                                      : "bg-background/40 text-muted-foreground hover:text-foreground"
+                                  }`}
+                                >
+                                  {conforme ? "✓ " : "⚠ "}{v}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
 
                       {p.tipo === "texto" && (
                         <input
@@ -579,19 +592,31 @@ function InspeccionPage() {
       </div>
 
       {/* Botones */}
-      <div className="sticky bottom-20 grid grid-cols-3 gap-2">
-        <button onClick={eliminar} className="h-12 rounded-xl bg-fail/15 text-fail font-semibold flex items-center justify-center gap-1.5">
-          <Trash2 className="size-4" />
-        </button>
-        <button onClick={() => guardar(false)} disabled={saving} className="h-12 rounded-xl bg-secondary font-semibold flex items-center justify-center gap-1.5">
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          Guardar
-        </button>
-        <button onClick={() => guardar(true)} disabled={saving} className="h-12 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-1.5 shadow-[0_0_24px_oklch(0.78_0.17_175_/_0.4)]">
-          <CheckCircle2 className="size-4" />
-          Finalizar
-        </button>
-      </div>
+      {soloLectura ? (
+        <div className="sticky bottom-20 glass rounded-xl p-3 flex items-center gap-2 border border-border">
+          <Lock className="size-4 text-muted-foreground shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            {insp?.estado === "finalizado"
+              ? "Esta revisión está finalizada. Solo un administrador puede modificarla."
+              : "Tu perfil es de consulta: puedes revisar y descargar el informe, pero no editar."}
+          </p>
+        </div>
+      ) : (
+        <div className="sticky bottom-20 grid grid-cols-3 gap-2">
+          <button onClick={eliminar} className="h-12 rounded-xl bg-fail/15 text-fail font-semibold flex items-center justify-center gap-1.5">
+            <Trash2 className="size-4" />
+          </button>
+          <button onClick={() => guardar(false)} disabled={saving} className="h-12 rounded-xl bg-secondary font-semibold flex items-center justify-center gap-1.5">
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            Guardar
+          </button>
+          <button onClick={() => guardar(true)} disabled={saving} className="h-12 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-1.5 shadow-[0_0_24px_oklch(0.78_0.17_175_/_0.4)]">
+            <CheckCircle2 className="size-4" />
+            Finalizar
+          </button>
+        </div>
+      )}
+
 
     </AppShell>
   );
