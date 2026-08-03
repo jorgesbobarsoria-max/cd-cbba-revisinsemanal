@@ -84,7 +84,7 @@ function EquiposPage() {
     load();
   }
 
-  if (paramsOf) return <ParamsView equipo={paramsOf} onBack={() => setParamsOf(null)} />;
+  if (paramsOf) return <ParamsView equipo={paramsOf} puedeGestionar={puedeGestionar} onBack={() => setParamsOf(null)} />;
 
   const groups = eq.reduce<Record<string, Equipo[]>>((acc, e) => { (acc[e.categoria] ||= []).push(e); return acc; }, {});
 
@@ -232,7 +232,7 @@ function DatosAdicionalesEditor({ value, onChange }: { value: Record<string, str
   );
 }
 
-function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) {
+function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack: () => void; puedeGestionar: boolean }) {
   const [pts, setPts] = useState<Punto[]>([]);
   const [editing, setEditing] = useState<Partial<Punto> | null>(null);
 
@@ -281,9 +281,11 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
         <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="size-4" /> Volver
         </button>
-        <Button size="sm" onClick={() => setEditing({ numero: pts.length + 1, tipo: "numerico" })}>
-          <Plus className="size-4" /> Nuevo
-        </Button>
+        {puedeGestionar && (
+          <Button size="sm" onClick={() => setEditing({ numero: pts.length + 1, tipo: "numerico" })}>
+            <Plus className="size-4" /> Nuevo
+          </Button>
+        )}
       </div>
 
       <div className="mb-4">
@@ -307,8 +309,12 @@ function ParamsView({ equipo, onBack }: { equipo: Equipo; onBack: () => void }) 
                 </p>
               </div>
               <div className="flex gap-1">
-                <Button size="sm" variant="outline" onClick={() => setEditing(p)}><Pencil className="size-3.5" /></Button>
-                <Button size="sm" variant="outline" onClick={() => del(p.id)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
+                {puedeGestionar && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => setEditing(p)}><Pencil className="size-3.5" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => del(p.id)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
