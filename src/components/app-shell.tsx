@@ -8,14 +8,14 @@ import { cn } from "@/lib/utils";
 const baseItems = [
   { to: "/", icon: Home, label: "Inicio" },
   { to: "/equipos", icon: Server, label: "Equipos" },
-  { to: "/mantenimiento", icon: Wrench, label: "Mant." },
+  { to: "/mantenimiento", icon: Wrench, label: "Mantenim." },
   { to: "/historial", icon: History, label: "Historial" },
 ];
 
 export function AppShell({ children, title }: { children: React.ReactNode; title?: string }) {
   const loc = useLocation();
   const nav = useNavigate();
-  const { isAdmin, mustChangePassword, loading, user } = useProfile();
+  const { isAdmin, mustChangePassword, loading, user, etiquetaRol, permisos } = useProfile();
 
   // Forzar cambio de contraseña en el primer inicio de sesión
   useEffect(() => {
@@ -41,6 +41,22 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
             <h1 className="text-sm font-semibold leading-tight">{title ?? "Revisión Semanal"}</h1>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          {user && !loading && (
+            <span
+              title={`Sesión con permisos de ${etiquetaRol}`}
+              className={cn(
+                "text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border font-semibold",
+                permisos.esAdmin
+                  ? "bg-primary/15 text-primary border-primary/40"
+                  : permisos.esTecnico
+                    ? "bg-warn/15 text-warn border-warn/40"
+                    : "bg-muted/40 text-muted-foreground border-border",
+              )}
+            >
+              {etiquetaRol}
+            </span>
+          )}
         <button
           onClick={() => supabase.auth.signOut()}
           className="size-9 rounded-xl bg-secondary hover:bg-muted grid place-items-center"
@@ -48,6 +64,7 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
         >
           <LogOut className="size-4" />
         </button>
+        </div>
       </header>
 
       <main className="flex-1 px-4 py-5">{children}</main>
