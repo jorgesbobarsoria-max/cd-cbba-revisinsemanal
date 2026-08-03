@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Settings2, ChevronLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, Settings2, ChevronLeft, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
 
@@ -38,7 +38,8 @@ const CRITICIDADES = ["Crítica", "Alta", "Media", "Baja"];
 const TIPOS = ["estado", "numerico", "texto", "binario"];
 
 function EquiposPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, permisos } = useProfile();
+  const puedeGestionar = permisos.puedeGestionarCatalogo;
   const nav = useNavigate();
   const [eq, setEq] = useState<Equipo[]>([]);
   const [editing, setEditing] = useState<Partial<Equipo> | null>(null);
