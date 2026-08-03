@@ -43,14 +43,20 @@ export function useProfile() {
     };
   }, [user, authLoading]);
 
+  const permisos = permisosDe(roles);
+
   return {
     user,
     roles,
-    isAdmin: roles.includes("admin"),
-    isTecnico: roles.includes("tecnico") || roles.includes("admin"),
+    permisos,
+    rol: permisos.rol,
+    etiquetaRol: ETIQUETA_ROL[permisos.rol],
+    isAdmin: permisos.esAdmin,
+    isTecnico: permisos.esTecnico,
     isViewer: roles.length > 0,
     mustChangePassword,
     isActive,
     loading: authLoading || loading,
   };
+
 }
