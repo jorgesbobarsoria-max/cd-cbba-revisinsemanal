@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { permisosDe, ETIQUETA_ROL, type AppRole } from "@/lib/permisos";
 
-export type AppRole = "admin" | "tecnico" | "viewer";
+export type { AppRole };
+
 
 export function useProfile() {
   const { user, loading: authLoading } = useAuth();
