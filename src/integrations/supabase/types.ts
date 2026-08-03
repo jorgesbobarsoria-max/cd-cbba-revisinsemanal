@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          accion: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          datos_antes: Json | null
+          datos_despues: Json | null
+          detalle: string | null
+          entidad: string
+          entidad_id: string | null
+          id: string
+        }
+        Insert: {
+          accion: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          datos_antes?: Json | null
+          datos_despues?: Json | null
+          detalle?: string | null
+          entidad: string
+          entidad_id?: string | null
+          id?: string
+        }
+        Update: {
+          accion?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          datos_antes?: Json | null
+          datos_despues?: Json | null
+          detalle?: string | null
+          entidad?: string
+          entidad_id?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       equipos: {
         Row: {
           capacidad: string | null
@@ -118,6 +157,7 @@ export type Database = {
           caption: string | null
           created_at: string
           created_by: string | null
+          descripcion: string | null
           equipo_ref: string | null
           id: string
           inspeccion_id: string | null
@@ -131,6 +171,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           created_by?: string | null
+          descripcion?: string | null
           equipo_ref?: string | null
           id?: string
           inspeccion_id?: string | null
@@ -144,6 +185,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           created_by?: string | null
+          descripcion?: string | null
           equipo_ref?: string | null
           id?: string
           inspeccion_id?: string | null
@@ -522,12 +564,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_read_inspeccion: {
+        Args: { _inspeccion_id: string }
+        Returns: boolean
+      }
+      can_write_inspeccion: {
+        Args: { _inspeccion_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      log_audit: {
+        Args: {
+          _accion: string
+          _datos_antes?: Json
+          _datos_despues?: Json
+          _detalle?: string
+          _entidad: string
+          _entidad_id: string
+        }
+        Returns: undefined
       }
       user_owns_evidencia_parent: {
         Args: { _inspeccion_id: string; _mantenimiento_id: string }
