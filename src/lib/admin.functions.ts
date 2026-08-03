@@ -80,8 +80,8 @@ export const createUser = createServerFn({ method: "POST" })
       user_metadata: {
         full_name: data.full_name ?? null,
         must_change_password: true,
-        role: data.role,
       },
+
     });
     if (error) throw new Error(error.message);
     if (!created.user) throw new Error("No se pudo crear el usuario");
