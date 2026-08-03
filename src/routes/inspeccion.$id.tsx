@@ -18,7 +18,7 @@ export const Route = createFileRoute("/inspeccion/$id")({
 });
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
-type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null };
+type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null; respuesta_esperada?: string | null; severidad?: string | null };
 type Item = { id?: string; punto_id: number; equipo_id: string; estado?: string; valor?: string; semaforo?: string; observaciones?: string; accion_correctiva?: string };
 
 const iconCat: Record<string, React.ElementType> = {
@@ -327,6 +327,7 @@ function InspeccionPage() {
                   </div>
                   <button
                     type="button"
+                    disabled={soloLectura}
                     onClick={() => toggleStandby(eq.id)}
                     role="switch"
                     aria-checked={isSb}
@@ -378,6 +379,7 @@ function InspeccionPage() {
                         {(["OK", "ALERTA", "FALLA", "NA"] as const).map((s) => (
                           <button
                             key={s}
+                            disabled={soloLectura}
                             onClick={() => update(p, { estado: s })}
                             className={`py-2 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition ${
                               it?.estado === s
@@ -392,7 +394,7 @@ function InspeccionPage() {
                       </div>
 
                       {p.tipo === "numerico" && (() => {
-                        const count = Math.max(1, Math.min(3, p.valores_count ?? 1));
+                        const count = cantidadValores(p);
                         const val = it?.valor ?? "";
                         const vres = validarNumerico(p, val);
                         if (count === 1) {
@@ -405,6 +407,7 @@ function InspeccionPage() {
                                 placeholder={`Valor ${p.unidad ?? ""} (rango OK: ${p.min_ok}–${p.max_ok})`}
                                 value={it?.valor ?? ""}
                                 onChange={(e) => update(p, { valor: e.target.value })}
+                                readOnly={soloLectura}
                                 aria-invalid={!!err}
                                 className={`w-full h-9 px-3 rounded-lg bg-background border text-sm font-mono focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
                               />
@@ -436,6 +439,7 @@ function InspeccionPage() {
                                         next[i] = e.target.value;
                                         update(p, { valor: next.slice(0, count).join("|") });
                                       }}
+                                      readOnly={soloLectura}
                                       aria-invalid={!!err}
                                       className={`w-full h-9 px-2 rounded-lg bg-background border text-sm font-mono text-center focus:outline-none ${err ? "border-fail focus:border-fail" : "border-border focus:border-primary"}`}
                                     />
@@ -451,21 +455,37 @@ function InspeccionPage() {
                       })()}
 
 
-                      {p.tipo === "binario" && (
-                        <div className="grid grid-cols-2 gap-1 mb-2">
-                          {(["No", "Sí"] as const).map((v) => (
-                            <button
-                              key={v}
-                              onClick={() => update(p, { valor: v })}
-                              className={`py-2 text-xs font-semibold rounded-lg transition ${
-                                it?.valor === v
-                                  ? v === "No" ? "bg-ok text-ok-foreground" : "bg-fail text-fail-foreground"
-                                  : "bg-background/40 text-muted-foreground hover:text-foreground"
-                              }`}
-                            >{v === "No" ? "✓ Sin alertas" : "⚠ Con alertas"}</button>
-                          ))}
-                        </div>
-                      )}
+                      {p.tipo === "binario" && (() => {
+                        // La respuesta correcta se define por parámetro (por defecto "No").
+                        const esperada = (p.respuesta_esperada ?? "No").trim();
+                        const grave = (p.severidad ?? "falla") === "falla";
+                        return (
+                          <div className="grid grid-cols-2 gap-1 mb-2">
+                            {(["No", "Sí"] as const).map((v) => {
+                              const conforme = v.toLowerCase() === esperada.toLowerCase();
+                              const activo = it?.valor === v;
+                              return (
+                                <button
+                                  key={v}
+                                  disabled={soloLectura}
+                                  onClick={() => update(p, { valor: v })}
+                                  className={`py-2 text-xs font-semibold rounded-lg transition disabled:opacity-60 ${
+                                    activo
+                                      ? conforme
+                                        ? "bg-ok text-ok-foreground"
+                                        : grave
+                                          ? "bg-fail text-fail-foreground"
+                                          : "bg-warn text-warn-foreground"
+                                      : "bg-background/40 text-muted-foreground hover:text-foreground"
+                                  }`}
+                                >
+                                  {conforme ? "✓ " : "⚠ "}{v}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
 
                       {p.tipo === "texto" && (
                         <input
