@@ -18,7 +18,7 @@ export const Route = createFileRoute("/inspeccion/$id")({
 });
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
-type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null; respuesta_esperada?: string | null; severidad?: string | null };
+type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null; respuesta_esperada?: string | null; severidad?: string | null; obligatorio?: boolean | null };
 type Item = { id?: string; punto_id: number; equipo_id: string; estado?: string; valor?: string; semaforo?: string; observaciones?: string; accion_correctiva?: string };
 
 const iconCat: Record<string, React.ElementType> = {
@@ -152,6 +152,28 @@ function InspeccionPage() {
   };
 
   const guardar = async (finalizar = false) => {
+    if (soloLectura) {
+      toast.error("No tienes permisos para modificar esta revisión");
+      return;
+    }
+    // Al finalizar no se admiten puntos obligatorios sin registrar.
+    if (finalizar) {
+      const pendientes = puntos.filter(
+        (p) =>
+          !standby.has(p.equipo_id) &&
+          (p.obligatorio ?? true) &&
+          !items[p.id]?.estado &&
+          !(items[p.id]?.valor ?? "").trim(),
+      );
+      if (pendientes.length > 0) {
+        const eqp = equipos.find((e) => e.id === pendientes[0].equipo_id);
+        if (eqp) setOpen(eqp.id);
+        toast.error(`Faltan ${pendientes.length} punto(s) obligatorio(s) por registrar`, {
+          description: `${eqp?.tag ?? ""} · ${pendientes[0].descripcion}`,
+        });
+        return;
+      }
+    }
     const errs = recolectarErrores();
     if (errs.length > 0) {
       const first = errs[0];
