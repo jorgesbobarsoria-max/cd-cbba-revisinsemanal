@@ -67,6 +67,12 @@ function AdminPage() {
     role: "viewer" as Role,
   });
   const [busy, setBusy] = useState(false);
+  const [verPw, setVerPw] = useState(false);
+  const [confirmDel, setConfirmDel] = useState<{ id: string; email: string } | null>(null);
+  const [textoConfirm, setTextoConfirm] = useState("");
+  const [resetTarget, setResetTarget] = useState<{ id: string; email: string } | null>(null);
+  const [nuevaPw, setNuevaPw] = useState("");
+  const [verNuevaPw, setVerNuevaPw] = useState(false);
 
   const submitNew = async (e: React.FormEvent) => {
     e.preventDefault();
