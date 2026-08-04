@@ -277,10 +277,47 @@ function InspeccionPage() {
         </div>
         <input
           placeholder="Técnico responsable"
+          disabled={soloLectura}
           defaultValue={insp?.tecnico ?? ""}
           onBlur={(e) => supabase.from("inspecciones").update({ tecnico: e.target.value }).eq("id", id)}
           className="mt-3 w-full bg-surface-1 border border-border rounded-lg px-3 h-10 text-sm focus:outline-none focus:border-primary"
         />
+        <button
+          type="button"
+          onClick={() => setVerCab((v) => !v)}
+          className="mt-2 w-full h-11 rounded-lg bg-surface-1 border border-border text-xs font-semibold flex items-center justify-between px-3"
+          aria-expanded={verCab}
+        >
+          <span>Datos de la revisión (turno, supervisor, condiciones)</span>
+          <ChevronRight className={`size-4 transition-transform ${verCab ? "rotate-90" : ""}`} />
+        </button>
+        {verCab && (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {([
+              ["turno", "Turno", "text"],
+              ["supervisor", "Supervisor", "text"],
+              ["cargo", "Cargo", "text"],
+              ["condicion_clima", "Condición climática", "text"],
+              ["temp_sala", "Temp. sala (°C)", "number"],
+              ["hr_sala", "Humedad relativa (%)", "number"],
+              ["carga_it", "Carga TI (kW)", "number"],
+              ["pue", "PUE", "number"],
+              ["proxima_revision", "Próxima revisión", "date"],
+            ] as const).map(([k, label, tipo]) => (
+              <label key={k} className="block">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+                <input
+                  type={tipo}
+                  inputMode={tipo === "number" ? "decimal" : undefined}
+                  disabled={soloLectura}
+                  value={cab[k] ?? ""}
+                  onChange={(e) => setCab((c) => ({ ...c, [k]: e.target.value }))}
+                  className="mt-1 w-full bg-surface-1 border border-border rounded-lg px-3 h-11 text-sm focus:outline-none focus:border-primary disabled:opacity-60"
+                />
+              </label>
+            ))}
+          </div>
+        )}
         <div className="grid grid-cols-4 gap-2 mt-3">
           <div className="text-center bg-ok/10 rounded-lg py-2"><p className="text-lg font-mono font-bold text-ok">{ok}</p><p className="text-[9px] uppercase text-muted-foreground">OK</p></div>
           <div className="text-center bg-warn/10 rounded-lg py-2"><p className="text-lg font-mono font-bold text-warn">{al}</p><p className="text-[9px] uppercase text-muted-foreground">Alerta</p></div>
