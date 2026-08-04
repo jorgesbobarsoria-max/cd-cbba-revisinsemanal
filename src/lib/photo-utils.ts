@@ -100,3 +100,9 @@ export async function listEvidencias(parent: { inspeccion_id?: string; mantenimi
   const { data } = await supabase.from("evidencias").select("*").eq(col, val).order("created_at");
   return (data ?? []) as EvidenciaRow[];
 }
+
+/** Guarda la descripción (pie de foto) de una evidencia ya subida. */
+export async function actualizarDescripcionEvidencia(id: string, caption: string) {
+  const { error } = await supabase.from("evidencias").update({ caption: caption || null }).eq("id", id);
+  if (error) throw error;
+}
