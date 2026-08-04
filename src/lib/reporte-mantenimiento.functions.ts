@@ -9,6 +9,7 @@ import {
 import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
 import { endesycLogoBytes } from "@/lib/endesyc-logo";
+import { lineChartSvg, PNG_FALLBACK } from "@/lib/chart-svg";
 
 const border = { style: BorderStyle.SINGLE, size: 4, color: "B0BEC5" };
 const cellBorders = { top: border, bottom: border, left: border, right: border };
@@ -34,15 +35,6 @@ function cell(text: string, opts: { bold?: boolean; fill?: string; width?: numbe
     margins: { top: 80, bottom: 80, left: 120, right: 120 },
     children: [new Paragraph({ alignment: opts.align, children: [new TextRun({ text, bold: opts.bold, size: 20, font: "Calibri", color: opts.color })] })],
   });
-}
-
-async function fetchChartPng(config: object): Promise<Uint8Array | null> {
-  try {
-    const url = `https://quickchart.io/chart?w=720&h=320&bkg=white&c=${encodeURIComponent(JSON.stringify(config))}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return new Uint8Array(await res.arrayBuffer());
-  } catch { return null; }
 }
 
 function fmtVal(v: any, it: ItemPlantilla): string {

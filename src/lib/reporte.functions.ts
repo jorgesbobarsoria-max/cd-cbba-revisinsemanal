@@ -22,6 +22,7 @@ import {
 } from "docx";
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
 import { endesycLogoBytes } from "@/lib/endesyc-logo";
+import { lineChartSvg, PNG_FALLBACK } from "@/lib/chart-svg";
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
 type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
@@ -59,17 +60,6 @@ function cell(text: string, opts: { bold?: boolean; fill?: string; width?: numbe
   });
 }
 
-
-async function fetchChartPng(config: object): Promise<Uint8Array | null> {
-  try {
-    const url = `https://quickchart.io/chart?w=720&h=320&bkg=white&c=${encodeURIComponent(JSON.stringify(config))}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return new Uint8Array(await res.arrayBuffer());
-  } catch {
-    return null;
-  }
-}
 
 export const generarInformeWord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
