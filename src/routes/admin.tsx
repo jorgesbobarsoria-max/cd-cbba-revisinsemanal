@@ -369,6 +369,71 @@ function AdminPage() {
         </div>
       )}
 
+      {resetTarget && (
+        <div role="dialog" aria-modal="true" aria-label="Restablecer contraseña"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4"
+          onClick={() => !busy && setResetTarget(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="glass rounded-2xl p-5 w-full max-w-sm space-y-3">
+            <h3 className="font-semibold text-base flex items-center gap-2">
+              <KeyRound className="size-4 text-primary" /> Restablecer contraseña
+            </h3>
+            <p className="text-xs text-muted-foreground">Se asignará una contraseña temporal a {resetTarget.email}. Deberá cambiarla en su próximo ingreso.</p>
+            <div className="flex gap-1.5">
+              <input
+                type={verNuevaPw ? "text" : "password"}
+                className="input"
+                minLength={12}
+                value={nuevaPw}
+                onChange={(e) => setNuevaPw(e.target.value)}
+                placeholder="Mínimo 12 caracteres"
+              />
+              <button type="button" onClick={() => setVerNuevaPw((v) => !v)}
+                aria-label={verNuevaPw ? "Ocultar contraseña" : "Mostrar contraseña"}
+                className="shrink-0 min-h-11 px-3 rounded-lg bg-secondary">
+                {verNuevaPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+              <button type="button" onClick={() => setNuevaPw(generarPassword())}
+                aria-label="Generar contraseña" className="shrink-0 min-h-11 px-3 rounded-lg bg-secondary">
+                <Wand2 className="size-4" />
+              </button>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button type="button" disabled={busy} onClick={() => setResetTarget(null)} className="flex-1 h-11 rounded-xl bg-secondary text-sm">Cancelar</button>
+              <button type="button" disabled={busy || nuevaPw.length < 12} onClick={resetPw}
+                className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
+                {busy && <Loader2 className="size-4 animate-spin" />} Restablecer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDel && (
+        <div role="dialog" aria-modal="true" aria-label="Eliminar usuario"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4"
+          onClick={() => !busy && setConfirmDel(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="glass rounded-2xl p-5 w-full max-w-sm space-y-3">
+            <h3 className="font-semibold text-base flex items-center gap-2 text-fail">
+              <Trash2 className="size-4" /> Eliminar usuario
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Esta acción es permanente. Para confirmar, escriba el correo <span className="font-mono text-foreground">{confirmDel.email}</span>.
+            </p>
+            <input className="input" value={textoConfirm} onChange={(e) => setTextoConfirm(e.target.value)} placeholder="Correo del usuario" />
+            <div className="flex gap-2 pt-1">
+              <button type="button" disabled={busy} onClick={() => setConfirmDel(null)} className="flex-1 h-11 rounded-xl bg-secondary text-sm">Cancelar</button>
+              <button type="button" disabled={busy || textoConfirm.trim().toLowerCase() !== confirmDel.email.toLowerCase()}
+                onClick={removeUser}
+                className="flex-1 h-11 rounded-xl bg-fail text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
+                {busy && <Loader2 className="size-4 animate-spin" />} Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
       <style>{`
         .input { width:100%; height:40px; padding:0 12px; border-radius:10px;
           background: var(--surface-1); border:1px solid var(--border);
