@@ -23,6 +23,14 @@ export const Route = createFileRoute("/admin")({
 
 type Role = "admin" | "tecnico" | "viewer";
 
+/** Genera una contraseña temporal robusta de 16 caracteres. */
+function generarPassword(): string {
+  const abc = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*";
+  const bytes = new Uint32Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => abc[b % abc.length]).join("");
+}
+
 const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrador",
   tecnico: "Técnico",
