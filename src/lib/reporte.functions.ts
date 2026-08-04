@@ -259,19 +259,14 @@ export const generarInformeWord = createServerFn({ method: "POST" })
         });
         const hasData = datasets.some((d) => d.data.some((v) => v != null));
         if (hasData) {
-          const png = await fetchChartPng({
-            type: "line",
-            data: { labels, datasets },
-            options: {
-              plugins: { title: { display: true, text: `Tendencia – ${eq.tag}` }, legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } },
-              scales: { y: { beginAtZero: false } },
-            },
+          const svg = lineChartSvg({
+            titulo: `Tendencia – ${eq.tag}`,
+            labels,
+            series: datasets.map((d) => ({ label: d.label, data: d.data, color: d.borderColor })),
           });
-          if (png) {
-            children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 160, after: 80 }, children: [
-              new ImageRun({ type: "png", data: png, transformation: { width: 560, height: 250 }, altText: { title: "Tendencia", description: `Tendencia de ${eq.tag}`, name: "tendencia" } }),
-            ]}));
-          }
+          children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 160, after: 80 }, children: [
+            new ImageRun({ type: "svg", data: svg, fallback: { type: "png", data: PNG_FALLBACK }, transformation: { width: 560, height: 265 }, altText: { title: "Tendencia", description: `Tendencia de ${eq.tag}`, name: "tendencia" } }),
+          ]}));
         }
       }
     }
