@@ -13,7 +13,7 @@ import {
   resetUserPassword,
 } from "@/lib/admin.functions";
 import { toast } from "sonner";
-import { UserPlus, Shield, Loader2, Trash2, KeyRound, Ban, Check, Users } from "lucide-react";
+import { UserPlus, Shield, Loader2, Trash2, KeyRound, Ban, Check, Users, Eye, EyeOff, Wand2 } from "lucide-react";
 import { friendlyDbError } from "@/lib/friendly-errors";
 
 export const Route = createFileRoute("/admin")({
@@ -234,15 +234,15 @@ function AdminPage() {
                   <select
                     value={primaryRole}
                     onChange={(e) => changeRole(u.id, e.target.value as Role)}
-                    className="h-8 text-[11px] rounded-lg bg-secondary border border-border px-2"
+                    className="min-h-11 text-[11px] rounded-lg bg-secondary border border-border px-2"
                   >
                     <option value="admin">Administrador</option>
                     <option value="tecnico">Técnico</option>
                     <option value="viewer">Viewer</option>
                   </select>
                   <button
-                    onClick={() => resetPw(u.id)}
-                    className="h-8 px-2 rounded-lg bg-secondary hover:bg-muted text-[11px] flex items-center gap-1"
+                    onClick={() => { setResetTarget({ id: u.id, email: u.email }); setNuevaPw(""); setVerNuevaPw(false); }}
+                    className="min-h-11 px-3 rounded-lg bg-secondary hover:bg-muted text-[11px] flex items-center gap-1"
                     title="Restablecer contraseña"
                   >
                     <KeyRound className="size-3" /> Reset
@@ -250,7 +250,7 @@ function AdminPage() {
                   {!isSelf && (
                     <button
                       onClick={() => toggleActive(u.id, !u.is_active)}
-                      className={`h-8 px-2 rounded-lg text-[11px] flex items-center gap-1 ${
+                      className={`min-h-11 px-3 rounded-lg text-[11px] flex items-center gap-1 ${
                         u.is_active
                           ? "bg-secondary hover:bg-muted"
                           : "bg-ok/20 text-ok hover:bg-ok/30"
@@ -269,8 +269,8 @@ function AdminPage() {
                   )}
                   {!isSelf && (
                     <button
-                      onClick={() => removeUser(u.id, u.email)}
-                      className="h-8 px-2 rounded-lg bg-fail/15 text-fail hover:bg-fail/25 text-[11px] flex items-center gap-1"
+                      onClick={() => { setConfirmDel({ id: u.id, email: u.email }); setTextoConfirm(""); }}
+                      className="min-h-11 px-3 rounded-lg bg-fail/15 text-fail hover:bg-fail/25 text-[11px] flex items-center gap-1"
                     >
                       <Trash2 className="size-3" /> Eliminar
                     </button>
