@@ -39,6 +39,8 @@ function InspeccionPage() {
   const [items, setItems] = useState<Record<number, Item>>({});
   const [insp, setInsp] = useState<{ fecha: string; semana: number; tecnico: string | null; turno: string | null; estado: string } | null>(null);
   const [standby, setStandby] = useState<Set<string>>(new Set());
+  const [cab, setCab] = useState<Record<string, string>>({});
+  const [verCab, setVerCab] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -85,13 +87,25 @@ function InspeccionPage() {
       const [eq, pt, ins, it] = await Promise.all([
         supabase.from("equipos").select("*").order("orden"),
         supabase.from("puntos_inspeccion").select("*").order("numero"),
-        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,estado,standby_equipos").eq("id", id).single(),
+        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,supervisor,cargo,condicion_clima,temp_sala,hr_sala,carga_it,pue,proxima_revision,estado,standby_equipos").eq("id", id).single(),
         supabase.from("inspeccion_items").select("*").eq("inspeccion_id", id),
       ]);
       setEquipos(eq.data ?? []);
       setPuntos(pt.data ?? []);
       setInsp(ins.data);
       setStandby(new Set(((ins.data as any)?.standby_equipos ?? []) as string[]));
+      const d = (ins.data ?? {}) as Record<string, unknown>;
+      setCab({
+        turno: (d.turno as string) ?? "",
+        supervisor: (d.supervisor as string) ?? "",
+        cargo: (d.cargo as string) ?? "",
+        condicion_clima: (d.condicion_clima as string) ?? "",
+        temp_sala: d.temp_sala != null ? String(d.temp_sala) : "",
+        hr_sala: d.hr_sala != null ? String(d.hr_sala) : "",
+        carga_it: d.carga_it != null ? String(d.carga_it) : "",
+        pue: d.pue != null ? String(d.pue) : "",
+        proxima_revision: (d.proxima_revision as string) ?? "",
+      });
       const map: Record<number, Item> = {};
       (it.data ?? []).forEach((r) => {
         map[r.punto_id] = { id: r.id, punto_id: r.punto_id, equipo_id: r.equipo_id, estado: r.estado ?? undefined, valor: r.valor ?? undefined, semaforo: r.semaforo ?? undefined, observaciones: r.observaciones ?? undefined, accion_correctiva: r.accion_correctiva ?? undefined };
@@ -204,7 +218,20 @@ function InspeccionPage() {
         const { error } = await supabase.from("inspeccion_items").insert(rows);
         if (error) throw error;
       }
-      const updatePayload: Record<string, unknown> = { standby_equipos: standbyArr, updated_at: new Date().toISOString() };
+      const numOrNull = (v?: string) => (v && v.trim() !== "" && !isNaN(Number(v.replace(",", "."))) ? Number(v.replace(",", ".")) : null);
+      const updatePayload: Record<string, unknown> = {
+        standby_equipos: standbyArr,
+        updated_at: new Date().toISOString(),
+        turno: cab.turno?.trim() || null,
+        supervisor: cab.supervisor?.trim() || null,
+        cargo: cab.cargo?.trim() || null,
+        condicion_clima: cab.condicion_clima?.trim() || null,
+        temp_sala: numOrNull(cab.temp_sala),
+        hr_sala: numOrNull(cab.hr_sala),
+        carga_it: numOrNull(cab.carga_it),
+        pue: numOrNull(cab.pue),
+        proxima_revision: cab.proxima_revision?.trim() || null,
+      };
       if (finalizar) updatePayload.estado = "finalizado";
       await supabase.from("inspecciones").update(updatePayload as never).eq("id", id);
       if (finalizar) {
