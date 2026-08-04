@@ -326,20 +326,15 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
             backgroundColor: colors[i % colors.length],
             fill: false, spanGaps: true, tension: 0.3,
           }));
-          const png = await fetchChartPng({
-            type: "line",
-            data: { labels, datasets },
-            options: {
-              plugins: { title: { display: true, text: `Tendencia histórica · ${equipoLabel(r)}` }, legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } },
-              scales: { y: { beginAtZero: false } },
-            },
+          const svg = lineChartSvg({
+            titulo: `Tendencia histórica · ${equipoLabel(r)}`,
+            labels,
+            series: datasets.map((d) => ({ label: d.label, data: d.data, color: d.borderColor })),
           });
-          if (png) {
-            children.push(p("Tendencia histórica (mantenimientos previos)", { bold: true, size: 20, color: "0D3B66" }));
-            children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 80, after: 80 }, children: [
-              new ImageRun({ type: "png", data: png, transformation: { width: 560, height: 250 }, altText: { title: "Tendencia", description: `Tendencia ${equipoLabel(r)}`, name: "tendencia" } }),
-            ]}));
-          }
+          children.push(p("Tendencia histórica (mantenimientos previos)", { bold: true, size: 20, color: "0D3B66" }));
+          children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 80, after: 80 }, children: [
+            new ImageRun({ type: "svg", data: svg, fallback: { type: "png", data: PNG_FALLBACK }, transformation: { width: 560, height: 265 }, altText: { title: "Tendencia", description: `Tendencia ${equipoLabel(r)}`, name: "tendencia" } }),
+          ]}));
         }
       } else if (showDesarrollo && mostrarTendencias && pl) {
         children.push(p("Sin histórico suficiente para gráfica de tendencia (se requieren ≥ 2 mantenimientos previos del mismo equipo).", { size: 18, color: "90A4AE" }));
