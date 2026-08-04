@@ -2,6 +2,25 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const MAX_FOTOS = 3;
 export const BUCKET = "evidencias";
+/** Tamaño máximo aceptado antes de comprimir. */
+export const MAX_BYTES = 15 * 1024 * 1024;
+export const FORMATOS_VALIDOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+
+/** Valida formato y tamaño del archivo antes de procesarlo. Devuelve el error o null. */
+export function validarArchivoFoto(file: File): string | null {
+  const tipo = (file.type || "").toLowerCase();
+  if (tipo && !tipo.startsWith("image/")) {
+    return `Formato no admitido (${file.type}). Use JPG, PNG o WEBP.`;
+  }
+  if (!tipo && !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name)) {
+    return "Formato no admitido. Use JPG, PNG o WEBP.";
+  }
+  if (file.size > MAX_BYTES) {
+    return `La imagen pesa ${(file.size / 1024 / 1024).toFixed(1)} MB; el máximo es ${MAX_BYTES / 1024 / 1024} MB.`;
+  }
+  return null;
+}
+
 
 /** Redimensiona (máx 1600px) y comprime como JPEG 0.8. Devuelve Blob. */
 export async function compressImage(file: File, maxSide = 1600, quality = 0.8): Promise<Blob> {
@@ -80,4 +99,10 @@ export async function listEvidencias(parent: { inspeccion_id?: string; mantenimi
   const val = parent.inspeccion_id ?? parent.mantenimiento_id!;
   const { data } = await supabase.from("evidencias").select("*").eq(col, val).order("created_at");
   return (data ?? []) as EvidenciaRow[];
+}
+
+/** Guarda la descripción (pie de foto) de una evidencia ya subida. */
+export async function actualizarDescripcionEvidencia(id: string, caption: string) {
+  const { error } = await supabase.from("evidencias").update({ caption: caption || null }).eq("id", id);
+  if (error) throw error;
 }

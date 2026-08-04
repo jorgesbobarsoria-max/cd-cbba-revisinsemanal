@@ -63,7 +63,7 @@ export const createUser = createServerFn({ method: "POST" })
     z
       .object({
         email: z.string().trim().email().max(255),
-        password: z.string().min(6).max(128),
+        password: z.string().min(12).max(128),
         full_name: z.string().trim().max(120).optional(),
         role: z.enum(["admin", "tecnico", "viewer"]),
       })
@@ -150,6 +150,21 @@ export const setUserActive = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Protección del último administrador activo
+    if (!data.is_active) {
+      const { data: esAdmin } = await supabaseAdmin
+        .from("user_roles").select("user_id").eq("user_id", data.user_id).eq("role", "admin").maybeSingle();
+      if (esAdmin) {
+        const { data: admins } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
+        const ids = (admins ?? []).map((a: { user_id: string }) => a.user_id);
+        const { data: activos } = await supabaseAdmin
+          .from("profiles").select("id").in("id", ids).eq("is_active", true);
+        if ((activos ?? []).length <= 1) {
+          throw new Error("No se puede desactivar al único administrador activo");
+        }
+      }
+    }
+
     // Ban / unban via auth admin
     const { error: banErr } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
       ban_duration: data.is_active ? "none" : "876000h", // ~100 años
@@ -173,6 +188,16 @@ export const deleteUser = createServerFn({ method: "POST" })
       throw new Error("No puedes eliminarte a ti mismo");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Protección del último administrador
+    const { data: esAdmin } = await supabaseAdmin
+      .from("user_roles").select("user_id").eq("user_id", data.user_id).eq("role", "admin").maybeSingle();
+    if (esAdmin) {
+      const { count } = await supabaseAdmin
+        .from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "admin");
+      if ((count ?? 0) <= 1) throw new Error("No se puede eliminar al único administrador");
+    }
+
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -184,7 +209,7 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     z
       .object({
         user_id: z.string().uuid(),
-        new_password: z.string().min(6).max(128),
+        new_password: z.string().min(12).max(128),
       })
       .parse(data),
   )

@@ -22,6 +22,7 @@ import {
 } from "docx";
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
 import { endesycLogoBytes } from "@/lib/endesyc-logo";
+import { lineChartSvg, PNG_FALLBACK } from "@/lib/chart-svg";
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
 type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
@@ -59,17 +60,6 @@ function cell(text: string, opts: { bold?: boolean; fill?: string; width?: numbe
   });
 }
 
-
-async function fetchChartPng(config: object): Promise<Uint8Array | null> {
-  try {
-    const url = `https://quickchart.io/chart?w=720&h=320&bkg=white&c=${encodeURIComponent(JSON.stringify(config))}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return new Uint8Array(await res.arrayBuffer());
-  } catch {
-    return null;
-  }
-}
 
 export const generarInformeWord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -269,19 +259,14 @@ export const generarInformeWord = createServerFn({ method: "POST" })
         });
         const hasData = datasets.some((d) => d.data.some((v) => v != null));
         if (hasData) {
-          const png = await fetchChartPng({
-            type: "line",
-            data: { labels, datasets },
-            options: {
-              plugins: { title: { display: true, text: `Tendencia – ${eq.tag}` }, legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } },
-              scales: { y: { beginAtZero: false } },
-            },
+          const svg = lineChartSvg({
+            titulo: `Tendencia – ${eq.tag}`,
+            labels,
+            series: datasets.map((d) => ({ label: d.label, data: d.data, color: d.borderColor })),
           });
-          if (png) {
-            children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 160, after: 80 }, children: [
-              new ImageRun({ type: "png", data: png, transformation: { width: 560, height: 250 }, altText: { title: "Tendencia", description: `Tendencia de ${eq.tag}`, name: "tendencia" } }),
-            ]}));
-          }
+          children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 160, after: 80 }, children: [
+            new ImageRun({ type: "svg", data: svg, fallback: { type: "png", data: PNG_FALLBACK }, transformation: { width: 560, height: 265 }, altText: { title: "Tendencia", description: `Tendencia de ${eq.tag}`, name: "tendencia" } }),
+          ]}));
         }
       }
     }
