@@ -111,28 +111,42 @@ function AdminPage() {
     }
   };
 
-  const removeUser = async (userId: string, email: string) => {
-    if (!confirm(`¿Eliminar definitivamente al usuario ${email}?`)) return;
+  const removeUser = async () => {
+    if (!confirmDel) return;
+    setBusy(true);
     try {
-      await deleteFn({ data: { user_id: userId } });
+      await deleteFn({ data: { user_id: confirmDel.id } });
       toast.success("Usuario eliminado");
+      setConfirmDel(null);
+      setTextoConfirm("");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     } catch (err) {
       toast.error(friendlyDbError(err));
+    } finally {
+      setBusy(false);
     }
   };
 
-  const resetPw = async (userId: string) => {
-    const pw = prompt("Nueva contraseña genérica (mín. 6 caracteres):");
-    if (!pw || pw.length < 6) return;
+  const resetPw = async () => {
+    if (!resetTarget) return;
+    if (nuevaPw.length < 12) {
+      toast.error("La contraseña temporal debe tener al menos 12 caracteres");
+      return;
+    }
+    setBusy(true);
     try {
-      await resetPwFn({ data: { user_id: userId, new_password: pw } });
+      await resetPwFn({ data: { user_id: resetTarget.id, new_password: nuevaPw } });
       toast.success("Contraseña restablecida. El usuario deberá cambiarla al ingresar.");
+      setResetTarget(null);
+      setNuevaPw("");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     } catch (err) {
       toast.error(friendlyDbError(err));
+    } finally {
+      setBusy(false);
     }
   };
+
 
   if (loading || !user || !isAdmin) return null;
 
