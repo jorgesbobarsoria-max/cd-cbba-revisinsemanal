@@ -313,17 +313,30 @@ function AdminPage() {
                 placeholder="tecnico@dc.bo"
               />
             </Field>
-            <Field label="Contraseña genérica (el usuario la cambiará al ingresar)">
-              <input
-                type="text"
-                required
-                minLength={6}
-                className="input"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder="Mín. 6 caracteres"
-              />
+            <Field label="Contraseña temporal (el usuario la cambiará al ingresar)">
+              <div className="flex gap-1.5">
+                <input
+                  type={verPw ? "text" : "password"}
+                  required
+                  minLength={12}
+                  className="input"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="Mínimo 12 caracteres"
+                />
+                <button type="button" onClick={() => setVerPw((v) => !v)}
+                  aria-label={verPw ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  className="shrink-0 min-h-11 px-3 rounded-lg bg-secondary">
+                  {verPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+                <button type="button" onClick={() => setForm({ ...form, password: generarPassword() })}
+                  aria-label="Generar contraseña"
+                  className="shrink-0 min-h-11 px-3 rounded-lg bg-secondary">
+                  <Wand2 className="size-4" />
+                </button>
+              </div>
             </Field>
+
             <Field label="Rol">
               <select
                 className="input"
