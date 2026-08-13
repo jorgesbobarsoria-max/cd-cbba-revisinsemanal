@@ -10,6 +10,7 @@ import { PLANTILLAS } from "@/lib/mantenimiento-plantillas";
 import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/reporte-mantenimiento.functions";
 import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
 import { toast } from "sonner";
+import { descargarDocx } from "@/lib/download-docx";
 
 
 export const Route = createFileRoute("/mantenimiento/")({
@@ -54,13 +55,7 @@ function MantenimientoListPage() {
     setDl(true);
     try {
       const { base64, filename } = await generar({ data: { ids: Array.from(sel), plantilla: plantillaInforme } });
-      const bin = atob(base64);
-      const arr = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      const blob = new Blob([arr], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
-      URL.revokeObjectURL(url);
+      descargarDocx(base64, filename);
       toast.success(`Informe generado (${sel.size} equipo${sel.size > 1 ? "s" : ""})`);
       setSelMode(false); setSel(new Set());
     } catch (e: any) { toast.error(e.message ?? "Error al generar"); }

@@ -7,6 +7,7 @@ import { ChevronRight, Calendar, FileDown, Loader2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generarInformeWord } from "@/lib/reporte.functions";
 import { toast } from "sonner";
+import { descargarDocx } from "@/lib/download-docx";
 
 export const Route = createFileRoute("/historial")({
   component: HistorialPage,
@@ -31,14 +32,7 @@ function HistorialPage() {
     setBusy(id);
     try {
       const res = await exportar({ data: { inspeccionId: id } });
-      const bin = atob(res.base64);
-      const bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = res.filename; a.click();
-      URL.revokeObjectURL(url);
+      descargarDocx(res.base64, res.filename);
       toast.success("Informe Word descargado");
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Error al exportar");
