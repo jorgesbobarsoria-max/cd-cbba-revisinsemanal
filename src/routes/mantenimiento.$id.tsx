@@ -13,6 +13,7 @@ import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/re
 import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
 import { PhotoCapture } from "@/components/photo-capture";
 import { listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
+import { descargarDocx } from "@/lib/download-docx";
 
 export const Route = createFileRoute("/mantenimiento/$id")({
   component: DetallePage,
@@ -45,13 +46,7 @@ function DetallePage() {
     setDl(true);
     try {
       const { base64, filename } = await generar({ data: { ids: [id], plantilla: plantillaInforme } });
-      const bin = atob(base64);
-      const arr = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      const blob = new Blob([arr], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
-      URL.revokeObjectURL(url);
+      descargarDocx(base64, filename);
       toast.success("Informe descargado");
     } catch (e: any) { toast.error(e.message ?? "Error al generar"); }
     setDl(false);
