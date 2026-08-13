@@ -233,7 +233,8 @@ function InspeccionPage() {
         proxima_revision: cab.proxima_revision?.trim() || null,
       };
       if (finalizar) updatePayload.estado = "finalizado";
-      await supabase.from("inspecciones").update(updatePayload as never).eq("id", id);
+      const { error: upErr } = await supabase.from("inspecciones").update(updatePayload as never).eq("id", id);
+      if (upErr) throw upErr;
       if (finalizar) {
         toast.success("Inspección finalizada y guardada");
         nav({ to: "/historial" });
