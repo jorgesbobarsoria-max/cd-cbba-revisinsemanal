@@ -16,7 +16,8 @@ function normalizarBase64(value: unknown): string {
   }
 
   base64 = base64
-    .replace(/\s/g, "+")
+    .replace(/[\r\n\t]/g, "")
+    .replace(/ /g, "+")
     .replace(/-/g, "+")
     .replace(/_/g, "/");
 
@@ -33,13 +34,15 @@ function normalizarBase64(value: unknown): string {
 
 export function descargarDocx(base64Value: unknown, filename: string): void {
   const base64 = normalizarBase64(base64Value);
-  const chunks: Uint8Array[] = [];
+  const chunks: ArrayBuffer[] = [];
   const chunkSize = 32_768;
 
   for (let offset = 0; offset < base64.length; offset += chunkSize) {
     const chunk = base64.slice(offset, offset + chunkSize);
     const binary = window.atob(chunk);
-    chunks.push(Uint8Array.from(binary, (char) => char.charCodeAt(0)));
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+    chunks.push(bytes.buffer);
   }
 
   const blob = new Blob(chunks, { type: DOCX_MIME });
