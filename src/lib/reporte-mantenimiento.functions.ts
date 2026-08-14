@@ -9,7 +9,7 @@ import {
 import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
 import { endesycLogoBytes } from "@/lib/endesyc-logo";
-import { lineChartSvg, PNG_FALLBACK } from "@/lib/chart-svg";
+import { lineChartSvg, svgBytes, PNG_FALLBACK } from "@/lib/chart-svg";
 
 const border = { style: BorderStyle.SINGLE, size: 4, color: "B0BEC5" };
 const cellBorders = { top: border, bottom: border, left: border, right: border };
@@ -325,7 +325,7 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
           });
           children.push(p("Tendencia histórica (mantenimientos previos)", { bold: true, size: 20, color: "0D3B66" }));
           children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 80, after: 80 }, children: [
-            new ImageRun({ type: "svg", data: svg, fallback: { type: "png", data: PNG_FALLBACK }, transformation: { width: 560, height: 265 }, altText: { title: "Tendencia", description: `Tendencia ${equipoLabel(r)}`, name: "tendencia" } }),
+            new ImageRun({ type: "svg", data: svgBytes(svg), fallback: { type: "png", data: PNG_FALLBACK }, transformation: { width: 560, height: 265 }, altText: { title: "Tendencia", description: `Tendencia ${equipoLabel(r)}`, name: "tendencia" } }),
           ]}));
         }
       } else if (showDesarrollo && mostrarTendencias && pl) {

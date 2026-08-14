@@ -199,3 +199,8 @@ export const PNG_FALLBACK: Uint8Array = Uint8Array.from([
   0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
   0x42, 0x60, 0x82,
 ]);
+
+/** docx interpreta un string como data-URI; el SVG debe entregarse en bytes. */
+export function svgBytes(svg: string): Uint8Array {
+  return new TextEncoder().encode(svg);
+}
