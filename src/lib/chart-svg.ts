@@ -200,7 +200,27 @@ export const PNG_FALLBACK: Uint8Array = Uint8Array.from([
   0x42, 0x60, 0x82,
 ]);
 
-/** docx interpreta un string como data-URI; el SVG debe entregarse en bytes. */
+/** docx interpreta un string como data-URI; el SVG debe entregarse siempre en bytes. */
 export function svgBytes(svg: string): Uint8Array {
-  return new TextEncoder().encode(svg);
+  let markup = (svg ?? "").trim();
+  // Si por error llega un data-URI, se normaliza al marcado real antes de codificar.
+  const dataUri = /^data:image\/svg\+xml(;charset=[^,;]+)?(;base64)?,/i.exec(markup);
+  if (dataUri) {
+    const payload = markup.slice(dataUri[0].length);
+    markup = dataUri[2]
+      ? (typeof atob === "function" ? atob(payload) : Buffer.from(payload, "base64").toString("binary"))
+      : decodeURIComponent(payload);
+  }
+  return new TextEncoder().encode(markup);
+}
+
+/** Imagen SVG lista para docx: bytes + fallback PNG obligatorio. */
+export function svgImageOptions(svg: string, width: number, height: number, alt: string) {
+  return {
+    type: "svg" as const,
+    data: svgBytes(svg),
+    fallback: { type: "png" as const, data: PNG_FALLBACK },
+    transformation: { width, height },
+    altText: { title: alt, description: alt, name: alt },
+  };
 }
