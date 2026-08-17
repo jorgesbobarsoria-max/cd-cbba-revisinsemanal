@@ -22,7 +22,7 @@ import {
 } from "docx";
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
 import { endesycLogoBytes } from "@/lib/endesyc-logo";
-import { lineChartSvg, svgBytes, PNG_FALLBACK } from "@/lib/chart-svg";
+import { lineChartSvg, svgImageOptions } from "@/lib/chart-svg";
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
 type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
@@ -265,7 +265,7 @@ export const generarInformeWord = createServerFn({ method: "POST" })
             series: datasets.map((d) => ({ label: d.label, data: d.data, color: d.borderColor })),
           });
           children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 160, after: 80 }, children: [
-            new ImageRun({ type: "svg", data: svgBytes(svg), fallback: { type: "png", data: PNG_FALLBACK }, transformation: { width: 560, height: 265 }, altText: { title: "Tendencia", description: `Tendencia de ${eq.tag}`, name: "tendencia" } }),
+            new ImageRun(svgImageOptions(svg, 560, 265, `Tendencia ${eq.tag}`)),
           ]}));
         }
       }
