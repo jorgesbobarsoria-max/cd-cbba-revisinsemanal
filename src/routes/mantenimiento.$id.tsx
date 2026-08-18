@@ -14,6 +14,8 @@ import { PlantillaInformeSelector } from "@/components/plantilla-informe-selecto
 import { PhotoCapture } from "@/components/photo-capture";
 import { listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
 import { descargarDocx } from "@/lib/download-docx";
+import { BTA521Import } from "@/components/bta521-import";
+import { BTA521_KEY } from "@/lib/bta521";
 
 export const Route = createFileRoute("/mantenimiento/$id")({
   component: DetallePage,
@@ -152,6 +154,9 @@ function DetallePage() {
                 </div>
               );
             })}
+            {/^bater/i.test(sec.titulo) && datos[BTA521_KEY] && (
+              <BTA521Import value={datos[BTA521_KEY]} readOnly />
+            )}
           </div>
         </section>
       ))}
