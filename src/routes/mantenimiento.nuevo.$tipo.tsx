@@ -15,6 +15,8 @@ import { friendlyDbError } from "@/lib/friendly-errors";
 import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
 import { PhotoCapture } from "@/components/photo-capture";
 import { uploadEvidencia } from "@/lib/photo-utils";
+import { BTA521Import } from "@/components/bta521-import";
+import { BTA521_KEY } from "@/lib/bta521";
 
 export const Route = createFileRoute("/mantenimiento/nuevo/$tipo")({
   component: NuevoMantPage,
@@ -289,6 +291,9 @@ function NuevoMantPage() {
                     />
                   </div>
                 ))}
+                {/^bater/i.test(sec.titulo) && (
+                  <BTA521Import value={datos[BTA521_KEY] ?? null} onChange={(v) => setItem(BTA521_KEY, v)} />
+                )}
               </AccordionContent>
             </AccordionItem>
           );
