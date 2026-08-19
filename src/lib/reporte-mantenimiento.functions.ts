@@ -10,6 +10,8 @@ import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas
 import { fetchFotoBytes, renderFotosRow, type FotoBin } from "@/lib/reporte-fotos";
 import { endesycLogoBytes } from "@/lib/endesyc-logo";
 import { lineChartSvg, svgImageOptions } from "@/lib/chart-svg";
+import { renderAnalisisBaterias, esImportBaterias } from "@/lib/reporte-baterias";
+import { BTA521_KEY } from "@/lib/bta521";
 
 const border = { style: BorderStyle.SINGLE, size: 4, color: "B0BEC5" };
 const cellBorders = { top: border, bottom: border, left: border, right: border };
@@ -285,6 +287,17 @@ export const generarInformeMantenimientoWord = createServerFn({ method: "POST" }
               const bins = binsForReg(r.id, (e) => e.scope === "parametro" && e.param_key === it.k);
               if (bins.length) children.push(...renderFotosRow(bins, `Evidencia · ${it.l}`));
             }
+          }
+        }
+
+        // Análisis de baterías importado del Fluke BTA 521
+        const bat = datos[BTA521_KEY];
+        if (esImportBaterias(bat)) {
+          children.push(...renderAnalisisBaterias(bat));
+          if (bat.resumen.criticas > 0) {
+            todosHallazgos.push({ eq: equipoLabel(r), tipo: pl?.nombre ?? r.tipo, hallazgo: `${bat.resumen.criticas} celda(s) de batería con resistencia interna crítica (>50% sobre la mediana del banco) — reemplazo recomendado` });
+          } else if (bat.resumen.regulares > 0) {
+            todosHallazgos.push({ eq: equipoLabel(r), tipo: pl?.nombre ?? r.tipo, hallazgo: `${bat.resumen.regulares} celda(s) de batería con degradación incipiente (20–50% sobre la mediana) — mantener en seguimiento` });
           }
         }
 
