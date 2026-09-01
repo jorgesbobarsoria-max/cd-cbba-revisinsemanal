@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ChevronLeft, Plus, Pencil, Trash2, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, Plus, Pencil, Trash2, SlidersHorizontal, EyeOff, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
 import { PLANTILLAS, getPlantilla, type OverrideRow, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
