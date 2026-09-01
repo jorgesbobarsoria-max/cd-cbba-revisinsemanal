@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Trash2, FileText, FileDown, Loader2 } from "lucide-react";
+import { ChevronLeft, Trash2, FileText, FileDown, Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
 import { getPlantilla } from "@/lib/mantenimiento-plantillas";
@@ -75,9 +75,17 @@ function DetallePage() {
         <Link to="/mantenimiento" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="size-4" /> Volver
         </Link>
-        <Button size="sm" variant="outline" onClick={eliminar} className="text-fail hover:text-fail">
-          <Trash2 className="size-3.5" /> Eliminar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/mantenimiento/editar/$id" params={{ id }}>
+              <Pencil className="size-3.5" /> Continuar editando
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" onClick={eliminar} className="text-fail hover:text-fail">
+            <Trash2 className="size-3.5" /> Eliminar
+          </Button>
+        </div>
+
       </div>
 
       <div className="mb-4">
