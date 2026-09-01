@@ -66,24 +66,27 @@ export function MantenimientoForm({ tipo, existing }: { tipo: string; existing?:
 
   useEffect(() => {
     (async () => {
-      const [eq, ex, pp] = await Promise.all([
+      const [eq, ex, pp, ov] = await Promise.all([
         plantillaBase?.categoriaEquipo
           ? supabase.from("equipos").select("id,tag,categoria,marca,modelo").eq("categoria", plantillaBase.categoriaEquipo).order("orden")
           : Promise.resolve({ data: [] as Equipo[] }),
         supabase.from("equipos_externos").select("id,tag,tipo,marca,modelo,serie,capacidad,ubicacion").eq("tipo", tipo).order("tag"),
         supabase.from("plantilla_parametros").select("*").eq("tipo", tipo).order("orden"),
+        supabase.from("plantilla_overrides").select("*").eq("tipo", tipo),
       ]);
       setEquipos((eq.data ?? []) as Equipo[]);
       setExternos((ex.data ?? []) as Externo[]);
       setExtras((pp.data ?? []) as ExtraParam[]);
+      setOverrides((ov.data ?? []) as OverrideRow[]);
       if (!plantillaBase?.categoriaEquipo) setModoExterno(true);
     })();
   }, [tipo, plantillaBase?.categoriaEquipo]);
 
   const plantilla = useMemo(() => {
     if (!plantillaBase) return undefined;
-    if (extras.length === 0) return plantillaBase;
-    const secciones = plantillaBase.secciones.map(s => ({ ...s, items: [...s.items] }));
+    const base = aplicarOverrides(plantillaBase, overrides);
+    if (extras.length === 0) return base;
+    const secciones = base.secciones.map(s => ({ ...s, items: [...s.items] }));
     for (const p of extras) {
       const item: ItemPlantilla = {
         k: `x_${p.clave}`, l: p.label, t: p.tipo_dato as any,
@@ -93,8 +96,8 @@ export function MantenimientoForm({ tipo, existing }: { tipo: string; existing?:
       if (idx >= 0) secciones[idx].items.push(item);
       else secciones.push({ titulo: p.seccion, items: [item] });
     }
-    return { ...plantillaBase, secciones };
-  }, [plantillaBase, extras]);
+    return { ...base, secciones };
+  }, [plantillaBase, extras, overrides]);
 
   if (!plantilla) return <p className="text-sm text-muted-foreground">Tipo no válido.</p>;
 
