@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Wrench, ChevronRight, Server, SlidersHorizontal, FileDown, Loader2, CheckSquare, Square } from "lucide-react";
+import { Wrench, ChevronRight, Server, SlidersHorizontal, FileDown, Loader2, CheckSquare, Square, Pencil } from "lucide-react";
 import { PLANTILLAS } from "@/lib/mantenimiento-plantillas";
 import { generarInformeMantenimientoWord, type PlantillaInforme } from "@/lib/reporte-mantenimiento.functions";
 import { PlantillaInformeSelector } from "@/components/plantilla-informe-selector";
@@ -160,10 +160,19 @@ function MantenimientoListPage() {
                   {content}
                 </button>
               ) : (
-                <Link key={r.id} to="/mantenimiento/$id" params={{ id: r.id }} className="glass rounded-xl p-3 flex items-center gap-3 hover:bg-secondary/40">
-                  {content}
-                </Link>
+                <div key={r.id} className="space-y-1">
+                  <Link to="/mantenimiento/$id" params={{ id: r.id }} className="glass rounded-xl p-3 flex items-center gap-3 hover:bg-secondary/40">
+                    {content}
+                  </Link>
+                  {r.estado !== "finalizado" && (
+                    <Link to="/mantenimiento/editar/$id" params={{ id: r.id }}
+                      className="ml-1 inline-flex items-center gap-1 text-[11px] text-primary hover:underline">
+                      <Pencil className="size-3" /> Continuar editando
+                    </Link>
+                  )}
+                </div>
               );
+
             })}
           </div>
         )}
