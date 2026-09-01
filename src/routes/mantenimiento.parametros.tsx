@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ChevronLeft, Plus, Pencil, Trash2, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, Plus, Pencil, Trash2, SlidersHorizontal, EyeOff, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
-import { PLANTILLAS, getPlantilla } from "@/lib/mantenimiento-plantillas";
+import { PLANTILLAS, getPlantilla, type OverrideRow, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
 
 export const Route = createFileRoute("/mantenimiento/parametros")({
   component: ParametrosPage,
@@ -38,23 +38,78 @@ function ParametrosPage() {
   const nav = useNavigate();
   const [tipo, setTipo] = useState(PLANTILLAS[0].id);
   const [rows, setRows] = useState<Param[]>([]);
+  const [ovs, setOvs] = useState<OverrideRow[]>([]);
   const [busy, setBusy] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Param | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
+  const [baseEdit, setBaseEdit] = useState<{ item: ItemPlantilla; seccion: string } | null>(null);
+  const [baseForm, setBaseForm] = useState({ label: "", unidad: "", seccion: "", opciones: "" });
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
   const plantilla = useMemo(() => getPlantilla(tipo), [tipo]);
   const seccionesBase = plantilla?.secciones.map(s => s.titulo) ?? [];
+  const ovMap = useMemo(() => new Map(ovs.map(o => [o.clave, o])), [ovs]);
 
   async function load() {
     setBusy(true);
-    const { data } = await supabase.from("plantilla_parametros").select("*").eq("tipo", tipo).order("orden");
-    setRows((data ?? []) as Param[]);
+    const [pp, po] = await Promise.all([
+      supabase.from("plantilla_parametros").select("*").eq("tipo", tipo).order("orden"),
+      supabase.from("plantilla_overrides").select("*").eq("tipo", tipo),
+    ]);
+    setRows((pp.data ?? []) as Param[]);
+    setOvs((po.data ?? []) as OverrideRow[]);
     setBusy(false);
   }
   useEffect(() => { load(); }, [tipo]);
+
+  async function upsertOverride(clave: string, patch: Partial<OverrideRow>) {
+    const prev = ovMap.get(clave);
+    const payload = {
+      tipo, clave,
+      seccion: patch.seccion ?? prev?.seccion ?? null,
+      label: patch.label ?? prev?.label ?? null,
+      unidad: patch.unidad ?? prev?.unidad ?? null,
+      opciones: patch.opciones ?? prev?.opciones ?? null,
+      oculto: patch.oculto ?? prev?.oculto ?? false,
+      created_by: user?.id ?? null,
+    };
+    const { error } = await supabase.from("plantilla_overrides").upsert(payload, { onConflict: "tipo,clave" });
+    if (error) { toast.error(friendlyDbError(error)); return; }
+    load();
+  }
+
+  async function restaurarBase(clave: string) {
+    const { error } = await supabase.from("plantilla_overrides").delete().eq("tipo", tipo).eq("clave", clave);
+    if (error) { toast.error(friendlyDbError(error)); return; }
+    toast.success("Parámetro restaurado"); load();
+  }
+
+  function startBaseEdit(item: ItemPlantilla, seccion: string) {
+    const o = ovMap.get(item.k);
+    setBaseEdit({ item, seccion });
+    setBaseForm({
+      label: o?.label ?? item.l,
+      unidad: o?.unidad ?? item.u ?? "",
+      seccion: o?.seccion ?? seccion,
+      opciones: (o?.opciones ?? item.o ?? []).join(", "),
+    });
+  }
+
+  async function saveBaseEdit() {
+    if (!baseEdit) return;
+    if (!baseForm.label.trim()) { toast.error("La etiqueta es obligatoria"); return; }
+    await upsertOverride(baseEdit.item.k, {
+      label: baseForm.label.trim(),
+      unidad: baseForm.unidad.trim() || null,
+      seccion: baseForm.seccion.trim() || baseEdit.seccion,
+      opciones: baseEdit.item.t === "opcion" ? baseForm.opciones.split(",").map(s => s.trim()).filter(Boolean) : null,
+      oculto: false,
+    });
+    setBaseEdit(null);
+    toast.success("Parámetro actualizado");
+  }
 
   function startNew() {
     setEditing(null);
@@ -120,10 +175,10 @@ function ParametrosPage() {
         <p className="text-[10px] text-muted-foreground mt-2">Secciones base: {seccionesBase.join(" · ")}</p>
       </div>
 
+      <h3 className="text-sm font-semibold mb-2 mt-4">Parámetros personalizados</h3>
       {busy ? <p className="text-sm text-muted-foreground">Cargando…</p> : rows.length === 0 ? (
         <div className="glass rounded-xl p-6 text-center">
           <p className="text-sm text-muted-foreground">Sin parámetros personalizados para este tipo.</p>
-          <p className="text-[11px] text-muted-foreground mt-1">El formulario ya incluye {plantilla?.secciones.reduce((s, x) => s + x.items.length, 0)} parámetros estándar.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -153,6 +208,64 @@ function ParametrosPage() {
           ))}
         </div>
       )}
+
+      <h3 className="text-sm font-semibold mb-2 mt-6">Parámetros estándar</h3>
+      <p className="text-[11px] text-muted-foreground mb-2">Puedes renombrar, cambiar unidad/sección u ocultar cualquier parámetro estándar. Los datos ya guardados no se borran.</p>
+      <div className="space-y-3">
+        {(plantilla?.secciones ?? []).map(sec => (
+          <div key={sec.titulo} className="glass rounded-xl p-3">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{sec.titulo}</p>
+            <div className="space-y-1.5">
+              {sec.items.map(it => {
+                const o = ovMap.get(it.k);
+                const oculto = !!o?.oculto;
+                return (
+                  <div key={it.k} className={`flex items-center gap-2 ${oculto ? "opacity-50" : ""}`}>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-sm truncate ${oculto ? "line-through" : ""}`}>
+                        {o?.label ?? it.l} {(o?.unidad ?? it.u) && <span className="text-muted-foreground">({o?.unidad ?? it.u})</span>}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground truncate">{it.t}{o ? " · modificado" : ""}{o?.seccion && o.seccion !== sec.titulo ? ` · → ${o.seccion}` : ""}</p>
+                    </div>
+                    <Button size="icon" variant="ghost" onClick={() => startBaseEdit(it, sec.titulo)}><Pencil className="size-4" /></Button>
+                    {oculto ? (
+                      <Button size="icon" variant="ghost" onClick={() => restaurarBase(it.k)}><RotateCcw className="size-4" /></Button>
+                    ) : (
+                      <Button size="icon" variant="ghost" onClick={() => upsertOverride(it.k, { oculto: true })}><EyeOff className="size-4 text-fail" /></Button>
+                    )}
+                    {o && !oculto && (
+                      <Button size="icon" variant="ghost" onClick={() => restaurarBase(it.k)}><RotateCcw className="size-4" /></Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Dialog open={!!baseEdit} onOpenChange={(v) => !v && setBaseEdit(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Editar parámetro estándar</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Field label="Etiqueta *"><Input value={baseForm.label} onChange={(e) => setBaseForm({ ...baseForm, label: e.target.value })} /></Field>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Unidad"><Input value={baseForm.unidad} onChange={(e) => setBaseForm({ ...baseForm, unidad: e.target.value })} /></Field>
+              <Field label="Sección">
+                <Input list="sec-list" value={baseForm.seccion} onChange={(e) => setBaseForm({ ...baseForm, seccion: e.target.value })} />
+              </Field>
+            </div>
+            {baseEdit?.item.t === "opcion" && (
+              <Field label="Opciones (separadas por coma)"><Input value={baseForm.opciones} onChange={(e) => setBaseForm({ ...baseForm, opciones: e.target.value })} /></Field>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBaseEdit(null)}>Cancelar</Button>
+            <Button onClick={saveBaseEdit}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">

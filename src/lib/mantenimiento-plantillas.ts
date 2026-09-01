@@ -439,3 +439,43 @@ export const PLANTILLAS: Plantilla[] = [
 export function getPlantilla(id: string): Plantilla | undefined {
   return PLANTILLAS.find(p => p.id === id);
 }
+
+// ---------- Personalización de parámetros estándar ----------
+export type OverrideRow = {
+  id?: string;
+  tipo: string;
+  clave: string;
+  seccion: string | null;
+  label: string | null;
+  unidad: string | null;
+  opciones: string[] | null;
+  orden: number | null;
+  oculto: boolean;
+};
+
+/** Aplica ocultamientos / renombres / cambios de sección sobre una plantilla base. */
+export function aplicarOverrides(p: Plantilla, ovs: OverrideRow[]): Plantilla {
+  if (!ovs.length) return p;
+  const map = new Map(ovs.map(o => [o.clave, o]));
+  const secciones: SeccionPlantilla[] = [];
+  const push = (titulo: string, item: ItemPlantilla) => {
+    const s = secciones.find(x => x.titulo === titulo);
+    if (s) s.items.push(item);
+    else secciones.push({ titulo, items: [item] });
+  };
+  for (const sec of p.secciones) {
+    if (!secciones.some(x => x.titulo === sec.titulo)) secciones.push({ titulo: sec.titulo, items: [] });
+    for (const it of sec.items) {
+      const o = map.get(it.k);
+      if (o?.oculto) continue;
+      const item: ItemPlantilla = {
+        ...it,
+        l: o?.label?.trim() ? o.label : it.l,
+        u: o?.unidad !== undefined && o?.unidad !== null ? (o.unidad || undefined) : it.u,
+        o: o?.opciones?.length ? o.opciones : it.o,
+      };
+      push(o?.seccion?.trim() ? o.seccion : sec.titulo, item);
+    }
+  }
+  return { ...p, secciones: secciones.filter(s => s.items.length > 0) };
+}

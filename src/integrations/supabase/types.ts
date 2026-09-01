@@ -434,6 +434,51 @@ export type Database = {
           },
         ]
       }
+      plantilla_overrides: {
+        Row: {
+          clave: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string | null
+          oculto: boolean
+          opciones: string[] | null
+          orden: number | null
+          seccion: string | null
+          tipo: string
+          unidad: string | null
+          updated_at: string
+        }
+        Insert: {
+          clave: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          oculto?: boolean
+          opciones?: string[] | null
+          orden?: number | null
+          seccion?: string | null
+          tipo: string
+          unidad?: string | null
+          updated_at?: string
+        }
+        Update: {
+          clave?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          oculto?: boolean
+          opciones?: string[] | null
+          orden?: number | null
+          seccion?: string | null
+          tipo?: string
+          unidad?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plantilla_parametros: {
         Row: {
           clave: string
