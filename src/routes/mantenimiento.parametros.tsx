@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ChevronLeft, Plus, Pencil, Trash2, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
-import { PLANTILLAS, getPlantilla } from "@/lib/mantenimiento-plantillas";
+import { PLANTILLAS, getPlantilla, type OverrideRow, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
 
 export const Route = createFileRoute("/mantenimiento/parametros")({
   component: ParametrosPage,
