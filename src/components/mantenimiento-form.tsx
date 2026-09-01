@@ -11,7 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ChevronLeft, Save, Check, CircleDot } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
-import { getPlantilla, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
+import { getPlantilla, aplicarOverrides, type ItemPlantilla, type OverrideRow } from "@/lib/mantenimiento-plantillas";
 import { PhotoCapture } from "@/components/photo-capture";
 import { uploadEvidencia, listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
 import { BTA521Import } from "@/components/bta521-import";
