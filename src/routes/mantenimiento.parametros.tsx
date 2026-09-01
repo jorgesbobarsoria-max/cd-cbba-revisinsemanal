@@ -38,23 +38,78 @@ function ParametrosPage() {
   const nav = useNavigate();
   const [tipo, setTipo] = useState(PLANTILLAS[0].id);
   const [rows, setRows] = useState<Param[]>([]);
+  const [ovs, setOvs] = useState<OverrideRow[]>([]);
   const [busy, setBusy] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Param | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
+  const [baseEdit, setBaseEdit] = useState<{ item: ItemPlantilla; seccion: string } | null>(null);
+  const [baseForm, setBaseForm] = useState({ label: "", unidad: "", seccion: "", opciones: "" });
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
   const plantilla = useMemo(() => getPlantilla(tipo), [tipo]);
   const seccionesBase = plantilla?.secciones.map(s => s.titulo) ?? [];
+  const ovMap = useMemo(() => new Map(ovs.map(o => [o.clave, o])), [ovs]);
 
   async function load() {
     setBusy(true);
-    const { data } = await supabase.from("plantilla_parametros").select("*").eq("tipo", tipo).order("orden");
-    setRows((data ?? []) as Param[]);
+    const [pp, po] = await Promise.all([
+      supabase.from("plantilla_parametros").select("*").eq("tipo", tipo).order("orden"),
+      supabase.from("plantilla_overrides").select("*").eq("tipo", tipo),
+    ]);
+    setRows((pp.data ?? []) as Param[]);
+    setOvs((po.data ?? []) as OverrideRow[]);
     setBusy(false);
   }
   useEffect(() => { load(); }, [tipo]);
+
+  async function upsertOverride(clave: string, patch: Partial<OverrideRow>) {
+    const prev = ovMap.get(clave);
+    const payload = {
+      tipo, clave,
+      seccion: patch.seccion ?? prev?.seccion ?? null,
+      label: patch.label ?? prev?.label ?? null,
+      unidad: patch.unidad ?? prev?.unidad ?? null,
+      opciones: patch.opciones ?? prev?.opciones ?? null,
+      oculto: patch.oculto ?? prev?.oculto ?? false,
+      created_by: user?.id ?? null,
+    };
+    const { error } = await supabase.from("plantilla_overrides").upsert(payload, { onConflict: "tipo,clave" });
+    if (error) { toast.error(friendlyDbError(error)); return; }
+    load();
+  }
+
+  async function restaurarBase(clave: string) {
+    const { error } = await supabase.from("plantilla_overrides").delete().eq("tipo", tipo).eq("clave", clave);
+    if (error) { toast.error(friendlyDbError(error)); return; }
+    toast.success("Parámetro restaurado"); load();
+  }
+
+  function startBaseEdit(item: ItemPlantilla, seccion: string) {
+    const o = ovMap.get(item.k);
+    setBaseEdit({ item, seccion });
+    setBaseForm({
+      label: o?.label ?? item.l,
+      unidad: o?.unidad ?? item.u ?? "",
+      seccion: o?.seccion ?? seccion,
+      opciones: (o?.opciones ?? item.o ?? []).join(", "),
+    });
+  }
+
+  async function saveBaseEdit() {
+    if (!baseEdit) return;
+    if (!baseForm.label.trim()) { toast.error("La etiqueta es obligatoria"); return; }
+    await upsertOverride(baseEdit.item.k, {
+      label: baseForm.label.trim(),
+      unidad: baseForm.unidad.trim() || null,
+      seccion: baseForm.seccion.trim() || baseEdit.seccion,
+      opciones: baseEdit.item.t === "opcion" ? baseForm.opciones.split(",").map(s => s.trim()).filter(Boolean) : null,
+      oculto: false,
+    });
+    setBaseEdit(null);
+    toast.success("Parámetro actualizado");
+  }
 
   function startNew() {
     setEditing(null);
