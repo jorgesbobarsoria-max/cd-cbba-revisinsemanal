@@ -30,6 +30,7 @@ export function MantenimientoForm({ tipo, existing }: { tipo: string; existing?:
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [externos, setExternos] = useState<Externo[]>([]);
   const [extras, setExtras] = useState<ExtraParam[]>([]);
+  const [overrides, setOverrides] = useState<OverrideRow[]>([]);
   const [modoExterno, setModoExterno] = useState<boolean>(!!existing?.equipo_externo);
   const [equipoId, setEquipoId] = useState<string>(existing?.equipo_id ?? "");
   const [externoId, setExternoId] = useState<string>(existing?.equipo_externo?.id ?? "");
