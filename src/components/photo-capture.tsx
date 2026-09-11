@@ -50,6 +50,9 @@ export function PhotoCapture(props: Props) {
   const [fallidas, setFallidas] = useState<Pendiente[]>([]);
   const [editando, setEditando] = useState<string | null>(null);
   const [textoDesc, setTextoDesc] = useState("");
+  const [cola, setCola] = useState<File[]>([]);
+  const [colaIdx, setColaIdx] = useState(0);
+  const [editadas, setEditadas] = useState<File[]>([]);
 
   useEffect(() => {
     if (props.mode === "immediate") setRows(props.existing ?? []);
