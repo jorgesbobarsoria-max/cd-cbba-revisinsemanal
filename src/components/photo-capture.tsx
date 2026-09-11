@@ -143,7 +143,28 @@ export function PhotoCapture(props: Props) {
     const picked = files.slice(0, slots);
     if (files.length > slots) toast.info(`Máximo ${MAX_FOTOS} fotos por punto`);
     if (!picked.length) return;
-    await procesar(picked);
+    setEditadas([]);
+    setColaIdx(0);
+    setCola(picked);
+  }
+
+  function editorListo(f: File) {
+    const acumuladas = [...editadas, f];
+    if (colaIdx + 1 < cola.length) {
+      setEditadas(acumuladas);
+      setColaIdx(colaIdx + 1);
+      return;
+    }
+    setCola([]);
+    setEditadas([]);
+    setColaIdx(0);
+    void procesar(acumuladas);
+  }
+
+  function editorCancelar() {
+    setCola([]);
+    setEditadas([]);
+    setColaIdx(0);
   }
 
   async function reintentar(idx: number) {
