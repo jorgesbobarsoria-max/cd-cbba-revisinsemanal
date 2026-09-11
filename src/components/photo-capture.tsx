@@ -7,6 +7,7 @@ import {
   type EvidenciaRow, type EvidenciaScope,
 } from "@/lib/photo-utils";
 import { useAuth } from "@/hooks/use-auth";
+import { PhotoEditor } from "@/components/photo-editor";
 
 type BaseProps = {
   scope: EvidenciaScope;
