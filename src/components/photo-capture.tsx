@@ -296,6 +296,17 @@ export function PhotoCapture(props: Props) {
           <button type="button" onClick={() => setEditando(null)} className="min-h-11 px-2 text-xs text-muted-foreground">Cancelar</button>
         </div>
       )}
+
+      {cola[colaIdx] && (
+        <PhotoEditor
+          key={`${colaIdx}-${cola[colaIdx].name}`}
+          file={cola[colaIdx]}
+          index={colaIdx}
+          total={cola.length}
+          onDone={editorListo}
+          onCancel={editorCancelar}
+        />
+      )}
     </div>
   );
 }
