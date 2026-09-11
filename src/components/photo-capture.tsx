@@ -7,6 +7,7 @@ import {
   type EvidenciaRow, type EvidenciaScope,
 } from "@/lib/photo-utils";
 import { useAuth } from "@/hooks/use-auth";
+import { PhotoEditor } from "@/components/photo-editor";
 
 type BaseProps = {
   scope: EvidenciaScope;
@@ -49,6 +50,9 @@ export function PhotoCapture(props: Props) {
   const [fallidas, setFallidas] = useState<Pendiente[]>([]);
   const [editando, setEditando] = useState<string | null>(null);
   const [textoDesc, setTextoDesc] = useState("");
+  const [cola, setCola] = useState<File[]>([]);
+  const [colaIdx, setColaIdx] = useState(0);
+  const [editadas, setEditadas] = useState<File[]>([]);
 
   useEffect(() => {
     if (props.mode === "immediate") setRows(props.existing ?? []);
@@ -139,7 +143,28 @@ export function PhotoCapture(props: Props) {
     const picked = files.slice(0, slots);
     if (files.length > slots) toast.info(`Máximo ${MAX_FOTOS} fotos por punto`);
     if (!picked.length) return;
-    await procesar(picked);
+    setEditadas([]);
+    setColaIdx(0);
+    setCola(picked);
+  }
+
+  function editorListo(f: File) {
+    const acumuladas = [...editadas, f];
+    if (colaIdx + 1 < cola.length) {
+      setEditadas(acumuladas);
+      setColaIdx(colaIdx + 1);
+      return;
+    }
+    setCola([]);
+    setEditadas([]);
+    setColaIdx(0);
+    void procesar(acumuladas);
+  }
+
+  function editorCancelar() {
+    setCola([]);
+    setEditadas([]);
+    setColaIdx(0);
   }
 
   async function reintentar(idx: number) {
@@ -270,6 +295,17 @@ export function PhotoCapture(props: Props) {
           <button type="button" onClick={() => guardarDescripcion(editando)} className="min-h-11 px-3 rounded-md bg-primary text-primary-foreground text-xs font-semibold">Guardar</button>
           <button type="button" onClick={() => setEditando(null)} className="min-h-11 px-2 text-xs text-muted-foreground">Cancelar</button>
         </div>
+      )}
+
+      {cola[colaIdx] && (
+        <PhotoEditor
+          key={`${colaIdx}-${cola[colaIdx].name}`}
+          file={cola[colaIdx]}
+          index={colaIdx}
+          total={cola.length}
+          onDone={editorListo}
+          onCancel={editorCancelar}
+        />
       )}
     </div>
   );
