@@ -38,6 +38,7 @@ type Pendiente = { file: File; error: string };
 export function PhotoCapture(props: Props) {
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
+  const galeriaRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<EvidenciaRow[]>(
     props.mode === "immediate" ? (props.existing ?? []) : [],
   );
@@ -193,11 +194,28 @@ export function PhotoCapture(props: Props) {
           {props.label ?? "Foto"}
           <span className="text-[10px] text-muted-foreground font-mono">{count}/{MAX_FOTOS}</span>
         </button>
+        <button
+          type="button"
+          onClick={() => galeriaRef.current?.click()}
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-lg bg-surface-1 border border-border text-foreground text-xs font-semibold hover:bg-surface-2 disabled:opacity-40"
+        >
+          <ImagePlus className="size-3.5" />
+          Galería
+        </button>
         <input
           ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
           capture="environment"
+          multiple
+          className="hidden"
+          onChange={onPick}
+        />
+        <input
+          ref={galeriaRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
           multiple
           className="hidden"
           onChange={onPick}
