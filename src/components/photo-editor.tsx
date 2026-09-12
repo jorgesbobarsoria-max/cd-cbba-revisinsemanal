@@ -51,25 +51,39 @@ function rotatedSize(w: number, h: number, rot: number) {
   return rot % 180 === 0 ? { w, h } : { w: h, h: w };
 }
 
+const colorCache = new Map<BrushColor, string>();
 function cssColor(name: BrushColor) {
-  const value = getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
-  return value || "currentColor";
+  const hit = colorCache.get(name);
+  if (hit) return hit;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim() || "currentColor";
+  colorCache.set(name, value);
+  return value;
 }
 
-function drawBase(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  rot: number,
-  scale: number,
-  filter: string,
-) {
+/** Imagen ya rotada y reescalada una sola vez; redibujar filtros sobre ella es mucho más rápido. */
+function makeBase(img: HTMLImageElement, rot: number, maxSide: number) {
+  const size = rotatedSize(img.width, img.height, rot);
+  const scale = Math.min(1, maxSide / Math.max(size.w, size.h));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(size.w * scale));
+  canvas.height = Math.max(1, Math.round(size.h * scale));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+  ctx.imageSmoothingQuality = "medium";
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate((rot * Math.PI) / 180);
+  const w = img.width * scale;
+  const h = img.height * scale;
+  ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  return canvas;
+}
+
+function drawBase(ctx: CanvasRenderingContext2D, base: HTMLCanvasElement, filter: string) {
   const { width, height } = ctx.canvas;
   ctx.clearRect(0, 0, width, height);
   ctx.save();
   ctx.filter = filter;
-  ctx.translate(width / 2, height / 2);
-  ctx.rotate((rot * Math.PI) / 180);
-  ctx.drawImage(img, (-img.width * scale) / 2, (-img.height * scale) / 2, img.width * scale, img.height * scale);
+  ctx.drawImage(base, 0, 0, width, height);
   ctx.restore();
   ctx.filter = "none";
 }
