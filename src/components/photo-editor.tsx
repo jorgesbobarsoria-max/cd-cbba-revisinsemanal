@@ -266,13 +266,14 @@ export function PhotoEditor({ file, index, total, onDone, onCancel }: Props) {
     if (!img) return;
     setSaving(true);
     try {
-      const size = rotatedSize(img.width, img.height, rot);
+      const base = makeBase(img, rot, MAX_OUTPUT);
+      const size = { w: base.width, h: base.height };
       const full = document.createElement("canvas");
       full.width = size.w;
       full.height = size.h;
       const ctx = full.getContext("2d");
       if (!ctx) return;
-      drawBase(ctx, img, rot, 1, canvasFilter);
+      drawBase(ctx, base, canvasFilter);
       mosaics.forEach((rect) => applyMosaic(ctx, rect));
       drawMarks(ctx, strokes, texts);
 
