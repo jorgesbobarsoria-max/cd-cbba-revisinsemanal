@@ -30,6 +30,15 @@ type Props = {
 };
 
 const MAX_PREVIEW = 1000;
+/** La foto final se comprime a 1600 px, así que no hace falta procesar más. */
+const MAX_OUTPUT = 1600;
+
+/** Vista previa acotada a la pantalla real del teléfono para no procesar píxeles invisibles. */
+function previewMax() {
+  if (typeof window === "undefined") return MAX_PREVIEW;
+  const side = Math.max(window.innerWidth, window.innerHeight) * Math.min(2, window.devicePixelRatio || 1);
+  return Math.max(640, Math.min(MAX_PREVIEW, Math.round(side)));
+}
 const tools: { id: Tool; label: string; icon: typeof Crop }[] = [
   { id: "crop", label: "Recortar", icon: Crop },
   { id: "adjust", label: "Ajustar", icon: SlidersHorizontal },
