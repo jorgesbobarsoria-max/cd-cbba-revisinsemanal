@@ -163,19 +163,24 @@ export function PhotoEditor({ file, index, total, onDone, onCancel }: Props) {
   const preset = filters.find((item) => item.id === filterId)?.value ?? "";
   const canvasFilter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) ${preset}`.trim();
 
+  const previewBase = useMemo(() => (img ? makeBase(img, rot, previewMax()) : null), [img, rot]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !img) return;
-    const size = rotatedSize(img.width, img.height, rot);
-    const scale = Math.min(1, MAX_PREVIEW / Math.max(size.w, size.h));
-    canvas.width = Math.round(size.w * scale);
-    canvas.height = Math.round(size.h * scale);
+    if (!canvas || !previewBase) return;
+    if (canvas.width !== previewBase.width || canvas.height !== previewBase.height) {
+      canvas.width = previewBase.width;
+      canvas.height = previewBase.height;
+    }
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    drawBase(ctx, img, rot, scale, canvasFilter);
-    mosaics.forEach((rect) => applyMosaic(ctx, rect));
-    drawMarks(ctx, drawing ? [...strokes, { points: drawing, color: brushColor, width: brushWidth }] : strokes, texts);
-  }, [img, rot, canvasFilter, mosaics, strokes, texts, drawing, brushColor, brushWidth]);
+    const frame = requestAnimationFrame(() => {
+      drawBase(ctx, previewBase, canvasFilter);
+      mosaics.forEach((rect) => applyMosaic(ctx, rect));
+      drawMarks(ctx, drawing ? [...strokes, { points: drawing, color: brushColor, width: brushWidth }] : strokes, texts);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [previewBase, canvasFilter, mosaics, strokes, texts, drawing, brushColor, brushWidth]);
 
   function pointerPosition(event: React.PointerEvent): Point | null {
     const canvas = canvasRef.current;
