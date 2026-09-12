@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   ChevronLeft,
@@ -30,6 +30,15 @@ type Props = {
 };
 
 const MAX_PREVIEW = 1000;
+/** La foto final se comprime a 1600 px, así que no hace falta procesar más. */
+const MAX_OUTPUT = 1600;
+
+/** Vista previa acotada a la pantalla real del teléfono para no procesar píxeles invisibles. */
+function previewMax() {
+  if (typeof window === "undefined") return MAX_PREVIEW;
+  const side = Math.max(window.innerWidth, window.innerHeight) * Math.min(2, window.devicePixelRatio || 1);
+  return Math.max(640, Math.min(MAX_PREVIEW, Math.round(side)));
+}
 const tools: { id: Tool; label: string; icon: typeof Crop }[] = [
   { id: "crop", label: "Recortar", icon: Crop },
   { id: "adjust", label: "Ajustar", icon: SlidersHorizontal },
@@ -51,25 +60,39 @@ function rotatedSize(w: number, h: number, rot: number) {
   return rot % 180 === 0 ? { w, h } : { w: h, h: w };
 }
 
+const colorCache = new Map<BrushColor, string>();
 function cssColor(name: BrushColor) {
-  const value = getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
-  return value || "currentColor";
+  const hit = colorCache.get(name);
+  if (hit) return hit;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim() || "currentColor";
+  colorCache.set(name, value);
+  return value;
 }
 
-function drawBase(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  rot: number,
-  scale: number,
-  filter: string,
-) {
+/** Imagen ya rotada y reescalada una sola vez; redibujar filtros sobre ella es mucho más rápido. */
+function makeBase(img: HTMLImageElement, rot: number, maxSide: number) {
+  const size = rotatedSize(img.width, img.height, rot);
+  const scale = Math.min(1, maxSide / Math.max(size.w, size.h));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(size.w * scale));
+  canvas.height = Math.max(1, Math.round(size.h * scale));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+  ctx.imageSmoothingQuality = "medium";
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate((rot * Math.PI) / 180);
+  const w = img.width * scale;
+  const h = img.height * scale;
+  ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  return canvas;
+}
+
+function drawBase(ctx: CanvasRenderingContext2D, base: HTMLCanvasElement, filter: string) {
   const { width, height } = ctx.canvas;
   ctx.clearRect(0, 0, width, height);
   ctx.save();
   ctx.filter = filter;
-  ctx.translate(width / 2, height / 2);
-  ctx.rotate((rot * Math.PI) / 180);
-  ctx.drawImage(img, (-img.width * scale) / 2, (-img.height * scale) / 2, img.width * scale, img.height * scale);
+  ctx.drawImage(base, 0, 0, width, height);
   ctx.restore();
   ctx.filter = "none";
 }
@@ -149,19 +172,24 @@ export function PhotoEditor({ file, index, total, onDone, onCancel }: Props) {
   const preset = filters.find((item) => item.id === filterId)?.value ?? "";
   const canvasFilter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) ${preset}`.trim();
 
+  const previewBase = useMemo(() => (img ? makeBase(img, rot, previewMax()) : null), [img, rot]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !img) return;
-    const size = rotatedSize(img.width, img.height, rot);
-    const scale = Math.min(1, MAX_PREVIEW / Math.max(size.w, size.h));
-    canvas.width = Math.round(size.w * scale);
-    canvas.height = Math.round(size.h * scale);
+    if (!canvas || !previewBase) return;
+    if (canvas.width !== previewBase.width || canvas.height !== previewBase.height) {
+      canvas.width = previewBase.width;
+      canvas.height = previewBase.height;
+    }
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    drawBase(ctx, img, rot, scale, canvasFilter);
-    mosaics.forEach((rect) => applyMosaic(ctx, rect));
-    drawMarks(ctx, drawing ? [...strokes, { points: drawing, color: brushColor, width: brushWidth }] : strokes, texts);
-  }, [img, rot, canvasFilter, mosaics, strokes, texts, drawing, brushColor, brushWidth]);
+    const frame = requestAnimationFrame(() => {
+      drawBase(ctx, previewBase, canvasFilter);
+      mosaics.forEach((rect) => applyMosaic(ctx, rect));
+      drawMarks(ctx, drawing ? [...strokes, { points: drawing, color: brushColor, width: brushWidth }] : strokes, texts);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [previewBase, canvasFilter, mosaics, strokes, texts, drawing, brushColor, brushWidth]);
 
   function pointerPosition(event: React.PointerEvent): Point | null {
     const canvas = canvasRef.current;
@@ -238,13 +266,14 @@ export function PhotoEditor({ file, index, total, onDone, onCancel }: Props) {
     if (!img) return;
     setSaving(true);
     try {
-      const size = rotatedSize(img.width, img.height, rot);
+      const base = makeBase(img, rot, MAX_OUTPUT);
+      const size = { w: base.width, h: base.height };
       const full = document.createElement("canvas");
       full.width = size.w;
       full.height = size.h;
       const ctx = full.getContext("2d");
       if (!ctx) return;
-      drawBase(ctx, img, rot, 1, canvasFilter);
+      drawBase(ctx, base, canvasFilter);
       mosaics.forEach((rect) => applyMosaic(ctx, rect));
       drawMarks(ctx, strokes, texts);
 
