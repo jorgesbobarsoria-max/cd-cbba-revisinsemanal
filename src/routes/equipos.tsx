@@ -48,14 +48,20 @@ function EquiposPage() {
   const [eq, setEq] = useState<Equipo[]>([]);
   const [editing, setEditing] = useState<Partial<Equipo> | null>(null);
   const [paramsOf, setParamsOf] = useState<Equipo | null>(null);
+  const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
-  async function load() {
-    const { data } = await supabase.from("equipos").select("*").order("orden");
+  useEffect(() => {
+    const c = typeof window !== "undefined" ? window.localStorage.getItem("dc_ciudad") : null;
+    if (c && CIUDADES.includes(c)) setCiudad(c);
+  }, []);
+
+  async function load(c = ciudad) {
+    const { data } = await supabase.from("equipos").select("*").eq("ciudad", c).order("orden");
     setEq((data ?? []) as Equipo[]);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(ciudad); }, [ciudad]);
 
   async function saveEquipo() {
     if (!editing?.id || !editing?.tag || !editing?.categoria) {
@@ -63,7 +69,7 @@ function EquiposPage() {
       return;
     }
     const payload = {
-      id: editing.id, categoria: editing.categoria, tag: editing.tag,
+      id: editing.id, ciudad: editing.ciudad ?? ciudad, categoria: editing.categoria, tag: editing.tag,
       marca: editing.marca ?? null, modelo: editing.modelo ?? null,
       capacidad: editing.capacidad ?? null, ubicacion: editing.ubicacion ?? null,
       criticidad: editing.criticidad ?? null, redundancia: editing.redundancia ?? null,
