@@ -107,7 +107,7 @@ function InspeccionPage() {
         map[r.punto_id] = { id: r.id, punto_id: r.punto_id, equipo_id: r.equipo_id, estado: r.estado ?? undefined, valor: r.valor ?? undefined, semaforo: r.semaforo ?? undefined, observaciones: r.observaciones ?? undefined, accion_correctiva: r.accion_correctiva ?? undefined };
       });
       setItems(map);
-      setOpen(eq.data?.[0]?.id ?? null);
+      setOpen(eqCiudad[0]?.id ?? null);
       setLoading(false);
     })();
   }, [id]);
