@@ -18,7 +18,7 @@ export const Route = createFileRoute("/equipos")({
 });
 
 type Equipo = {
-  id: string; categoria: string; tag: string; marca: string | null; modelo: string | null;
+  id: string; ciudad: string; categoria: string; tag: string; marca: string | null; modelo: string | null;
   capacidad: string | null; ubicacion: string | null; criticidad: string | null;
   redundancia: string | null; estado: string | null; orden: number;
   fecha_instalacion: string | null; observaciones: string | null;
@@ -33,7 +33,11 @@ type Punto = {
   valores_count?: number | null; etiquetas_valores?: string[] | null;
 };
 
-const CATEGORIAS = ["Aire de Precisión", "UPS", "ATS", "Grupo Generador", "Sup. Incendios", "Sensores Sala"];
+const CIUDADES = ["Cochabamba", "La Paz"];
+const CATEGORIAS = [
+  "Aire de Precisión", "UPS", "ATS", "Grupo Generador",
+  "Sistema Supresor Incendios", "Sensores Ambiente", "Rack / Micro Data Center",
+];
 const CRITICIDADES = ["Crítica", "Alta", "Media", "Baja"];
 const TIPOS = ["estado", "numerico", "texto", "binario"];
 
