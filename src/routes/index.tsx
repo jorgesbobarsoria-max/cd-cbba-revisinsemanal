@@ -33,6 +33,8 @@ function getWeekNumber(d: Date) {
   return Math.ceil(((+date - +yearStart) / 86400000 + 1) / 7);
 }
 
+const CIUDADES = ["Cochabamba", "La Paz"];
+
 const COLORS = {
   ok: "oklch(0.78 0.17 165)",
   warn: "oklch(0.82 0.17 75)",
