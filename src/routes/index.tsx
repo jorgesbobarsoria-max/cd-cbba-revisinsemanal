@@ -212,7 +212,7 @@ function HomePage() {
       <section className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Revisión Semanal</p>
-          <h2 className="text-xl font-bold mt-0.5">DC Cochabamba</h2>
+          <h2 className="text-xl font-bold mt-0.5">DC {ciudad}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             Hola, <span className="text-foreground">{user?.user_metadata?.full_name ?? user?.email?.split("@")[0]}</span>
           </p>
@@ -222,6 +222,27 @@ function HomePage() {
             {year}-W{semana}
           </div>
         </div>
+      </section>
+
+      {/* Selector de ciudad */}
+      <section className="mb-3 flex gap-2">
+        {CIUDADES.map((c) => (
+          <button
+            key={c}
+            onClick={() => {
+              setCiudad(c);
+              if (typeof window !== "undefined") window.localStorage.setItem("dc_ciudad", c);
+            }}
+            className={`flex-1 rounded-xl px-3 py-2 text-xs font-semibold border transition ${
+              ciudad === c
+                ? "bg-primary/15 border-primary/50 text-primary"
+                : "glass text-muted-foreground border-border/60"
+            }`}
+          >
+            <MapPin className="size-3.5 inline mr-1 -mt-0.5" />
+            {c}
+          </button>
+        ))}
       </section>
 
       {/* Selector de semana */}
@@ -245,6 +266,7 @@ function HomePage() {
           })}
         </select>
       </section>
+
 
 
       <button
