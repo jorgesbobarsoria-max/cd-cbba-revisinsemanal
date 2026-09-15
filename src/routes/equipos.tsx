@@ -100,18 +100,35 @@ function EquiposPage() {
 
   return (
     <AppShell title="Gestión de Equipos">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-xl font-bold">Catálogo</h2>
+          <h2 className="text-xl font-bold">Catálogo · {ciudad}</h2>
           <p className="text-xs text-muted-foreground">
             {eq.length} equipos · {puedeGestionar ? "toca para editar parámetros" : "solo lectura"}
           </p>
         </div>
         {puedeGestionar && (
-          <Button size="sm" onClick={() => setEditing({ orden: eq.length + 1, estado: "Operativo" })}>
+          <Button size="sm" onClick={() => setEditing({ ciudad, orden: eq.length + 1, estado: "Operativo" })}>
             <Plus className="size-4" /> Nuevo
           </Button>
         )}
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        {CIUDADES.map((c) => (
+          <button
+            key={c}
+            onClick={() => {
+              setCiudad(c);
+              if (typeof window !== "undefined") window.localStorage.setItem("dc_ciudad", c);
+            }}
+            className={`flex-1 rounded-xl px-3 py-2 text-xs font-semibold border transition ${
+              ciudad === c ? "bg-primary/15 border-primary/50 text-primary" : "glass text-muted-foreground border-border/60"
+            }`}
+          >
+            {c}
+          </button>
+        ))}
       </div>
 
       {!puedeGestionar && (
