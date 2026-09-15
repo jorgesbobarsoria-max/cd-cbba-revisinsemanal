@@ -57,6 +57,7 @@ export type Database = {
         Row: {
           capacidad: string | null
           categoria: string
+          ciudad: string
           created_at: string
           criticidad: string | null
           datos_adicionales: Json
@@ -74,6 +75,7 @@ export type Database = {
         Insert: {
           capacidad?: string | null
           categoria: string
+          ciudad?: string
           created_at?: string
           criticidad?: string | null
           datos_adicionales?: Json
@@ -91,6 +93,7 @@ export type Database = {
         Update: {
           capacidad?: string | null
           categoria?: string
+          ciudad?: string
           created_at?: string
           criticidad?: string | null
           datos_adicionales?: Json
@@ -292,6 +295,7 @@ export type Database = {
         Row: {
           carga_it: number | null
           cargo: string | null
+          ciudad: string
           condicion_clima: string | null
           created_at: string
           estado: string
@@ -315,6 +319,7 @@ export type Database = {
         Insert: {
           carga_it?: number | null
           cargo?: string | null
+          ciudad?: string
           condicion_clima?: string | null
           created_at?: string
           estado?: string
@@ -338,6 +343,7 @@ export type Database = {
         Update: {
           carga_it?: number | null
           cargo?: string | null
+          ciudad?: string
           condicion_clima?: string | null
           created_at?: string
           estado?: string
