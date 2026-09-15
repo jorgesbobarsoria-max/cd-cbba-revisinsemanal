@@ -51,23 +51,32 @@ function HomePage() {
   const [trend, setTrend] = useState<{ semana: string; alertas: number; ok: number }[]>([]);
   const [busy, setBusy] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
   useEffect(() => {
+    const c = typeof window !== "undefined" ? window.localStorage.getItem("dc_ciudad") : null;
+    if (c && CIUDADES.includes(c)) setCiudad(c);
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
+    setSelectedId(null);
+    setItems([]);
+    setTrend([]);
     (async () => {
       const [{ data: ins }, { data: eqs }, { data: pts }] = await Promise.all([
-        supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado").order("fecha", { ascending: false }).limit(24),
-        supabase.from("equipos").select("id,tag,marca,modelo,categoria").order("orden"),
+        supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado").eq("ciudad", ciudad).order("fecha", { ascending: false }).limit(24),
+        supabase.from("equipos").select("id,tag,marca,modelo,categoria").eq("ciudad", ciudad).order("orden"),
         supabase.from("puntos_inspeccion").select("id,equipo_id,descripcion,tipo,unidad"),
       ]);
       setInsps(ins ?? []);
       setEquipos(eqs ?? []);
       setPuntos(pts ?? []);
-      if (ins && ins.length > 0) setSelectedId(prev => prev ?? ins[0].id);
+      if (ins && ins.length > 0) setSelectedId(ins[0].id);
     })();
-  }, [user]);
+  }, [user, ciudad]);
 
   useEffect(() => {
     if (!selectedId || insps.length === 0) return;
