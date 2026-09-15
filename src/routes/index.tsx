@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, ChevronRight, AlertTriangle, CheckCircle2, Calendar,
-  Thermometer, Activity, Bell, BarChart3, Zap, ListChecks, Gauge,
+  Thermometer, Activity, Bell, BarChart3, Zap, ListChecks, Gauge, MapPin,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
