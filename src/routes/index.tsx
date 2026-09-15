@@ -189,6 +189,7 @@ function HomePage() {
         .from("inspecciones")
         .insert({
           user_id: user.id,
+          ciudad,
           fecha: today.toISOString().slice(0, 10),
           semana: getWeekNumber(today),
           tecnico: user.user_metadata?.full_name ?? user.email,
