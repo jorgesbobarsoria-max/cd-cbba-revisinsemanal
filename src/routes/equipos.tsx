@@ -18,7 +18,7 @@ export const Route = createFileRoute("/equipos")({
 });
 
 type Equipo = {
-  id: string; categoria: string; tag: string; marca: string | null; modelo: string | null;
+  id: string; ciudad: string; categoria: string; tag: string; marca: string | null; modelo: string | null;
   capacidad: string | null; ubicacion: string | null; criticidad: string | null;
   redundancia: string | null; estado: string | null; orden: number;
   fecha_instalacion: string | null; observaciones: string | null;
@@ -33,7 +33,11 @@ type Punto = {
   valores_count?: number | null; etiquetas_valores?: string[] | null;
 };
 
-const CATEGORIAS = ["Aire de Precisión", "UPS", "ATS", "Grupo Generador", "Sup. Incendios", "Sensores Sala"];
+const CIUDADES = ["Cochabamba", "La Paz"];
+const CATEGORIAS = [
+  "Aire de Precisión", "UPS", "ATS", "Grupo Generador",
+  "Sistema Supresor Incendios", "Sensores Ambiente", "Rack / Micro Data Center",
+];
 const CRITICIDADES = ["Crítica", "Alta", "Media", "Baja"];
 const TIPOS = ["estado", "numerico", "texto", "binario"];
 
@@ -44,14 +48,20 @@ function EquiposPage() {
   const [eq, setEq] = useState<Equipo[]>([]);
   const [editing, setEditing] = useState<Partial<Equipo> | null>(null);
   const [paramsOf, setParamsOf] = useState<Equipo | null>(null);
+  const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
-  async function load() {
-    const { data } = await supabase.from("equipos").select("*").order("orden");
+  useEffect(() => {
+    const c = typeof window !== "undefined" ? window.localStorage.getItem("dc_ciudad") : null;
+    if (c && CIUDADES.includes(c)) setCiudad(c);
+  }, []);
+
+  async function load(c = ciudad) {
+    const { data } = await supabase.from("equipos").select("*").eq("ciudad", c).order("orden");
     setEq((data ?? []) as Equipo[]);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(ciudad); }, [ciudad]);
 
   async function saveEquipo() {
     if (!editing?.id || !editing?.tag || !editing?.categoria) {
@@ -59,7 +69,7 @@ function EquiposPage() {
       return;
     }
     const payload = {
-      id: editing.id, categoria: editing.categoria, tag: editing.tag,
+      id: editing.id, ciudad: editing.ciudad ?? ciudad, categoria: editing.categoria, tag: editing.tag,
       marca: editing.marca ?? null, modelo: editing.modelo ?? null,
       capacidad: editing.capacidad ?? null, ubicacion: editing.ubicacion ?? null,
       criticidad: editing.criticidad ?? null, redundancia: editing.redundancia ?? null,
@@ -90,18 +100,35 @@ function EquiposPage() {
 
   return (
     <AppShell title="Gestión de Equipos">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-xl font-bold">Catálogo</h2>
+          <h2 className="text-xl font-bold">Catálogo · {ciudad}</h2>
           <p className="text-xs text-muted-foreground">
             {eq.length} equipos · {puedeGestionar ? "toca para editar parámetros" : "solo lectura"}
           </p>
         </div>
         {puedeGestionar && (
-          <Button size="sm" onClick={() => setEditing({ orden: eq.length + 1, estado: "Operativo" })}>
+          <Button size="sm" onClick={() => setEditing({ ciudad, orden: eq.length + 1, estado: "Operativo" })}>
             <Plus className="size-4" /> Nuevo
           </Button>
         )}
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        {CIUDADES.map((c) => (
+          <button
+            key={c}
+            onClick={() => {
+              setCiudad(c);
+              if (typeof window !== "undefined") window.localStorage.setItem("dc_ciudad", c);
+            }}
+            className={`flex-1 rounded-xl px-3 py-2 text-xs font-semibold border transition ${
+              ciudad === c ? "bg-primary/15 border-primary/50 text-primary" : "glass text-muted-foreground border-border/60"
+            }`}
+          >
+            {c}
+          </button>
+        ))}
       </div>
 
       {!puedeGestionar && (

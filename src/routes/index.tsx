@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, ChevronRight, AlertTriangle, CheckCircle2, Calendar,
-  Thermometer, Activity, Bell, BarChart3, Zap, ListChecks, Gauge,
+  Thermometer, Activity, Bell, BarChart3, Zap, ListChecks, Gauge, MapPin,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
@@ -33,6 +33,8 @@ function getWeekNumber(d: Date) {
   return Math.ceil(((+date - +yearStart) / 86400000 + 1) / 7);
 }
 
+const CIUDADES = ["Cochabamba", "La Paz"];
+
 const COLORS = {
   ok: "oklch(0.78 0.17 165)",
   warn: "oklch(0.82 0.17 75)",
@@ -51,23 +53,32 @@ function HomePage() {
   const [trend, setTrend] = useState<{ semana: string; alertas: number; ok: number }[]>([]);
   const [busy, setBusy] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
   useEffect(() => {
+    const c = typeof window !== "undefined" ? window.localStorage.getItem("dc_ciudad") : null;
+    if (c && CIUDADES.includes(c)) setCiudad(c);
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
+    setSelectedId(null);
+    setItems([]);
+    setTrend([]);
     (async () => {
       const [{ data: ins }, { data: eqs }, { data: pts }] = await Promise.all([
-        supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado").order("fecha", { ascending: false }).limit(24),
-        supabase.from("equipos").select("id,tag,marca,modelo,categoria").order("orden"),
+        supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado").eq("ciudad", ciudad).order("fecha", { ascending: false }).limit(24),
+        supabase.from("equipos").select("id,tag,marca,modelo,categoria").eq("ciudad", ciudad).order("orden"),
         supabase.from("puntos_inspeccion").select("id,equipo_id,descripcion,tipo,unidad"),
       ]);
       setInsps(ins ?? []);
       setEquipos(eqs ?? []);
       setPuntos(pts ?? []);
-      if (ins && ins.length > 0) setSelectedId(prev => prev ?? ins[0].id);
+      if (ins && ins.length > 0) setSelectedId(ins[0].id);
     })();
-  }, [user]);
+  }, [user, ciudad]);
 
   useEffect(() => {
     if (!selectedId || insps.length === 0) return;
@@ -178,6 +189,7 @@ function HomePage() {
         .from("inspecciones")
         .insert({
           user_id: user.id,
+          ciudad,
           fecha: today.toISOString().slice(0, 10),
           semana: getWeekNumber(today),
           tecnico: user.user_metadata?.full_name ?? user.email,
@@ -200,7 +212,7 @@ function HomePage() {
       <section className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Revisión Semanal</p>
-          <h2 className="text-xl font-bold mt-0.5">DC Cochabamba</h2>
+          <h2 className="text-xl font-bold mt-0.5">DC {ciudad}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             Hola, <span className="text-foreground">{user?.user_metadata?.full_name ?? user?.email?.split("@")[0]}</span>
           </p>
@@ -210,6 +222,27 @@ function HomePage() {
             {year}-W{semana}
           </div>
         </div>
+      </section>
+
+      {/* Selector de ciudad */}
+      <section className="mb-3 flex gap-2">
+        {CIUDADES.map((c) => (
+          <button
+            key={c}
+            onClick={() => {
+              setCiudad(c);
+              if (typeof window !== "undefined") window.localStorage.setItem("dc_ciudad", c);
+            }}
+            className={`flex-1 rounded-xl px-3 py-2 text-xs font-semibold border transition ${
+              ciudad === c
+                ? "bg-primary/15 border-primary/50 text-primary"
+                : "glass text-muted-foreground border-border/60"
+            }`}
+          >
+            <MapPin className="size-3.5 inline mr-1 -mt-0.5" />
+            {c}
+          </button>
+        ))}
       </section>
 
       {/* Selector de semana */}
@@ -233,6 +266,7 @@ function HomePage() {
           })}
         </select>
       </section>
+
 
 
       <button

@@ -81,10 +81,12 @@ function InspeccionPage() {
       const [eq, pt, ins, it] = await Promise.all([
         supabase.from("equipos").select("*").order("orden"),
         supabase.from("puntos_inspeccion").select("*").order("numero"),
-        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,supervisor,cargo,condicion_clima,temp_sala,hr_sala,carga_it,pue,proxima_revision,estado,standby_equipos").eq("id", id).single(),
+        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,supervisor,cargo,condicion_clima,temp_sala,hr_sala,carga_it,pue,proxima_revision,estado,standby_equipos,ciudad").eq("id", id).single(),
         supabase.from("inspeccion_items").select("*").eq("inspeccion_id", id),
       ]);
-      setEquipos(eq.data ?? []);
+      const ciudadInsp = ((ins.data as any)?.ciudad as string) ?? "Cochabamba";
+      const eqCiudad = (eq.data ?? []).filter((e: any) => (e.ciudad ?? "Cochabamba") === ciudadInsp);
+      setEquipos(eqCiudad);
       setPuntos(pt.data ?? []);
       setInsp(ins.data);
       setStandby(new Set(((ins.data as any)?.standby_equipos ?? []) as string[]));
@@ -105,7 +107,7 @@ function InspeccionPage() {
         map[r.punto_id] = { id: r.id, punto_id: r.punto_id, equipo_id: r.equipo_id, estado: r.estado ?? undefined, valor: r.valor ?? undefined, semaforo: r.semaforo ?? undefined, observaciones: r.observaciones ?? undefined, accion_correctiva: r.accion_correctiva ?? undefined };
       });
       setItems(map);
-      setOpen(eq.data?.[0]?.id ?? null);
+      setOpen(eqCiudad[0]?.id ?? null);
       setLoading(false);
     })();
   }, [id]);
