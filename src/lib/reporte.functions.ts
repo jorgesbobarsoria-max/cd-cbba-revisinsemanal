@@ -71,11 +71,13 @@ export const generarInformeWord = createServerFn({ method: "POST" })
     const { data: insp } = await supabase.from("inspecciones").select("*").eq("id", inspeccionId).single();
     if (!insp) throw new Error("Inspección no encontrada");
 
+    const ciudadInsp = ((insp as Record<string, unknown>).ciudad as string) ?? "Cochabamba";
+
     const [{ data: equipos }, { data: puntos }, { data: items }, { data: historico }] = await Promise.all([
-      supabase.from("equipos").select("*").order("orden"),
+      supabase.from("equipos").select("*").eq("ciudad", ciudadInsp).order("orden"),
       supabase.from("puntos_inspeccion").select("*").order("numero"),
       supabase.from("inspeccion_items").select("*").eq("inspeccion_id", inspeccionId),
-      supabase.from("inspecciones").select("id,fecha,semana").order("fecha", { ascending: false }).limit(8),
+      supabase.from("inspecciones").select("id,fecha,semana").eq("ciudad", ciudadInsp).order("fecha", { ascending: false }).limit(8),
     ]);
 
     const I = insp as Insp;
