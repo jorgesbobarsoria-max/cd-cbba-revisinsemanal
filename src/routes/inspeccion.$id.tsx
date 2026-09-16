@@ -38,7 +38,7 @@ function InspeccionPage() {
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [puntos, setPuntos] = useState<Punto[]>([]);
   const [items, setItems] = useState<Record<number, Item>>({});
-  const [insp, setInsp] = useState<{ fecha: string; semana: number; tecnico: string | null; turno: string | null; estado: string } | null>(null);
+  const [insp, setInsp] = useState<{ fecha: string; semana: number; tecnico: string | null; turno: string | null; estado: string; user_id?: string } | null>(null);
   const [standby, setStandby] = useState<Set<string>>(new Set());
   const [cab, setCab] = useState<Record<string, string>>({});
   const [verCab, setVerCab] = useState(false);
@@ -49,9 +49,18 @@ function InspeccionPage() {
   const exportar = useServerFn(generarInformeWord);
   const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
 
-  // Un registro finalizado queda bloqueado salvo para administradores.
-  const soloLectura =
-    !permisos.puedeCapturar || (insp?.estado === "finalizado" && !permisos.puedeEditarFinalizado);
+  // El técnico dueño del registro (o un administrador) puede reabrir una revisión finalizada.
+  const esPropietario = !!user && !!insp?.user_id && insp.user_id === user.id;
+  const puedeReabrir = permisos.puedeEditarFinalizado || (permisos.puedeCapturar && esPropietario);
+  const finalizado = insp?.estado === "finalizado";
+  const soloLectura = !permisos.puedeCapturar || finalizado;
+
+  const reabrir = async () => {
+    const { error } = await supabase.from("inspecciones").update({ estado: "en_progreso" }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setInsp((p) => (p ? { ...p, estado: "en_progreso" } : p));
+    toast.success("Revisión reabierta: ya puedes modificar los valores");
+  };
 
   const isAcCategoria = (c: string) => /aire/i.test(c);
 
@@ -81,7 +90,7 @@ function InspeccionPage() {
       const [eq, pt, ins, it] = await Promise.all([
         supabase.from("equipos").select("*").order("orden"),
         supabase.from("puntos_inspeccion").select("*").order("numero"),
-        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,supervisor,cargo,condicion_clima,temp_sala,hr_sala,carga_it,pue,proxima_revision,estado,standby_equipos,ciudad").eq("id", id).single(),
+        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,supervisor,cargo,condicion_clima,temp_sala,hr_sala,carga_it,pue,proxima_revision,estado,standby_equipos,ciudad,user_id").eq("id", id).single(),
         supabase.from("inspeccion_items").select("*").eq("inspeccion_id", id),
       ]);
       const ciudadInsp = ((ins.data as any)?.ciudad as string) ?? "Cochabamba";
@@ -654,13 +663,25 @@ function InspeccionPage() {
 
       {/* Botones */}
       {soloLectura ? (
-        <div className="sticky bottom-20 glass rounded-xl p-3 flex items-center gap-2 border border-border">
-          <Lock className="size-4 text-muted-foreground shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            {insp?.estado === "finalizado"
-              ? "Esta revisión está finalizada. Solo un administrador puede modificarla."
-              : "Tu perfil es de consulta: puedes revisar y descargar el informe, pero no editar."}
-          </p>
+        <div className="sticky bottom-20 glass rounded-xl p-3 space-y-2 border border-border">
+          <div className="flex items-center gap-2">
+            <Lock className="size-4 text-muted-foreground shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              {finalizado
+                ? puedeReabrir
+                  ? "Esta revisión está finalizada. Reábrela para corregir o completar los valores de cualquier equipo."
+                  : "Esta revisión está finalizada. Solo un administrador o el técnico que la registró puede modificarla."
+                : "Tu perfil es de consulta: puedes revisar y descargar el informe, pero no editar."}
+            </p>
+          </div>
+          {finalizado && puedeReabrir && (
+            <button
+              onClick={reabrir}
+              className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 text-sm"
+            >
+              <Save className="size-4" /> Reabrir y editar registro
+            </button>
+          )}
         </div>
       ) : (
         <div className="sticky bottom-20 grid grid-cols-3 gap-2">
