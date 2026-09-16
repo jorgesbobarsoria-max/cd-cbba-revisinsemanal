@@ -16,7 +16,7 @@ export const Route = createFileRoute("/historial")({
 function HistorialPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
-  const [rows, setRows] = useState<Array<{ id: string; fecha: string; semana: number; tecnico: string | null; estado: string }>>([]);
+  const [rows, setRows] = useState<Array<{ id: string; fecha: string; semana: number; tecnico: string | null; estado: string; ciudad?: string | null }>>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const exportar = useServerFn(generarInformeWord);
 
