@@ -53,7 +53,7 @@ function InspeccionPage() {
   const esPropietario = !!user && !!insp?.user_id && insp.user_id === user.id;
   const puedeReabrir = permisos.puedeEditarFinalizado || (permisos.puedeCapturar && esPropietario);
   const finalizado = insp?.estado === "finalizado";
-  const soloLectura = !permisos.puedeCapturar || (finalizado && !puedeReabrir);
+  const soloLectura = !permisos.puedeCapturar || finalizado;
 
   const reabrir = async () => {
     const { error } = await supabase.from("inspecciones").update({ estado: "en_progreso" }).eq("id", id);
