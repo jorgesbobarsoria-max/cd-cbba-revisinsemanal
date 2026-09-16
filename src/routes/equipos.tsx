@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Settings2, ChevronLeft, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, Settings2, ChevronLeft, Lock, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
 
@@ -92,6 +92,24 @@ function EquiposPage() {
     if (error) { toast.error(friendlyDbError(error)); return; }
     toast.success("Equipo eliminado");
     load();
+  }
+
+  // Intercambia la posición del equipo con el anterior/siguiente de la ciudad.
+  async function mover(id: string, dir: -1 | 1) {
+    const lista = [...eq].sort((a, b) => a.orden - b.orden);
+    const i = lista.findIndex((x) => x.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= lista.length) return;
+    const a = lista[i], b = lista[j];
+    // Normaliza por si hay valores de orden repetidos.
+    const ordenA = a.orden === b.orden ? b.orden + dir : b.orden;
+    const [r1, r2] = await Promise.all([
+      supabase.from("equipos").update({ orden: ordenA }).eq("id", a.id),
+      supabase.from("equipos").update({ orden: a.orden }).eq("id", b.id),
+    ]);
+    const err = r1.error ?? r2.error;
+    if (err) { toast.error(friendlyDbError(err)); return; }
+    setEq(lista.map((x) => (x.id === a.id ? { ...x, orden: ordenA } : x.id === b.id ? { ...x, orden: a.orden } : x)).sort((x, y) => x.orden - y.orden));
   }
 
   if (paramsOf) return <ParamsView equipo={paramsOf} puedeGestionar={puedeGestionar} onBack={() => setParamsOf(null)} />;
