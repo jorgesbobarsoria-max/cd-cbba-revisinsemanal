@@ -24,7 +24,7 @@ function HistorialPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado").order("fecha", { ascending: false })
+    supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado,ciudad").order("fecha", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
   }, [user]);
 
