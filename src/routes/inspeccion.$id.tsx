@@ -38,7 +38,7 @@ function InspeccionPage() {
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [puntos, setPuntos] = useState<Punto[]>([]);
   const [items, setItems] = useState<Record<number, Item>>({});
-  const [insp, setInsp] = useState<{ fecha: string; semana: number; tecnico: string | null; turno: string | null; estado: string } | null>(null);
+  const [insp, setInsp] = useState<{ fecha: string; semana: number; tecnico: string | null; turno: string | null; estado: string; user_id?: string } | null>(null);
   const [standby, setStandby] = useState<Set<string>>(new Set());
   const [cab, setCab] = useState<Record<string, string>>({});
   const [verCab, setVerCab] = useState(false);
@@ -49,9 +49,18 @@ function InspeccionPage() {
   const exportar = useServerFn(generarInformeWord);
   const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
 
-  // Un registro finalizado queda bloqueado salvo para administradores.
-  const soloLectura =
-    !permisos.puedeCapturar || (insp?.estado === "finalizado" && !permisos.puedeEditarFinalizado);
+  // El técnico dueño del registro (o un administrador) puede reabrir una revisión finalizada.
+  const esPropietario = !!user && !!insp?.user_id && insp.user_id === user.id;
+  const puedeReabrir = permisos.puedeEditarFinalizado || (permisos.puedeCapturar && esPropietario);
+  const finalizado = insp?.estado === "finalizado";
+  const soloLectura = !permisos.puedeCapturar || (finalizado && !puedeReabrir);
+
+  const reabrir = async () => {
+    const { error } = await supabase.from("inspecciones").update({ estado: "en_progreso" }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setInsp((p) => (p ? { ...p, estado: "en_progreso" } : p));
+    toast.success("Revisión reabierta: ya puedes modificar los valores");
+  };
 
   const isAcCategoria = (c: string) => /aire/i.test(c);
 
