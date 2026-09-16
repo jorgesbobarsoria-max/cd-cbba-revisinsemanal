@@ -16,7 +16,7 @@ export const Route = createFileRoute("/historial")({
 function HistorialPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
-  const [rows, setRows] = useState<Array<{ id: string; fecha: string; semana: number; tecnico: string | null; estado: string }>>([]);
+  const [rows, setRows] = useState<Array<{ id: string; fecha: string; semana: number; tecnico: string | null; estado: string; ciudad?: string | null }>>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const exportar = useServerFn(generarInformeWord);
 
@@ -24,7 +24,7 @@ function HistorialPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado").order("fecha", { ascending: false })
+    supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado,ciudad").order("fecha", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
   }, [user]);
 
@@ -56,7 +56,7 @@ function HistorialPage() {
           <div key={r.id} className="glass rounded-xl p-3 flex items-center gap-2">
             <Link to="/inspeccion/$id" params={{ id: r.id }} className="flex-1 flex items-center justify-between min-w-0">
               <div className="min-w-0">
-                <p className="font-semibold truncate">Semana {r.semana}</p>
+                <p className="font-semibold truncate">Semana {r.semana} <span className="text-xs font-normal text-primary">· {r.ciudad ?? "Cochabamba"}</span></p>
                 <p className="text-xs text-muted-foreground font-mono truncate">{r.fecha} · {r.tecnico ?? "—"}</p>
               </div>
               <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold mr-2 ${

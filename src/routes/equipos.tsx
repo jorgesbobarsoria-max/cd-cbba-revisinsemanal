@@ -184,6 +184,12 @@ function EquiposPage() {
           {editing && (
             <div className="space-y-3">
               <Field label="ID (código único)"><Input value={editing.id ?? ""} onChange={(e) => setEditing({ ...editing, id: e.target.value })} placeholder="ACU-01" disabled={!!eq.find(x => x.id === editing.id)} /></Field>
+              <Field label="Ciudad">
+                <Select value={editing.ciudad ?? ciudad} onValueChange={(v) => setEditing({ ...editing, ciudad: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
+                  <SelectContent>{CIUDADES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </Field>
               <Field label="TAG"><Input value={editing.tag ?? ""} onChange={(e) => setEditing({ ...editing, tag: e.target.value })} placeholder="Aire Precisión Sala 1" /></Field>
               <Field label="Categoría">
                 <Select value={editing.categoria ?? ""} onValueChange={(v) => setEditing({ ...editing, categoria: v })}>
