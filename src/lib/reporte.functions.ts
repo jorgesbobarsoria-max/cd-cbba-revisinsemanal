@@ -117,7 +117,7 @@ export const generarInformeWord = createServerFn({ method: "POST" })
     // Portada
     children.push(
       new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 1200, after: 240 }, children: [new TextRun({ text: "INFORME DE REVISIÓN SEMANAL", bold: true, size: 44, font: "Calibri", color: "0D3B66" })] }),
-      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Infraestructura Crítica – Data Center", size: 28, font: "Calibri", color: "455A64" })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Infraestructura Crítica – Data Center ${ciudadInsp}`, size: 28, font: "Calibri", color: "455A64" })] }),
       new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 600 }, children: [new TextRun({ text: `Semana ${I.semana} · ${I.fecha}`, size: 26, bold: true, font: "Calibri" })] }),
       new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200 }, children: [new TextRun({ text: `Técnico: ${I.tecnico ?? "—"}    Turno: ${I.turno ?? "—"}`, size: 22, font: "Calibri" })] }),
       new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Supervisor: ${I.supervisor ?? "—"}`, size: 22, font: "Calibri" })] }),
