@@ -663,13 +663,25 @@ function InspeccionPage() {
 
       {/* Botones */}
       {soloLectura ? (
-        <div className="sticky bottom-20 glass rounded-xl p-3 flex items-center gap-2 border border-border">
-          <Lock className="size-4 text-muted-foreground shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            {insp?.estado === "finalizado"
-              ? "Esta revisión está finalizada. Solo un administrador puede modificarla."
-              : "Tu perfil es de consulta: puedes revisar y descargar el informe, pero no editar."}
-          </p>
+        <div className="sticky bottom-20 glass rounded-xl p-3 space-y-2 border border-border">
+          <div className="flex items-center gap-2">
+            <Lock className="size-4 text-muted-foreground shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              {finalizado
+                ? puedeReabrir
+                  ? "Esta revisión está finalizada. Reábrela para corregir o completar los valores de cualquier equipo."
+                  : "Esta revisión está finalizada. Solo un administrador o el técnico que la registró puede modificarla."
+                : "Tu perfil es de consulta: puedes revisar y descargar el informe, pero no editar."}
+            </p>
+          </div>
+          {finalizado && puedeReabrir && (
+            <button
+              onClick={reabrir}
+              className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 text-sm"
+            >
+              <Save className="size-4" /> Reabrir y editar registro
+            </button>
+          )}
         </div>
       ) : (
         <div className="sticky bottom-20 grid grid-cols-3 gap-2">
