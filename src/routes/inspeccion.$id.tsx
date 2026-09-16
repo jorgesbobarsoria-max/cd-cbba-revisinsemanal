@@ -90,7 +90,7 @@ function InspeccionPage() {
       const [eq, pt, ins, it] = await Promise.all([
         supabase.from("equipos").select("*").order("orden"),
         supabase.from("puntos_inspeccion").select("*").order("numero"),
-        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,supervisor,cargo,condicion_clima,temp_sala,hr_sala,carga_it,pue,proxima_revision,estado,standby_equipos,ciudad").eq("id", id).single(),
+        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,supervisor,cargo,condicion_clima,temp_sala,hr_sala,carga_it,pue,proxima_revision,estado,standby_equipos,ciudad,user_id").eq("id", id).single(),
         supabase.from("inspeccion_items").select("*").eq("inspeccion_id", id),
       ]);
       const ciudadInsp = ((ins.data as any)?.ciudad as string) ?? "Cochabamba";
