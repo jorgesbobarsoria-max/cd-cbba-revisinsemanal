@@ -113,6 +113,22 @@ function EquiposPage() {
     setEq(lista.map((x) => (x.id === a.id ? { ...x, orden: ordenA } : x.id === b.id ? { ...x, orden: a.orden } : x)).sort((x, y) => x.orden - y.orden));
   }
 
+  // Guarda el orden resultante del arrastre reasignando los mismos valores de orden de la ciudad.
+  async function guardarOrden(lista: Equipo[]) {
+    const valores = eq.map((e) => e.orden).sort((a, b) => a - b);
+    const cambios = lista
+      .map((e, i) => ({ id: e.id, orden: valores[i] ?? i + 1 }))
+      .filter((c, i) => c.orden !== lista[i].orden);
+    if (cambios.length === 0) return;
+    setEq(lista.map((e, i) => ({ ...e, orden: valores[i] ?? i + 1 })));
+    const res = await Promise.all(
+      cambios.map((c) => supabase.from("equipos").update({ orden: c.orden }).eq("id", c.id)),
+    );
+    const err = res.find((r) => r.error)?.error;
+    if (err) { toast.error(friendlyDbError(err)); load(); return; }
+    toast.success("Orden guardado");
+  }
+
   if (paramsOf) return <ParamsView equipo={paramsOf} puedeGestionar={puedeGestionar} onBack={() => setParamsOf(null)} />;
 
   const groups = eq.reduce<Record<string, Equipo[]>>((acc, e) => { (acc[e.categoria] ||= []).push(e); return acc; }, {});
