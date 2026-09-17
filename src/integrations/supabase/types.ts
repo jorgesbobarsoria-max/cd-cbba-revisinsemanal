@@ -652,6 +652,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sitios: {
+        Row: {
+          ciudad: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          ciudad: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          ciudad?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -683,6 +704,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      puede_escribir_sitio: { Args: { _ciudad: string }; Returns: boolean }
       user_owns_evidencia_parent: {
         Args: { _inspeccion_id: string; _mantenimiento_id: string }
         Returns: boolean
