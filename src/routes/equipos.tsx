@@ -177,7 +177,22 @@ function EquiposPage() {
         </div>
       )}
 
-      {Object.entries(groups).map(([cat, items]) => (
+      {puedeGestionar && eq.length > 1 && (
+        <Button
+          size="sm"
+          variant={reordenando ? "default" : "outline"}
+          className="w-full mb-4"
+          onClick={() => setReordenando((v) => !v)}
+        >
+          {reordenando ? <><Check className="size-4" /> Terminar reordenamiento</> : <><ListOrdered className="size-4" /> Reordenar arrastrando</>}
+        </Button>
+      )}
+
+      {reordenando && puedeGestionar && (
+        <ReorderList equipos={[...eq].sort((a, b) => a.orden - b.orden)} onReorder={guardarOrden} />
+      )}
+
+      {!reordenando && Object.entries(groups).map(([cat, items]) => (
         <section key={cat} className="mb-5">
           <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">{cat}</h3>
           <div className="space-y-2">
