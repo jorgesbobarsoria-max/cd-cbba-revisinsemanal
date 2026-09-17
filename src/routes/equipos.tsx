@@ -481,3 +481,79 @@ function numOrNull(v: unknown): number | null {
   const n = typeof v === "number" ? v : parseFloat(String(v));
   return isNaN(n) ? null : n;
 }
+
+// Lista plana con arrastre (pointer events: funciona con mouse y táctil en Android).
+function ReorderList({ equipos, onReorder }: { equipos: Equipo[]; onReorder: (l: Equipo[]) => void }) {
+  const [lista, setLista] = useState<Equipo[]>(equipos);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const contRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setLista(equipos); }, [equipos]);
+
+  function indexAt(clientY: number) {
+    const cont = contRef.current;
+    if (!cont) return -1;
+    const filas = Array.from(cont.querySelectorAll<HTMLElement>("[data-row]"));
+    for (let i = 0; i < filas.length; i++) {
+      const r = filas[i].getBoundingClientRect();
+      if (clientY < r.top + r.height / 2) return i;
+    }
+    return filas.length - 1;
+  }
+
+  function onPointerDown(e: React.PointerEvent, id: string) {
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    setDragId(id);
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!dragId) return;
+    const from = lista.findIndex((x) => x.id === dragId);
+    const to = indexAt(e.clientY);
+    if (to < 0 || to === from) return;
+    const next = [...lista];
+    const [m] = next.splice(from, 1);
+    next.splice(to, 0, m);
+    setLista(next);
+  }
+
+  function onPointerUp() {
+    if (!dragId) return;
+    setDragId(null);
+    onReorder(lista);
+  }
+
+  return (
+    <div ref={contRef} className="space-y-1.5 mb-5 touch-none select-none">
+      <p className="text-[11px] text-muted-foreground mb-2">
+        Mantén presionado el asa y arrastra para cambiar el orden. Se guarda al soltar.
+      </p>
+      {lista.map((e, i) => (
+        <div
+          key={e.id}
+          data-row
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          className={`glass rounded-xl px-3 py-2.5 flex items-center gap-3 transition ${
+            dragId === e.id ? "border-primary/60 opacity-90 scale-[1.01]" : ""
+          }`}
+        >
+          <button
+            onPointerDown={(ev) => onPointerDown(ev, e.id)}
+            className="p-1 -m-1 text-muted-foreground cursor-grab active:cursor-grabbing"
+            aria-label={`Mover ${e.tag}`}
+          >
+            <GripVertical className="size-5" />
+          </button>
+          <span className="text-xs font-mono text-muted-foreground w-5 shrink-0">{i + 1}</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium truncate">{e.tag}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{e.categoria} · {e.id}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
