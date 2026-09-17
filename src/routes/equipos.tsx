@@ -115,6 +115,8 @@ function EquiposPage() {
   if (paramsOf) return <ParamsView equipo={paramsOf} puedeGestionar={puedeGestionar} onBack={() => setParamsOf(null)} />;
 
   const groups = eq.reduce<Record<string, Equipo[]>>((acc, e) => { (acc[e.categoria] ||= []).push(e); return acc; }, {});
+  const minOrden = eq.length ? Math.min(...eq.map((e) => e.orden)) : 0;
+  const maxOrden = eq.length ? Math.max(...eq.map((e) => e.orden)) : 0;
 
   return (
     <AppShell title="Gestión de Equipos">
@@ -180,6 +182,12 @@ function EquiposPage() {
                   </Button>
                   {puedeGestionar && (
                     <>
+                      <Button size="sm" variant="outline" title="Subir" disabled={e.orden === minOrden} onClick={() => mover(e.id, -1)}>
+                        <ArrowUp className="size-3.5" />
+                      </Button>
+                      <Button size="sm" variant="outline" title="Bajar" disabled={e.orden === maxOrden} onClick={() => mover(e.id, 1)}>
+                        <ArrowDown className="size-3.5" />
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => setEditing(e)}>
                         <Pencil className="size-3.5" />
                       </Button>
