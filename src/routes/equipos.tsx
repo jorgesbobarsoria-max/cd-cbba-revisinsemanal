@@ -49,6 +49,7 @@ function EquiposPage() {
   const [editing, setEditing] = useState<Partial<Equipo> | null>(null);
   const [paramsOf, setParamsOf] = useState<Equipo | null>(null);
   const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
+  const [reordenando, setReordenando] = useState(false);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
