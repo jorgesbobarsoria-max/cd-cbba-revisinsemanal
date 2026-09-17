@@ -180,6 +180,12 @@ function EquiposPage() {
                   </Button>
                   {puedeGestionar && (
                     <>
+                      <Button size="sm" variant="outline" title="Subir" disabled={e.orden === minOrden} onClick={() => mover(e.id, -1)}>
+                        <ArrowUp className="size-3.5" />
+                      </Button>
+                      <Button size="sm" variant="outline" title="Bajar" disabled={e.orden === maxOrden} onClick={() => mover(e.id, 1)}>
+                        <ArrowDown className="size-3.5" />
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => setEditing(e)}>
                         <Pencil className="size-3.5" />
                       </Button>
