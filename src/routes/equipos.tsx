@@ -115,6 +115,8 @@ function EquiposPage() {
   if (paramsOf) return <ParamsView equipo={paramsOf} puedeGestionar={puedeGestionar} onBack={() => setParamsOf(null)} />;
 
   const groups = eq.reduce<Record<string, Equipo[]>>((acc, e) => { (acc[e.categoria] ||= []).push(e); return acc; }, {});
+  const minOrden = eq.length ? Math.min(...eq.map((e) => e.orden)) : 0;
+  const maxOrden = eq.length ? Math.max(...eq.map((e) => e.orden)) : 0;
 
   return (
     <AppShell title="Gestión de Equipos">
