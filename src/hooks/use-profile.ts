@@ -11,6 +11,7 @@ export function useProfile() {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [sitios, setSitios] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,22 +19,25 @@ export function useProfile() {
     if (authLoading) return;
     if (!user) {
       setRoles([]);
+      setSitios([]);
       setMustChangePassword(false);
       setLoading(false);
       return;
     }
     (async () => {
       setLoading(true);
-      const [{ data: rolesData }, { data: profileData }] = await Promise.all([
+      const [{ data: rolesData }, { data: profileData }, { data: sitiosData }] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", user.id),
         supabase
           .from("profiles")
           .select("must_change_password, is_active")
           .eq("id", user.id)
           .maybeSingle(),
+        supabase.from("user_sitios").select("ciudad").eq("user_id", user.id),
       ]);
       if (cancel) return;
       setRoles((rolesData ?? []).map((r) => r.role as AppRole));
+      setSitios((sitiosData ?? []).map((s) => s.ciudad as string));
       setMustChangePassword(profileData?.must_change_password ?? false);
       setIsActive(profileData?.is_active ?? true);
       setLoading(false);
@@ -48,6 +52,7 @@ export function useProfile() {
   return {
     user,
     roles,
+    sitios,
     permisos,
     rol: permisos.rol,
     etiquetaRol: ETIQUETA_ROL[permisos.rol],
