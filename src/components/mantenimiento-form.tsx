@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
+import { puedeEscribirEnSitio } from "@/lib/sitios";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,7 @@ type ExtraParam = { id: string; seccion: string; clave: string; label: string; t
 
 export function MantenimientoForm({ tipo, existing }: { tipo: string; existing?: any }) {
   const { user, loading } = useAuth();
+  const { permisos, sitios } = useProfile();
   const nav = useNavigate();
   const editId: string | undefined = existing?.id;
   const plantillaBase = useMemo(() => getPlantilla(tipo), [tipo]);
@@ -121,6 +124,10 @@ export function MantenimientoForm({ tipo, existing }: { tipo: string; existing?:
           if (nuevo?.id) extData = { ...extData, id: nuevo.id };
         }
       }
+    }
+    if (!puedeEscribirEnSitio({ esAdmin: permisos.esAdmin, esTecnico: permisos.esTecnico, sitios }, meta.ciudad)) {
+      toast.error(`No tienes permiso para registrar en ${meta.ciudad}. Pide al administrador que te asigne este sitio.`);
+      return;
     }
     setBusy(true);
     const payload: any = {

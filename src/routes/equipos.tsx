@@ -33,7 +33,7 @@ type Punto = {
   valores_count?: number | null; etiquetas_valores?: string[] | null;
 };
 
-const CIUDADES = ["Cochabamba", "La Paz"];
+import { CIUDADES } from "@/lib/sitios";
 const CATEGORIAS = [
   "Aire de Precisión", "UPS", "ATS", "Grupo Generador",
   "Sistema Supresor Incendios", "Sensores Ambiente", "Rack / Micro Data Center",

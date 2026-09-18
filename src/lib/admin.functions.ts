@@ -29,6 +29,15 @@ export const listUsers = createServerFn({ method: "GET" })
       .select("user_id, role");
     if (rErr) throw new Error(rErr.message);
 
+    const { data: sitiosRows, error: sErr } = await supabaseAdmin
+      .from("user_sitios")
+      .select("user_id, ciudad");
+    if (sErr) throw new Error(sErr.message);
+    const sitiosByUser: Record<string, string[]> = {};
+    (sitiosRows ?? []).forEach((r: { user_id: string; ciudad: string }) => {
+      sitiosByUser[r.user_id] = [...(sitiosByUser[r.user_id] ?? []), r.ciudad];
+    });
+
     const rolesByUser: Record<string, string[]> = {};
     (rolesRows ?? []).forEach((r) => {
       rolesByUser[r.user_id] = [...(rolesByUser[r.user_id] ?? []), r.role];
@@ -53,6 +62,7 @@ export const listUsers = createServerFn({ method: "GET" })
       is_active: p.is_active,
       created_at: p.created_at,
       roles: rolesByUser[p.id] ?? [],
+      sitios: sitiosByUser[p.id] ?? [],
       last_sign_in_at: authByUser[p.id]?.last_sign_in_at ?? null,
     }));
   });
@@ -135,6 +145,31 @@ export const updateUserRole = createServerFn({ method: "POST" })
       .from("user_roles")
       .insert({ user_id: data.user_id, role: data.role });
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setUserSitios = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        sitios: z.array(z.string().trim().min(1).max(80)).max(20),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const unicos = Array.from(new Set(data.sitios.map((s) => s.trim())));
+    await supabaseAdmin.from("user_sitios").delete().eq("user_id", data.user_id);
+    if (unicos.length > 0) {
+      const { error } = await supabaseAdmin
+        .from("user_sitios")
+        .insert(unicos.map((ciudad) => ({ user_id: data.user_id, ciudad })));
+      if (error) throw new Error(error.message);
+    }
     return { ok: true };
   });
 

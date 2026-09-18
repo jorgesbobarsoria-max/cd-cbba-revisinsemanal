@@ -11,9 +11,11 @@ import {
   setUserActive,
   deleteUser,
   resetUserPassword,
+  setUserSitios,
 } from "@/lib/admin.functions";
+import { CIUDADES } from "@/lib/sitios";
 import { toast } from "sonner";
-import { UserPlus, Shield, Loader2, Trash2, KeyRound, Ban, Check, Users, Eye, EyeOff, Wand2 } from "lucide-react";
+import { UserPlus, Shield, Loader2, Trash2, KeyRound, Ban, Check, Users, Eye, EyeOff, Wand2, MapPin } from "lucide-react";
 import { friendlyDbError } from "@/lib/friendly-errors";
 
 export const Route = createFileRoute("/admin")({
@@ -54,6 +56,7 @@ function AdminPage() {
   const setActiveFn = useServerFn(setUserActive);
   const deleteFn = useServerFn(deleteUser);
   const resetPwFn = useServerFn(resetUserPassword);
+  const setSitiosFn = useServerFn(setUserSitios);
 
   useEffect(() => {
     if (loading) return;
@@ -109,6 +112,20 @@ function AdminPage() {
     try {
       await updateRoleFn({ data: { user_id: userId, role } });
       toast.success("Rol actualizado");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    } catch (err) {
+      toast.error(friendlyDbError(err));
+    }
+  };
+
+  const toggleSitio = async (u: { id: string; sitios: string[] }, ciudad: string) => {
+    const actuales = u.sitios ?? [];
+    const sitios = actuales.includes(ciudad)
+      ? actuales.filter((c) => c !== ciudad)
+      : [...actuales, ciudad];
+    try {
+      await setSitiosFn({ data: { user_id: u.id, sitios } });
+      toast.success("Sitios actualizados");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     } catch (err) {
       toast.error(friendlyDbError(err));
@@ -236,6 +253,46 @@ function AdminPage() {
                       {u.must_change_password && " · pend. cambio pwd"}
                     </p>
                   </div>
+                </div>
+
+                <div className="pt-2 border-t border-border/40 mb-2">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                    <MapPin className="size-3" /> Sitios con permiso de registro
+                  </p>
+                  {primaryRole === "admin" ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Administrador: puede registrar en todos los sitios.
+                    </p>
+                  ) : primaryRole === "viewer" ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Consulta: solo lectura, ve todos los sitios.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {CIUDADES.map((c) => {
+                        const on = (u.sitios ?? []).includes(c);
+                        return (
+                          <button
+                            key={c}
+                            onClick={() => toggleSitio(u, c)}
+                            className={`min-h-9 px-3 rounded-lg text-[11px] font-semibold border transition ${
+                              on
+                                ? "bg-primary/15 text-primary border-primary/40"
+                                : "bg-secondary text-muted-foreground border-border"
+                            }`}
+                          >
+                            {on ? <Check className="inline size-3 mr-1 -mt-0.5" /> : null}
+                            {c}
+                          </button>
+                        );
+                      })}
+                      {(u.sitios ?? []).length === 0 && (
+                        <span className="text-[11px] text-warn self-center">
+                          Sin sitios asignados: no podrá registrar datos.
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/40">
