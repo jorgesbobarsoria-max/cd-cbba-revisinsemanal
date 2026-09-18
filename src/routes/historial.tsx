@@ -43,8 +43,8 @@ function HistorialPage() {
 
   return (
     <AppShell title="Historial">
-      <h2 className="text-xl font-bold mb-1">Mis revisiones</h2>
-      <p className="text-sm text-muted-foreground mb-4">{rows.length} registros · descarga el informe Word de las finalizadas</p>
+      <h2 className="text-xl font-bold mb-1">Revisiones registradas</h2>
+      <p className="text-sm text-muted-foreground mb-4">{rows.length} registros de todos los técnicos y sitios · descarga el informe Word de las finalizadas</p>
       <div className="space-y-2">
         {rows.length === 0 && (
           <div className="text-center py-12 text-sm text-muted-foreground glass rounded-xl">
