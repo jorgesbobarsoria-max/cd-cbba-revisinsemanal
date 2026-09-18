@@ -33,7 +33,8 @@ function getWeekNumber(d: Date) {
   return Math.ceil(((+date - +yearStart) / 86400000 + 1) / 7);
 }
 
-const CIUDADES = ["Cochabamba", "La Paz"];
+import { CIUDADES, puedeEscribirEnSitio } from "@/lib/sitios";
+import { useProfile } from "@/hooks/use-profile";
 
 const COLORS = {
   ok: "oklch(0.78 0.17 165)",
@@ -54,6 +55,11 @@ function HomePage() {
   const [busy, setBusy] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
+  const { permisos, sitios } = useProfile();
+  const puedeRegistrar = puedeEscribirEnSitio(
+    { esAdmin: permisos.esAdmin, esTecnico: permisos.esTecnico, sitios },
+    ciudad,
+  );
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -269,10 +275,16 @@ function HomePage() {
 
 
 
+      {!puedeRegistrar && (
+        <p className="glass rounded-2xl p-3 mb-3 text-[11px] text-warn">
+          Solo puedes consultar los datos de {ciudad}. Para registrar aquí, pide al administrador que te asigne este sitio.
+        </p>
+      )}
+
       <button
         onClick={nuevaInspeccion}
-        disabled={busy}
-        className="w-full glass rounded-2xl p-4 flex items-center justify-between mb-5 group hover:border-primary/60 transition-all"
+        disabled={busy || !puedeRegistrar}
+        className="w-full glass rounded-2xl p-4 flex items-center justify-between mb-5 group hover:border-primary/60 transition-all disabled:opacity-50"
       >
         <div className="text-left">
           <p className="text-[10px] uppercase tracking-wider text-primary font-semibold">Iniciar</p>
