@@ -95,8 +95,10 @@ function InspeccionPage() {
       ]);
       const ciudadInsp = ((ins.data as any)?.ciudad as string) ?? "Cochabamba";
       const eqCiudad = (eq.data ?? []).filter((e: any) => (e.ciudad ?? "Cochabamba") === ciudadInsp);
+      const equiposDelSitio = new Set(eqCiudad.map((e) => e.id));
+      const puntosDelSitio = (pt.data ?? []).filter((p) => equiposDelSitio.has(p.equipo_id));
       setEquipos(eqCiudad);
-      setPuntos(pt.data ?? []);
+      setPuntos(puntosDelSitio);
       setInsp(ins.data);
       setStandby(new Set(((ins.data as any)?.standby_equipos ?? []) as string[]));
       const d = (ins.data ?? {}) as Record<string, unknown>;
