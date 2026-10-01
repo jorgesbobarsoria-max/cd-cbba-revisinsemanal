@@ -18,6 +18,14 @@ import { BTA521Import } from "@/components/bta521-import";
 import { BTA521_KEY } from "@/lib/bta521";
 
 export const Route = createFileRoute("/mantenimiento/$id")({
+  head: () => ({ meta: [
+    { title: "Detalle de mantenimiento · DC Inspect" },
+    { name: "description", content: "Detalle técnico e informe de un mantenimiento preventivo." },
+    { property: "og:title", content: "Detalle de mantenimiento · DC Inspect" },
+    { property: "og:description", content: "Detalle técnico e informe de un mantenimiento preventivo." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: DetallePage,
 });
 

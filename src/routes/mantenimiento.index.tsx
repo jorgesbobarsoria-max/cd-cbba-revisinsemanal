@@ -14,6 +14,14 @@ import { descargarDocx } from "@/lib/download-docx";
 
 
 export const Route = createFileRoute("/mantenimiento/")({
+  head: () => ({ meta: [
+    { title: "Registros de mantenimiento · DC Inspect" },
+    { name: "description", content: "Listado e informes de mantenimientos preventivos." },
+    { property: "og:title", content: "Registros de mantenimiento · DC Inspect" },
+    { property: "og:description", content: "Listado e informes de mantenimientos preventivos." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: MantenimientoListPage,
 });
 

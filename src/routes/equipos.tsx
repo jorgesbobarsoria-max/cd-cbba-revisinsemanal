@@ -14,6 +14,14 @@ import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
 
 export const Route = createFileRoute("/equipos")({
+  head: () => ({ meta: [
+    { title: "Gestión de equipos · DC Inspect" },
+    { name: "description", content: "Equipos y parámetros de medición organizados por centro de datos." },
+    { property: "og:title", content: "Gestión de equipos · DC Inspect" },
+    { property: "og:description", content: "Equipos y parámetros de medición organizados por centro de datos." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: EquiposPage,
 });
 

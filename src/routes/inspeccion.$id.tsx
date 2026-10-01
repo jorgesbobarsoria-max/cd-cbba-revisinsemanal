@@ -15,6 +15,14 @@ import { descargarDocx } from "@/lib/download-docx";
 
 
 export const Route = createFileRoute("/inspeccion/$id")({
+  head: () => ({ meta: [
+    { title: "Revisión semanal · DC Inspect" },
+    { name: "description", content: "Registro detallado de la revisión semanal por equipo y sitio." },
+    { property: "og:title", content: "Revisión semanal · DC Inspect" },
+    { property: "og:description", content: "Registro detallado de la revisión semanal por equipo y sitio." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: InspeccionPage,
 });
 

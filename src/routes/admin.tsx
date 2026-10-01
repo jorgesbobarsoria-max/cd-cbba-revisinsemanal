@@ -19,7 +19,14 @@ import { UserPlus, Shield, Loader2, Trash2, KeyRound, Ban, Check, Users, Eye, Ey
 import { friendlyDbError } from "@/lib/friendly-errors";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Administración · DC Inspect" }] }),
+  head: () => ({ meta: [
+    { title: "Administración · DC Inspect" },
+    { name: "description", content: "Administración de usuarios, roles y sitios autorizados." },
+    { property: "og:title", content: "Administración · DC Inspect" },
+    { property: "og:description", content: "Administración de usuarios, roles y sitios autorizados." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminPage,
 });
 

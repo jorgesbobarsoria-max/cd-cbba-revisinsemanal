@@ -15,6 +15,14 @@ import { friendlyDbError } from "@/lib/friendly-errors";
 import { PLANTILLAS, getPlantilla, type OverrideRow, type ItemPlantilla } from "@/lib/mantenimiento-plantillas";
 
 export const Route = createFileRoute("/mantenimiento/parametros")({
+  head: () => ({ meta: [
+    { title: "Parámetros de mantenimiento · DC Inspect" },
+    { name: "description", content: "Configuración de parámetros para los formularios de mantenimiento." },
+    { property: "og:title", content: "Parámetros de mantenimiento · DC Inspect" },
+    { property: "og:description", content: "Configuración de parámetros para los formularios de mantenimiento." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ParametrosPage,
 });
 
