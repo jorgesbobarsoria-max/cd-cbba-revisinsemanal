@@ -8,6 +8,14 @@ import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
 
 export const Route = createFileRoute("/mantenimiento/editar/$id")({
+  head: () => ({ meta: [
+    { title: "Editar mantenimiento · DC Inspect" },
+    { name: "description", content: "Edición y finalización de un mantenimiento preventivo." },
+    { property: "og:title", content: "Editar mantenimiento · DC Inspect" },
+    { property: "og:description", content: "Edición y finalización de un mantenimiento preventivo." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: EditarMantPage,
 });
 

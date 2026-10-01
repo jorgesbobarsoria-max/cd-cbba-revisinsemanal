@@ -6,7 +6,14 @@ import { Server, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Acceso · DC Inspect" }] }),
+  head: () => ({ meta: [
+    { title: "Acceso · DC Inspect" },
+    { name: "description", content: "Acceso seguro para usuarios de DC Inspect." },
+    { property: "og:title", content: "Acceso · DC Inspect" },
+    { property: "og:description", content: "Acceso seguro para usuarios de DC Inspect." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AuthPage,
 });
 

@@ -303,31 +303,31 @@ export function PhotoEditor({ file, index, total, onDone, onCancel }: Props) {
   const activeSelection = selection ?? (tool === "crop" ? crop : null);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-editor text-editor-foreground" role="dialog" aria-modal="true" aria-label="Editor de foto">
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-editor-border px-2 safe-area-top">
-        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="size-11 text-editor-foreground" aria-label="Cancelar edición">
-          <ChevronLeft className="size-6" />
+    <div className="fixed inset-0 z-50 grid h-[100dvh] max-h-[100dvh] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-editor text-editor-foreground" role="dialog" aria-modal="true" aria-label="Editor de foto">
+      <header className="grid min-h-14 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center border-b border-editor-border px-2 safe-area-top">
+        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="size-10 shrink-0 text-editor-foreground" aria-label="Cancelar edición">
+          <ChevronLeft className="size-5" />
         </Button>
         <div className="min-w-0 px-2 text-center">
           <p className="text-sm font-semibold">Editar foto</p>
           <p className="text-[11px] text-editor-muted">{index + 1} de {total}</p>
         </div>
-        <Button type="button" onClick={save} disabled={!img || saving} className="h-10 rounded-full px-5 font-bold">
+        <Button type="button" onClick={save} disabled={!img || saving} className="h-9 shrink-0 rounded-full px-4 text-sm font-bold">
           {saving ? "Guardando…" : "Guardar"}
         </Button>
       </header>
 
-      <main className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-editor-stage p-3">
+      <main className="relative flex min-h-0 items-center justify-center overflow-hidden bg-editor-stage p-2">
         {!img && <p className="text-sm text-editor-muted">Preparando imagen…</p>}
         <div
           ref={wrapRef}
-          className="relative inline-block max-h-full max-w-full touch-none select-none"
+          className="relative inline-flex max-h-full max-w-full touch-none select-none items-center justify-center overflow-hidden"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
-          <canvas ref={canvasRef} className="block max-h-[calc(100dvh-21rem)] max-w-full object-contain" />
+          <canvas ref={canvasRef} className="block h-auto max-h-full w-auto max-w-full object-contain" />
           {activeSelection && (
             <div
               className={cn("pointer-events-none absolute border-2", tool === "mosaic" ? "border-warn bg-warn/15" : "border-primary bg-primary/10")}
@@ -339,24 +339,24 @@ export function PhotoEditor({ file, index, total, onDone, onCancel }: Props) {
         </div>
       </main>
 
-      <section className="shrink-0 border-t border-editor-border bg-editor-panel safe-area-bottom">
-        <div className="min-h-24 border-b border-editor-border px-4 py-3">
-          {tool === "crop" && <div className="flex items-center justify-center gap-3"><Button type="button" variant="secondary" onClick={() => setRot((value) => (value + 90) % 360)}><RotateCw /> Girar</Button><Button type="button" variant="ghost" disabled={!crop} onClick={() => setCrop(null)}>Quitar recorte</Button></div>}
-          {tool === "adjust" && <div className="grid grid-cols-3 gap-3">{[["Brillo", brightness, setBrightness], ["Contraste", contrast, setContrast], ["Color", saturation, setSaturation]].map(([label, value, setter]) => <label key={label as string} className="space-y-1 text-[11px] text-editor-muted"><span>{label as string}</span><input type="range" min="50" max="180" value={value as number} onChange={(event) => (setter as React.Dispatch<React.SetStateAction<number>>)(Number(event.target.value))} className="w-full accent-primary" /></label>)}</div>}
-          {tool === "filters" && <div className="flex gap-2 overflow-x-auto pb-1">{filters.map((item) => <Button key={item.id} type="button" variant={filterId === item.id ? "default" : "secondary"} size="sm" onClick={() => setFilterId(item.id)}>{item.label}</Button>)}</div>}
+      <section className="shrink-0 overflow-hidden border-t border-editor-border bg-editor-panel safe-area-bottom">
+        <div className="flex h-[4.5rem] items-center overflow-hidden border-b border-editor-border px-3 py-2">
+          {tool === "crop" && <div className="flex w-full items-center justify-center gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setRot((value) => (value + 90) % 360)}><RotateCw /> Girar</Button><Button type="button" size="sm" variant="ghost" disabled={!crop} onClick={() => setCrop(null)}>Quitar recorte</Button></div>}
+          {tool === "adjust" && <div className="grid w-full grid-cols-3 gap-2">{[["Brillo", brightness, setBrightness], ["Contraste", contrast, setContrast], ["Color", saturation, setSaturation]].map(([label, value, setter]) => <label key={label as string} className="min-w-0 space-y-0.5 text-[10px] text-editor-muted"><span>{label as string}</span><input type="range" min="50" max="180" value={value as number} onChange={(event) => (setter as React.Dispatch<React.SetStateAction<number>>)(Number(event.target.value))} className="block w-full accent-primary" /></label>)}</div>}
+          {tool === "filters" && <div className="flex w-full gap-2 overflow-x-auto py-1">{filters.map((item) => <Button key={item.id} type="button" variant={filterId === item.id ? "default" : "secondary"} size="sm" onClick={() => setFilterId(item.id)} className="shrink-0">{item.label}</Button>)}</div>}
           {tool === "draw" && <DrawingControls color={brushColor} setColor={setBrushColor} width={brushWidth} setWidth={setBrushWidth} onUndo={() => setStrokes((current) => current.slice(0, -1))} />}
-          {tool === "text" && <div className="flex items-center gap-2"><input value={textDraft} maxLength={60} onChange={(event) => setTextDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addText(); }} placeholder="Escriba un texto" className="h-11 min-w-0 flex-1 rounded-md border border-editor-border bg-editor-stage px-3 text-sm outline-none focus:border-primary" /><ColorChoices value={brushColor} onChange={setBrushColor} /><Button type="button" size="icon" onClick={addText} aria-label="Añadir texto"><Check /></Button></div>}
+          {tool === "text" && <div className="flex w-full items-center gap-1.5"><input value={textDraft} maxLength={60} onChange={(event) => setTextDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addText(); }} placeholder="Escriba un texto" className="h-9 min-w-0 flex-1 rounded-md border border-editor-border bg-editor-stage px-2 text-sm outline-none focus:border-primary" /><ColorChoices value={brushColor} onChange={setBrushColor} /><Button type="button" size="icon" className="size-9 shrink-0" onClick={addText} aria-label="Añadir texto"><Check /></Button></div>}
           {tool === "mosaic" && <div className="flex items-center justify-between gap-3"><p className="text-xs text-editor-muted">Marque sobre la imagen el área que desea ocultar.</p><Button type="button" variant="ghost" size="sm" disabled={!mosaics.length} onClick={() => setMosaics((current) => current.slice(0, -1))}><Undo2 /> Deshacer</Button></div>}
         </div>
 
-        <nav className="flex h-24 items-stretch overflow-x-auto px-1" aria-label="Herramientas de edición">
+        <nav className="flex h-[4.25rem] items-stretch overflow-x-auto px-1" aria-label="Herramientas de edición">
           {tools.map((item) => {
             const Icon = item.icon;
-            return <Button key={item.id} type="button" variant="ghost" onClick={() => { setTool(item.id); setSelection(null); setDragStart(null); }} className={cn("h-full min-w-20 shrink-0 flex-col gap-2 rounded-none px-3 text-xs text-editor-muted", tool === item.id && "border-t-2 border-primary text-primary")}><Icon className="size-6" />{item.label}</Button>;
+            return <Button key={item.id} type="button" variant="ghost" onClick={() => { setTool(item.id); setSelection(null); setDragStart(null); }} className={cn("h-full min-w-[4.5rem] shrink-0 flex-col gap-1 rounded-none px-2 text-[10px] text-editor-muted", tool === item.id && "border-t-2 border-primary text-primary")}><Icon className="size-5" />{item.label}</Button>;
           })}
         </nav>
 
-        <div className="flex items-center justify-between border-t border-editor-border px-3 py-2">
+        <div className="flex h-10 items-center justify-between border-t border-editor-border px-2">
           <Button type="button" variant="ghost" size="sm" onClick={reset}><Undo2 /> Restablecer</Button>
           <Button type="button" variant="ghost" size="sm" onClick={() => onDone(file)}>Usar original</Button>
         </div>

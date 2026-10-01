@@ -9,7 +9,14 @@ import { KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/cambiar-password")({
-  head: () => ({ meta: [{ title: "Cambiar contraseña · DC Inspect" }] }),
+  head: () => ({ meta: [
+    { title: "Cambiar contraseña · DC Inspect" },
+    { name: "description", content: "Actualización segura de la contraseña de acceso." },
+    { property: "og:title", content: "Cambiar contraseña · DC Inspect" },
+    { property: "og:description", content: "Actualización segura de la contraseña de acceso." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ChangePasswordPage,
 });
 

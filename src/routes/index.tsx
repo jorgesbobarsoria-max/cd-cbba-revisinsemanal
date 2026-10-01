@@ -15,6 +15,14 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
+  head: () => ({ meta: [
+    { title: "Panel de revisión semanal · DC Inspect" },
+    { name: "description", content: "Indicadores y revisiones semanales de los centros de datos." },
+    { property: "og:title", content: "Panel de revisión semanal · DC Inspect" },
+    { property: "og:description", content: "Indicadores y revisiones semanales de los centros de datos." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: HomePage,
 });
 

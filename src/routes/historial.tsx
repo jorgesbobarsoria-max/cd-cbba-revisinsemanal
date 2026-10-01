@@ -10,6 +10,14 @@ import { toast } from "sonner";
 import { descargarDocx } from "@/lib/download-docx";
 
 export const Route = createFileRoute("/historial")({
+  head: () => ({ meta: [
+    { title: "Historial de revisiones · DC Inspect" },
+    { name: "description", content: "Historial de revisiones semanales de todos los centros de datos." },
+    { property: "og:title", content: "Historial de revisiones · DC Inspect" },
+    { property: "og:description", content: "Historial de revisiones semanales de todos los centros de datos." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: HistorialPage,
 });
 

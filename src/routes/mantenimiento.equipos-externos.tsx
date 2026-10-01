@@ -16,6 +16,14 @@ import { friendlyDbError } from "@/lib/friendly-errors";
 import { PLANTILLAS } from "@/lib/mantenimiento-plantillas";
 
 export const Route = createFileRoute("/mantenimiento/equipos-externos")({
+  head: () => ({ meta: [
+    { title: "Equipos externos · DC Inspect" },
+    { name: "description", content: "Catálogo de equipos externos usados en mantenimientos." },
+    { property: "og:title", content: "Equipos externos · DC Inspect" },
+    { property: "og:description", content: "Catálogo de equipos externos usados en mantenimientos." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: EquiposExternosPage,
 });
 
