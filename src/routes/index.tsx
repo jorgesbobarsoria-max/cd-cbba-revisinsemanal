@@ -13,6 +13,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line, Legend,
 } from "recharts";
 import { toast } from "sonner";
+import { DashboardDetalle, type DetalleTipo } from "@/components/dashboard-detalle";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
@@ -62,6 +63,8 @@ function HomePage() {
   const [trend, setTrend] = useState<{ semana: string; alertas: number; ok: number }[]>([]);
   const [busy, setBusy] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detalle, setDetalle] = useState<DetalleTipo | null>(null);
+  const [standby, setStandby] = useState<string[]>([]);
   const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
   const { permisos, sitios } = useProfile();
   const puedeRegistrar = puedeEscribirEnSitio(
@@ -97,11 +100,14 @@ function HomePage() {
   useEffect(() => {
     if (!selectedId || insps.length === 0) return;
     (async () => {
-      const { data: it } = await supabase
-        .from("inspeccion_items")
-        .select("equipo_id,punto_id,semaforo,valor,observaciones,accion_correctiva")
-        .eq("inspeccion_id", selectedId);
+      const [{ data: it }, { data: insSel }] = await Promise.all([
+        supabase.from("inspeccion_items")
+          .select("equipo_id,punto_id,semaforo,valor,observaciones,accion_correctiva")
+          .eq("inspeccion_id", selectedId),
+        supabase.from("inspecciones").select("standby_equipos").eq("id", selectedId).maybeSingle(),
+      ]);
       setItems(it ?? []);
+      setStandby(((insSel as { standby_equipos?: string[] } | null)?.standby_equipos ?? []) as string[]);
 
       // Tendencia: hasta 6 inspecciones desde la seleccionada hacia atrás, en orden cronológico
       const idx = insps.findIndex(i => i.id === selectedId);
@@ -306,19 +312,22 @@ function HomePage() {
 
       {/* KPI cards */}
       <section className="grid grid-cols-2 gap-2 mb-5">
-        <KpiCard icon={CheckCircle2} iconColor="text-ok" title="Disponibilidad"
+        <KpiCard onClick={() => setDetalle("disp")} icon={CheckCircle2} iconColor="text-ok" title="Disponibilidad"
           value={stats.disponibilidad != null ? `${stats.disponibilidad}%` : "--"}
           sub="Meta: ≥ 95%" />
-        <KpiCard icon={BarChart3} iconColor="text-primary" title="Equipos OK"
+        <KpiCard onClick={() => setDetalle("equipos")} icon={BarChart3} iconColor="text-primary" title="Equipos OK"
           value={`${stats.equiposOk}/${equipos.length}`}
           sub="Operativos / Total" />
-        <KpiCard icon={AlertTriangle} iconColor="text-fail" title="Alertas Activas"
+        <KpiCard onClick={() => setDetalle("alertas")} icon={AlertTriangle} iconColor="text-fail" title="Alertas Activas"
           value={String(stats.alertaTotal)}
           sub="Requieren atención" />
-        <KpiCard icon={Thermometer} iconColor="text-warn" title="Temp. Promedio"
+        <KpiCard onClick={() => setDetalle("temp")} icon={Thermometer} iconColor="text-warn" title="Temp. Promedio"
           value={stats.tempProm != null ? `${stats.tempProm}°C` : "--"}
           sub="Rango: 18-27°C" />
       </section>
+      <DashboardDetalle tipo={detalle} onClose={() => setDetalle(null)}
+        equipos={equipos} items={items} puntos={puntos} insps={insps}
+        inspeccionId={selectedId} standby={standby} />
 
       {/* Charts */}
       <section className="space-y-3 mb-5">
@@ -456,16 +465,16 @@ function HomePage() {
   );
 }
 
-function KpiCard({ icon: Icon, iconColor, title, value, sub }: { icon: React.ElementType; iconColor: string; title: string; value: string; sub: string }) {
+function KpiCard({ icon: Icon, iconColor, title, value, sub, onClick }: { icon: React.ElementType; iconColor: string; title: string; value: string; sub: string; onClick?: () => void }) {
   return (
-    <div className="glass rounded-2xl p-3.5">
+    <button type="button" onClick={onClick} className="glass rounded-2xl p-3.5 text-left hover:border-primary/50 active:scale-[0.98] transition">
       <div className="flex items-start justify-between mb-1.5">
         <p className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">{title}</p>
         <Icon className={`size-4 ${iconColor}`} />
       </div>
       <p className="text-2xl font-bold font-mono leading-tight">{value}</p>
-      <p className="text-[10px] text-muted-foreground mt-1">{sub}</p>
-    </div>
+      <p className="text-[10px] text-muted-foreground mt-1">{sub} · <span className="text-primary">Ver detalle</span></p>
+    </button>
   );
 }
 
