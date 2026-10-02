@@ -89,9 +89,9 @@
     "vitest": "^4.1.10"
   },
   "overrides": {
-    "seroval": "^1.6.2"
+    "seroval": "1.6.8"
   },
   "resolutions": {
-    "seroval": "^1.6.2"
+    "seroval": "1.6.8"
   }
 }
