@@ -686,6 +686,7 @@ export type Database = {
         Args: { _inspeccion_id: string }
         Returns: boolean
       }
+      es_usuario_activo: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
