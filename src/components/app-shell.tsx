@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Home, History, Server, LogOut, Wrench, Shield } from "lucide-react";
+import { Home, History, Server, LogOut, Wrench, Shield, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/use-profile";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ const baseItems = [
   { to: "/", icon: Home, label: "Inicio" },
   { to: "/equipos", icon: Server, label: "Equipos" },
   { to: "/mantenimiento", icon: Wrench, label: "Mantenim." },
+  { to: "/diagnostico", icon: Sparkles, label: "IA" },
   { to: "/historial", icon: History, label: "Historial" },
 ];
 
