@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
 import { supabase } from "@/integrations/supabase/client";
 import { CIUDADES } from "@/lib/sitios";
 import { diagnosticarFalla } from "@/lib/diagnostico.functions";
@@ -26,6 +27,7 @@ type Eq = { id: string; tag: string; categoria: string };
 
 function DiagnosticoPage() {
   const { user, loading } = useAuth();
+  const { isAdmin, loading: perfilLoading } = useProfile();
   const nav = useNavigate();
   const diagnosticar = useServerFn(diagnosticarFalla);
   const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
@@ -55,6 +57,18 @@ function DiagnosticoPage() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo analizar");
     } finally { setBusy(false); }
+  }
+
+  if (!loading && !perfilLoading && user && !isAdmin) {
+    return (
+      <AppShell title="Diagnóstico IA">
+        <section className="glass rounded-2xl p-6 text-center space-y-2 mt-8">
+          <Sparkles className="size-8 mx-auto text-muted-foreground" />
+          <h2 className="text-lg font-bold">Solo administradores</h2>
+          <p className="text-sm text-muted-foreground">El diagnóstico con IA está disponible únicamente para cuentas con rol de administrador.</p>
+        </section>
+      </AppShell>
+    );
   }
 
   return (
