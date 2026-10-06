@@ -353,6 +353,23 @@ function HomePage() {
               <p className="text-xs text-muted-foreground">{selected?.hr_sala != null ? "Humedad relativa de sala" : "Sin humedad registrada en esta revisión"}</p>
             </div>
           </div>
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Tendencia · últimas revisiones semanales (%)</p>
+            {humTrend.length === 0 ? <EmptyMini label="Sin historial de humedad" /> : (
+              <ResponsiveContainer width="100%" height={160}>
+                <LineChart data={humTrend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 250)" />
+                  <XAxis dataKey="semana" tick={{ fill: "oklch(0.7 0.02 250)", fontSize: 10 }} />
+                  <YAxis tick={{ fill: "oklch(0.7 0.02 250)", fontSize: 10 }} domain={[0, 100]} />
+                  <Tooltip contentStyle={{ background: "oklch(0.2 0.02 250)", border: "1px solid oklch(0.3 0.02 250)", borderRadius: 8, fontSize: 12 }} />
+                  <ReferenceLine y={20} stroke={COLORS.warn} strokeDasharray="4 4" />
+                  <ReferenceLine y={60} stroke={COLORS.warn} strokeDasharray="4 4" />
+                  <Line type="monotone" dataKey="hr" name="Humedad relativa" stroke={COLORS.primary} strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+            <p className="text-[10px] text-muted-foreground">Líneas de referencia: 20–60% (rango ASHRAE)</p>
+          </div>
           {selected && <Button asChild variant="outline"><Link to="/inspeccion/$id" params={{ id: selected.id }}>Abrir en la revisión</Link></Button>}
         </DialogContent>
       </Dialog>
