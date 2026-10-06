@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, LineChart, Line, Legend,
+  PieChart, Pie, Cell, LineChart, Line, Legend, ReferenceLine,
 } from "recharts";
 import { toast } from "sonner";
 import { DashboardDetalle, type DetalleTipo } from "@/components/dashboard-detalle";
@@ -152,6 +152,15 @@ function HomePage() {
     const tempProm = tempVals.length > 0 ? (tempVals.reduce((a, b) => a + b, 0) / tempVals.length).toFixed(1) : null;
     return { ok, alerta, falla, total, equiposOk, evaluados, disponibilidad, tempProm, alertaTotal: alerta + falla };
   }, [items, equipos, puntos]);
+
+  const humTrend = useMemo(() => {
+    return insps
+      .filter(i => i.hr_sala != null)
+      .slice(0, 12)
+      .slice()
+      .reverse()
+      .map(i => ({ semana: `W${i.semana}`, hr: Number(i.hr_sala!.toFixed(1)) }));
+  }, [insps]);
 
   const tempPorUnidad = useMemo(() => {
     const tempPts = puntos.filter(p => /temp/i.test(p.descripcion) && p.tipo === "numerico");
@@ -343,6 +352,23 @@ function HomePage() {
               <p className="text-3xl font-bold font-mono">{selected?.hr_sala != null ? `${selected.hr_sala.toFixed(1)}%` : "--"}</p>
               <p className="text-xs text-muted-foreground">{selected?.hr_sala != null ? "Humedad relativa de sala" : "Sin humedad registrada en esta revisión"}</p>
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Tendencia · últimas revisiones semanales (%)</p>
+            {humTrend.length === 0 ? <EmptyMini label="Sin historial de humedad" /> : (
+              <ResponsiveContainer width="100%" height={160}>
+                <LineChart data={humTrend} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 250)" />
+                  <XAxis dataKey="semana" tick={{ fill: "oklch(0.7 0.02 250)", fontSize: 10 }} />
+                  <YAxis tick={{ fill: "oklch(0.7 0.02 250)", fontSize: 10 }} domain={[0, 100]} />
+                  <Tooltip contentStyle={{ background: "oklch(0.2 0.02 250)", border: "1px solid oklch(0.3 0.02 250)", borderRadius: 8, fontSize: 12 }} />
+                  <ReferenceLine y={20} stroke={COLORS.warn} strokeDasharray="4 4" />
+                  <ReferenceLine y={60} stroke={COLORS.warn} strokeDasharray="4 4" />
+                  <Line type="monotone" dataKey="hr" name="Humedad relativa" stroke={COLORS.primary} strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+            <p className="text-[10px] text-muted-foreground">Líneas de referencia: 20–60% (rango ASHRAE)</p>
           </div>
           {selected && <Button asChild variant="outline"><Link to="/inspeccion/$id" params={{ id: selected.id }}>Abrir en la revisión</Link></Button>}
         </DialogContent>
