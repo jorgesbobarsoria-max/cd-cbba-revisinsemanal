@@ -59,7 +59,7 @@ function DiagnosticoPage() {
     } finally { setBusy(false); }
   }
 
-  if (!loading && !perfilLoading && (!user || !isAdmin)) {
+  if (!loading && !perfilLoading && user && !isAdmin) {
     return (
       <AppShell title="Diagnóstico IA">
         <section className="glass rounded-2xl p-6 text-center space-y-2 mt-8">
