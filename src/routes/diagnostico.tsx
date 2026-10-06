@@ -27,6 +27,7 @@ type Eq = { id: string; tag: string; categoria: string };
 
 function DiagnosticoPage() {
   const { user, loading } = useAuth();
+  const { isAdmin, loading: perfilLoading } = useProfile();
   const nav = useNavigate();
   const diagnosticar = useServerFn(diagnosticarFalla);
   const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
