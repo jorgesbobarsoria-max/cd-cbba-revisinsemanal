@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, LineChart, Line, Legend,
+  PieChart, Pie, Cell, LineChart, Line, Legend, ReferenceLine,
 } from "recharts";
 import { toast } from "sonner";
 import { DashboardDetalle, type DetalleTipo } from "@/components/dashboard-detalle";
