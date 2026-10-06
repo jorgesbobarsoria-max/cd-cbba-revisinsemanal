@@ -59,6 +59,18 @@ function DiagnosticoPage() {
     } finally { setBusy(false); }
   }
 
+  if (!loading && !perfilLoading && (!user || !isAdmin)) {
+    return (
+      <AppShell title="Diagnóstico IA">
+        <section className="glass rounded-2xl p-6 text-center space-y-2 mt-8">
+          <Sparkles className="size-8 mx-auto text-muted-foreground" />
+          <h2 className="text-lg font-bold">Solo administradores</h2>
+          <p className="text-sm text-muted-foreground">El diagnóstico con IA está disponible únicamente para cuentas con rol de administrador.</p>
+        </section>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell title="Diagnóstico IA">
       <section className="mb-4">
