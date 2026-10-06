@@ -9,50 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as MantenimientoRouteImport } from './routes/mantenimiento'
-import { Route as HistorialRouteImport } from './routes/historial'
-import { Route as EquiposRouteImport } from './routes/equipos'
-import { Route as DiagnosticoRouteImport } from './routes/diagnostico'
-import { Route as CambiarPasswordRouteImport } from './routes/cambiar-password'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as MantenimientoIndexRouteImport } from './routes/mantenimiento.index'
-import { Route as MantenimientoParametrosRouteImport } from './routes/mantenimiento.parametros'
-import { Route as MantenimientoEquiposExternosRouteImport } from './routes/mantenimiento.equipos-externos'
-import { Route as MantenimientoIdRouteImport } from './routes/mantenimiento.$id'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CambiarPasswordRouteImport } from './routes/cambiar-password'
+import { Route as DiagnosticoRouteImport } from './routes/diagnostico'
+import { Route as EquiposRouteImport } from './routes/equipos'
+import { Route as HistorialRouteImport } from './routes/historial'
+import { Route as MantenimientoRouteImport } from './routes/mantenimiento'
 import { Route as InspeccionIdRouteImport } from './routes/inspeccion.$id'
-import { Route as MantenimientoNuevoTipoRouteImport } from './routes/mantenimiento.nuevo.$tipo'
+import { Route as MantenimientoIndexRouteImport } from './routes/mantenimiento.index'
+import { Route as MantenimientoIdRouteImport } from './routes/mantenimiento.$id'
+import { Route as MantenimientoEquiposExternosRouteImport } from './routes/mantenimiento.equipos-externos'
+import { Route as MantenimientoParametrosRouteImport } from './routes/mantenimiento.parametros'
 import { Route as MantenimientoEditarIdRouteImport } from './routes/mantenimiento.editar.$id'
+import { Route as MantenimientoNuevoTipoRouteImport } from './routes/mantenimiento.nuevo.$tipo'
 
-const MantenimientoRoute = MantenimientoRouteImport.update({
-  id: '/mantenimiento',
-  path: '/mantenimiento',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistorialRoute = HistorialRouteImport.update({
-  id: '/historial',
-  path: '/historial',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EquiposRoute = EquiposRouteImport.update({
-  id: '/equipos',
-  path: '/equipos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DiagnosticoRoute = DiagnosticoRouteImport.update({
-  id: '/diagnostico',
-  path: '/diagnostico',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CambiarPasswordRoute = CambiarPasswordRouteImport.update({
-  id: '/cambiar-password',
-  path: '/cambiar-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -60,9 +35,39 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CambiarPasswordRoute = CambiarPasswordRouteImport.update({
+  id: '/cambiar-password',
+  path: '/cambiar-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagnosticoRoute = DiagnosticoRouteImport.update({
+  id: '/diagnostico',
+  path: '/diagnostico',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EquiposRoute = EquiposRouteImport.update({
+  id: '/equipos',
+  path: '/equipos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistorialRoute = HistorialRouteImport.update({
+  id: '/historial',
+  path: '/historial',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MantenimientoRoute = MantenimientoRouteImport.update({
+  id: '/mantenimiento',
+  path: '/mantenimiento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InspeccionIdRoute = InspeccionIdRouteImport.update({
+  id: '/inspeccion/$id',
+  path: '/inspeccion/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MantenimientoIndexRoute = MantenimientoIndexRouteImport.update({
@@ -70,9 +75,9 @@ const MantenimientoIndexRoute = MantenimientoIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MantenimientoRoute,
 } as any)
-const MantenimientoParametrosRoute = MantenimientoParametrosRouteImport.update({
-  id: '/parametros',
-  path: '/parametros',
+const MantenimientoIdRoute = MantenimientoIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
   getParentRoute: () => MantenimientoRoute,
 } as any)
 const MantenimientoEquiposExternosRoute =
@@ -81,24 +86,19 @@ const MantenimientoEquiposExternosRoute =
     path: '/equipos-externos',
     getParentRoute: () => MantenimientoRoute,
   } as any)
-const MantenimientoIdRoute = MantenimientoIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => MantenimientoRoute,
-} as any)
-const InspeccionIdRoute = InspeccionIdRouteImport.update({
-  id: '/inspeccion/$id',
-  path: '/inspeccion/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MantenimientoNuevoTipoRoute = MantenimientoNuevoTipoRouteImport.update({
-  id: '/nuevo/$tipo',
-  path: '/nuevo/$tipo',
+const MantenimientoParametrosRoute = MantenimientoParametrosRouteImport.update({
+  id: '/parametros',
+  path: '/parametros',
   getParentRoute: () => MantenimientoRoute,
 } as any)
 const MantenimientoEditarIdRoute = MantenimientoEditarIdRouteImport.update({
   id: '/editar/$id',
   path: '/editar/$id',
+  getParentRoute: () => MantenimientoRoute,
+} as any)
+const MantenimientoNuevoTipoRoute = MantenimientoNuevoTipoRouteImport.update({
+  id: '/nuevo/$tipo',
+  path: '/nuevo/$tipo',
   getParentRoute: () => MantenimientoRoute,
 } as any)
 
@@ -220,46 +220,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/mantenimiento': {
-      id: '/mantenimiento'
-      path: '/mantenimiento'
-      fullPath: '/mantenimiento'
-      preLoaderRoute: typeof MantenimientoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/historial': {
-      id: '/historial'
-      path: '/historial'
-      fullPath: '/historial'
-      preLoaderRoute: typeof HistorialRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/equipos': {
-      id: '/equipos'
-      path: '/equipos'
-      fullPath: '/equipos'
-      preLoaderRoute: typeof EquiposRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/diagnostico': {
-      id: '/diagnostico'
-      path: '/diagnostico'
-      fullPath: '/diagnostico'
-      preLoaderRoute: typeof DiagnosticoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cambiar-password': {
-      id: '/cambiar-password'
-      path: '/cambiar-password'
-      fullPath: '/cambiar-password'
-      preLoaderRoute: typeof CambiarPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -269,11 +234,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cambiar-password': {
+      id: '/cambiar-password'
+      path: '/cambiar-password'
+      fullPath: '/cambiar-password'
+      preLoaderRoute: typeof CambiarPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico': {
+      id: '/diagnostico'
+      path: '/diagnostico'
+      fullPath: '/diagnostico'
+      preLoaderRoute: typeof DiagnosticoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/equipos': {
+      id: '/equipos'
+      path: '/equipos'
+      fullPath: '/equipos'
+      preLoaderRoute: typeof EquiposRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historial': {
+      id: '/historial'
+      path: '/historial'
+      fullPath: '/historial'
+      preLoaderRoute: typeof HistorialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mantenimiento': {
+      id: '/mantenimiento'
+      path: '/mantenimiento'
+      fullPath: '/mantenimiento'
+      preLoaderRoute: typeof MantenimientoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inspeccion/$id': {
+      id: '/inspeccion/$id'
+      path: '/inspeccion/$id'
+      fullPath: '/inspeccion/$id'
+      preLoaderRoute: typeof InspeccionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mantenimiento/': {
@@ -283,11 +290,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MantenimientoIndexRouteImport
       parentRoute: typeof MantenimientoRoute
     }
-    '/mantenimiento/parametros': {
-      id: '/mantenimiento/parametros'
-      path: '/parametros'
-      fullPath: '/mantenimiento/parametros'
-      preLoaderRoute: typeof MantenimientoParametrosRouteImport
+    '/mantenimiento/$id': {
+      id: '/mantenimiento/$id'
+      path: '/$id'
+      fullPath: '/mantenimiento/$id'
+      preLoaderRoute: typeof MantenimientoIdRouteImport
       parentRoute: typeof MantenimientoRoute
     }
     '/mantenimiento/equipos-externos': {
@@ -297,25 +304,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MantenimientoEquiposExternosRouteImport
       parentRoute: typeof MantenimientoRoute
     }
-    '/mantenimiento/$id': {
-      id: '/mantenimiento/$id'
-      path: '/$id'
-      fullPath: '/mantenimiento/$id'
-      preLoaderRoute: typeof MantenimientoIdRouteImport
-      parentRoute: typeof MantenimientoRoute
-    }
-    '/inspeccion/$id': {
-      id: '/inspeccion/$id'
-      path: '/inspeccion/$id'
-      fullPath: '/inspeccion/$id'
-      preLoaderRoute: typeof InspeccionIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mantenimiento/nuevo/$tipo': {
-      id: '/mantenimiento/nuevo/$tipo'
-      path: '/nuevo/$tipo'
-      fullPath: '/mantenimiento/nuevo/$tipo'
-      preLoaderRoute: typeof MantenimientoNuevoTipoRouteImport
+    '/mantenimiento/parametros': {
+      id: '/mantenimiento/parametros'
+      path: '/parametros'
+      fullPath: '/mantenimiento/parametros'
+      preLoaderRoute: typeof MantenimientoParametrosRouteImport
       parentRoute: typeof MantenimientoRoute
     }
     '/mantenimiento/editar/$id': {
@@ -323,6 +316,13 @@ declare module '@tanstack/react-router' {
       path: '/editar/$id'
       fullPath: '/mantenimiento/editar/$id'
       preLoaderRoute: typeof MantenimientoEditarIdRouteImport
+      parentRoute: typeof MantenimientoRoute
+    }
+    '/mantenimiento/nuevo/$tipo': {
+      id: '/mantenimiento/nuevo/$tipo'
+      path: '/nuevo/$tipo'
+      fullPath: '/mantenimiento/nuevo/$tipo'
+      preLoaderRoute: typeof MantenimientoNuevoTipoRouteImport
       parentRoute: typeof MantenimientoRoute
     }
   }
