@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, ChevronRight, AlertTriangle, CheckCircle2, Calendar,
-  Thermometer, Activity, Bell, BarChart3, Zap, ListChecks, Gauge, MapPin,
+   Thermometer, Activity, Bell, BarChart3, Zap, ListChecks, Gauge, MapPin, Droplets,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
@@ -14,6 +14,8 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { DashboardDetalle, type DetalleTipo } from "@/components/dashboard-detalle";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
@@ -28,7 +30,7 @@ export const Route = createFileRoute("/")({
 });
 
 type Inspeccion = {
-  id: string; fecha: string; semana: number; tecnico: string | null; estado: string;
+   id: string; fecha: string; semana: number; tecnico: string | null; estado: string; hr_sala: number | null;
 };
 type Equipo = { id: string; tag: string; marca: string | null; modelo: string | null; categoria: string };
 type Item = { equipo_id: string; punto_id: number; semaforo: string | null; valor: string | null; observaciones: string | null; accion_correctiva: string | null };
@@ -64,6 +66,7 @@ function HomePage() {
   const [busy, setBusy] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detalle, setDetalle] = useState<DetalleTipo | null>(null);
+  const [humedadAbierta, setHumedadAbierta] = useState(false);
   const [standby, setStandby] = useState<string[]>([]);
   const [ciudad, setCiudad] = useState<string>(CIUDADES[0]);
   const { permisos, sitios } = useProfile();
@@ -86,7 +89,7 @@ function HomePage() {
     setTrend([]);
     (async () => {
       const [{ data: ins }, { data: eqs }, { data: pts }] = await Promise.all([
-        supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado").eq("ciudad", ciudad).order("fecha", { ascending: false }).limit(24),
+         supabase.from("inspecciones").select("id,fecha,semana,tecnico,estado,hr_sala").eq("ciudad", ciudad).order("fecha", { ascending: false }).limit(24),
         supabase.from("equipos").select("id,tag,marca,modelo,categoria").eq("ciudad", ciudad).order("orden"),
         supabase.from("puntos_inspeccion").select("id,equipo_id,descripcion,tipo,unidad"),
       ]);
@@ -324,7 +327,26 @@ function HomePage() {
         <KpiCard onClick={() => setDetalle("temp")} icon={Thermometer} iconColor="text-warn" title="Temp. Promedio"
           value={stats.tempProm != null ? `${stats.tempProm}°C` : "--"}
           sub="Rango: 18-27°C" />
+        <KpiCard onClick={() => setHumedadAbierta(true)} icon={Droplets} iconColor="text-primary" title="Humedad relativa"
+          value={selected?.hr_sala != null ? `${selected.hr_sala.toFixed(1)}%` : "--"}
+          sub="Humedad de sala" />
       </section>
+      <Dialog open={humedadAbierta} onOpenChange={setHumedadAbierta}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Humedad relativa</DialogTitle>
+            <DialogDescription>DC {ciudad} · {selected ? `Semana ${selected.semana} · ${selected.fecha}` : "Sin revisión seleccionada"}</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-3 py-4">
+            <Droplets className="size-8 text-primary" />
+            <div>
+              <p className="text-3xl font-bold font-mono">{selected?.hr_sala != null ? `${selected.hr_sala.toFixed(1)}%` : "--"}</p>
+              <p className="text-xs text-muted-foreground">{selected?.hr_sala != null ? "Humedad relativa de sala" : "Sin humedad registrada en esta revisión"}</p>
+            </div>
+          </div>
+          {selected && <Button asChild variant="outline"><Link to="/inspeccion/$id" params={{ id: selected.id }}>Abrir en la revisión</Link></Button>}
+        </DialogContent>
+      </Dialog>
       <DashboardDetalle tipo={detalle} onClose={() => setDetalle(null)}
         equipos={equipos} items={items} puntos={puntos} insps={insps}
         inspeccionId={selectedId} standby={standby} />
@@ -467,14 +489,14 @@ function HomePage() {
 
 function KpiCard({ icon: Icon, iconColor, title, value, sub, onClick }: { icon: React.ElementType; iconColor: string; title: string; value: string; sub: string; onClick?: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="glass rounded-2xl p-3.5 text-left hover:border-primary/50 active:scale-[0.98] transition">
+     <Button variant="ghost" type="button" onClick={onClick} className="glass h-auto min-w-0 block whitespace-normal rounded-2xl p-3.5 text-left hover:border-primary/50 active:scale-[0.98] transition">
       <div className="flex items-start justify-between mb-1.5">
         <p className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">{title}</p>
         <Icon className={`size-4 ${iconColor}`} />
       </div>
       <p className="text-2xl font-bold font-mono leading-tight">{value}</p>
       <p className="text-[10px] text-muted-foreground mt-1">{sub} · <span className="text-primary">Ver detalle</span></p>
-    </button>
+     </Button>
   );
 }
 
