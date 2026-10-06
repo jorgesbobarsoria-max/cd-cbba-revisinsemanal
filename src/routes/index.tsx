@@ -153,6 +153,15 @@ function HomePage() {
     return { ok, alerta, falla, total, equiposOk, evaluados, disponibilidad, tempProm, alertaTotal: alerta + falla };
   }, [items, equipos, puntos]);
 
+  const humTrend = useMemo(() => {
+    return insps
+      .filter(i => i.hr_sala != null)
+      .slice(0, 12)
+      .slice()
+      .reverse()
+      .map(i => ({ semana: `W${i.semana}`, hr: Number(i.hr_sala!.toFixed(1)) }));
+  }, [insps]);
+
   const tempPorUnidad = useMemo(() => {
     const tempPts = puntos.filter(p => /temp/i.test(p.descripcion) && p.tipo === "numerico");
     return equipos
