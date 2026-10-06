@@ -26,9 +26,10 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
     }
   }, [mustChangePassword, loading, user, loc.pathname, nav]);
 
-  const items = isAdmin
-    ? [...baseItems, { to: "/admin", icon: Shield, label: "Admin" }]
-    : baseItems;
+  const items = [
+    ...baseItems.filter((it) => it.to !== "/diagnostico" || isAdmin),
+    ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
+  ];
 
   return (
     <div className="min-h-screen flex flex-col pb-20">
