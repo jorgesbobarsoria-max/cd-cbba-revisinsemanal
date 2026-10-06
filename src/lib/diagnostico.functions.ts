@@ -23,6 +23,9 @@ export const diagnosticarFalla = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
+    // Solo administradores pueden ejecutar el diagnóstico IA
+    const { data: esAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!esAdmin) throw new Error("Solo los administradores pueden usar el diagnóstico con IA.");
     const sb = context.supabase;
     const { data: eq, error: eqErr } = await sb.from("equipos")
       .select("id,tag,categoria,marca,modelo,ubicacion,criticidad,ciudad").eq("id", data.equipo_id).maybeSingle();
