@@ -240,7 +240,7 @@ function HomePage() {
   const year = selected ? new Date(selected.fecha).getFullYear() : new Date().getFullYear();
 
   return (
-    <AppShell title="Dashboard">
+    <AppShell title="Panel de Inspecciones DC Inspect">
       <section className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Revisión Semanal</p>
