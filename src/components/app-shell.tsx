@@ -4,6 +4,7 @@ import { Home, History, Server, LogOut, Wrench, Shield, Sparkles } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/use-profile";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const baseItems = [
   { to: "/", icon: Home, label: "Inicio" },
@@ -32,18 +33,18 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
   ];
 
   return (
-    <div className="min-h-screen flex flex-col pb-20">
-      <header className="sticky top-0 z-30 glass px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="size-9 rounded-xl bg-primary/15 border border-primary/40 grid place-items-center">
+    <div className="min-h-screen flex flex-col pb-[calc(5rem+env(safe-area-inset-bottom,0px))]">
+      <header className="sticky top-0 z-30 glass px-4 py-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="size-9 shrink-0 rounded-xl bg-primary/15 border border-primary/40 grid place-items-center">
             <Server className="size-4 text-primary" />
           </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Data Center · CBBA</p>
-            <h1 className="text-sm font-semibold leading-tight">{title ?? "Revisión Semanal"}</h1>
+          <div className="min-w-0">
+            <p className="truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Data Center · CBBA</p>
+            <h1 className="truncate text-sm font-semibold leading-tight">{title ?? "Revisión Semanal"}</h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {user && !loading && (
             <span
               title={`Sesión con permisos de ${etiquetaRol}`}
@@ -59,34 +60,40 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
               {etiquetaRol}
             </span>
           )}
-        <button
+        <Button
+          variant="secondary"
+          size="icon"
           onClick={() => supabase.auth.signOut()}
           className="size-9 rounded-xl bg-secondary hover:bg-muted grid place-items-center"
           aria-label="Salir"
         >
           <LogOut className="size-4" />
-        </button>
+        </Button>
         </div>
       </header>
 
       <main className="flex-1 px-4 py-5">{children}</main>
 
-      <nav className="fixed bottom-0 inset-x-0 z-30 glass border-t border-border/60">
-        <div className={cn("max-w-md mx-auto grid", items.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+      <nav aria-label="Navegación principal" className="fixed bottom-0 inset-x-0 z-30 bg-background border-t border-border pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="max-w-lg mx-auto grid grid-flow-col auto-cols-fr px-1">
           {items.map((it) => {
             const active = loc.pathname === it.to || (it.to !== "/" && loc.pathname.startsWith(it.to));
             return (
+              <Button asChild variant="ghost" key={it.to} className={cn(
+                "h-16 min-w-0 rounded-none px-0.5 py-2",
+                active ? "text-primary bg-primary/10 hover:bg-primary/15 hover:text-primary" : "text-muted-foreground hover:text-foreground",
+              )}>
               <Link
                 key={it.to}
                 to={it.to}
-                className={cn(
-                  "flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                )}
+                aria-current={active ? "page" : undefined}
+                title={it.label === "Mantenim." ? "Mantenimiento" : it.label}
+                className="flex flex-col items-center justify-center gap-1 text-[10px] sm:text-[11px] font-medium transition-colors"
               >
-                <it.icon className={cn("size-5", active && "drop-shadow-[0_0_8px_oklch(0.78_0.17_175_/_0.6)]")} />
-                {it.label}
+                <it.icon className="size-5 shrink-0" />
+                <span className="max-w-full truncate">{it.label}</span>
               </Link>
+              </Button>
             );
           })}
         </div>
