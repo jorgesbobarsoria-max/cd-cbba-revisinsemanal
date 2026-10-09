@@ -1,0 +1,3 @@
+- [x] Adaptar la barra inferior a tablet y orientación horizontal.
+- [x] Añadir nombres accesibles y selección visible a cada opción.
+- [x] Verificar navegación, espacio libre y selección en distintos tamaños.

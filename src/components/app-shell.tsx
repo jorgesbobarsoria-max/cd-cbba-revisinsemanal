@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const baseItems = [
-  { to: "/", icon: Home, label: "Inicio" },
-  { to: "/equipos", icon: Server, label: "Equipos" },
-  { to: "/mantenimiento", icon: Wrench, label: "Mantenim." },
-  { to: "/diagnostico", icon: Sparkles, label: "IA" },
-  { to: "/historial", icon: History, label: "Historial" },
+  { to: "/", icon: Home, label: "Inicio", accessibleLabel: "Inicio" },
+  { to: "/equipos", icon: Server, label: "Equipos", accessibleLabel: "Equipos" },
+  { to: "/mantenimiento", icon: Wrench, label: "Mantenim.", accessibleLabel: "Mantenimiento" },
+  { to: "/diagnostico", icon: Sparkles, label: "IA", accessibleLabel: "Diagnóstico de fallas con inteligencia artificial" },
+  { to: "/historial", icon: History, label: "Historial", accessibleLabel: "Historial de revisiones" },
 ];
 
 export function AppShell({ children, title }: { children: React.ReactNode; title?: string }) {
@@ -29,11 +29,11 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
 
   const items = [
     ...baseItems.filter((it) => it.to !== "/diagnostico" || isAdmin),
-    ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
+    ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin", accessibleLabel: "Administración de usuarios" }] : []),
   ];
 
   return (
-    <div className="min-h-screen flex flex-col pb-[calc(5rem+env(safe-area-inset-bottom,0px))]">
+    <div className="app-shell min-h-screen flex flex-col">
       <header className="sticky top-0 z-30 glass px-4 py-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <div className="size-9 shrink-0 rounded-xl bg-primary/15 border border-primary/40 grid place-items-center">
@@ -74,24 +74,26 @@ export function AppShell({ children, title }: { children: React.ReactNode; title
 
       <main className="flex-1 px-4 py-5">{children}</main>
 
-      <nav aria-label="Navegación principal" className="fixed bottom-0 inset-x-0 z-30 bg-background border-t border-border pb-[env(safe-area-inset-bottom,0px)]">
-        <div className="max-w-lg mx-auto grid grid-flow-col auto-cols-fr px-1">
+      <nav aria-label="Navegación principal" className="bottom-navigation fixed bottom-0 inset-x-0 z-30 bg-background border-t border-border">
+        <div className="bottom-navigation-grid mx-auto grid grid-flow-col auto-cols-fr">
           {items.map((it) => {
             const active = loc.pathname === it.to || (it.to !== "/" && loc.pathname.startsWith(it.to));
             return (
               <Button asChild variant="ghost" key={it.to} className={cn(
-                "h-16 min-w-0 rounded-none px-0.5 py-2",
-                active ? "text-primary bg-primary/10 hover:bg-primary/15 hover:text-primary" : "text-muted-foreground hover:text-foreground",
+                "bottom-navigation-item min-w-0 rounded-none border-t-[3px] px-0.5 py-2 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                active ? "border-primary text-primary bg-primary/10 hover:bg-primary/15 hover:text-primary font-bold" : "border-transparent text-muted-foreground hover:text-foreground",
               )}>
               <Link
                 key={it.to}
                 to={it.to}
                 aria-current={active ? "page" : undefined}
-                title={it.label === "Mantenim." ? "Mantenimiento" : it.label}
-                className="flex flex-col items-center justify-center gap-1 text-[10px] sm:text-[11px] font-medium transition-colors"
+                aria-label={it.accessibleLabel}
+                title={it.accessibleLabel}
+                className="flex items-center justify-center gap-1 transition-colors"
               >
-                <it.icon className="size-5 shrink-0" />
-                <span className="max-w-full truncate">{it.label}</span>
+                <it.icon aria-hidden="true" className="size-5 shrink-0" />
+                <span className="bottom-navigation-short max-w-full truncate">{it.label}</span>
+                {it.to === "/mantenimiento" && <span className="bottom-navigation-full max-w-full truncate">Mantenimiento</span>}
               </Link>
               </Button>
             );

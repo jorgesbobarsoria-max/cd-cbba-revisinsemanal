@@ -22,8 +22,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "DC Inspect · Revisión Semanal Data Center" },
       { property: "og:description", content: "App de inspección semanal de infraestructura crítica del Data Center alineada a Uptime Institute M&O." },
       { name: "twitter:description", content: "App de inspección semanal de infraestructura crítica del Data Center alineada a Uptime Institute M&O." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9208d810-fd74-448b-8d19-30b8fabac4d8/id-preview-18bcf37d--e1b8e60e-9d74-4d2d-8e4a-80c5d7c17369.lovable.app-1782230286864.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9208d810-fd74-448b-8d19-30b8fabac4d8/id-preview-18bcf37d--e1b8e60e-9d74-4d2d-8e4a-80c5d7c17369.lovable.app-1782230286864.png" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
