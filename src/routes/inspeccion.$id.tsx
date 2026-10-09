@@ -433,6 +433,7 @@ function InspeccionPage() {
                     onClick={() => toggleStandby(eq.id)}
                     role="switch"
                     aria-checked={isSb}
+                    aria-label={`Equipo ${eq.tag} en Stand By`}
                     className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition ${isSb ? "bg-warn" : "bg-muted"}`}
                   >
                     <span className={`inline-block size-5 rounded-full bg-background shadow transition ${isSb ? "translate-x-5" : "translate-x-0.5"}`} />
