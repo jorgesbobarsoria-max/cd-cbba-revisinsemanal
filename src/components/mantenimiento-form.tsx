@@ -385,7 +385,7 @@ function hasValue(v: any): boolean {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-1"><Label className="text-[11px]">{label}</Label>{children}</div>;
+  return <Label className="block space-y-1 text-[11px]"><span>{label}</span>{children}</Label>;
 }
 
 function ItemControl({ item, value, onChange }: { item: ItemPlantilla; value: any; onChange: (v: any) => void }) {

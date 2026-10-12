@@ -292,6 +292,7 @@ function InspeccionPage() {
           <span className={`text-[10px] px-2 py-1 rounded-full uppercase tracking-wider font-semibold ${insp?.estado === "finalizado" ? "bg-ok/15 text-ok" : "bg-warn/15 text-warn"}`}>{insp?.estado}</span>
         </div>
         <input
+          aria-label="Técnico responsable"
           placeholder="Técnico responsable"
           disabled={soloLectura}
           defaultValue={insp?.tecnico ?? ""}

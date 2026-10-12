@@ -296,7 +296,7 @@ function EquiposPage() {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-1"><Label className="text-xs">{label}</Label>{children}</div>;
+  return <Label className="block space-y-1 text-xs"><span>{label}</span>{children}</Label>;
 }
 
 function DatosAdicionalesEditor({ value, onChange }: { value: Record<string, string>; onChange: (v: Record<string, string>) => void }) {
