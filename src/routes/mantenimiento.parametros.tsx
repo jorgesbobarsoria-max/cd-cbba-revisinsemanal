@@ -196,10 +196,10 @@ function ParametrosPage() {
                 <p className="text-sm font-semibold truncate">{r.label} {r.unidad && <span className="text-muted-foreground font-normal">({r.unidad})</span>}</p>
                 <p className="text-[11px] text-muted-foreground truncate">{r.seccion} · {r.tipo_dato}{r.opciones?.length ? ` · ${r.opciones.join("/")}` : ""}</p>
               </div>
-              <Button size="icon" variant="ghost" onClick={() => startEdit(r)}><Pencil className="size-4" /></Button>
+              <Button size="icon" variant="ghost" aria-label={`Editar parámetro ${r.label}`} onClick={() => startEdit(r)}><Pencil className="size-4" /></Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button size="icon" variant="ghost"><Trash2 className="size-4 text-fail" /></Button>
+                  <Button size="icon" variant="ghost" aria-label={`Eliminar parámetro ${r.label}`}><Trash2 className="size-4 text-fail" /></Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -235,14 +235,14 @@ function ParametrosPage() {
                       </p>
                       <p className="text-[10px] text-muted-foreground truncate">{it.t}{o ? " · modificado" : ""}{o?.seccion && o.seccion !== sec.titulo ? ` · → ${o.seccion}` : ""}</p>
                     </div>
-                    <Button size="icon" variant="ghost" onClick={() => startBaseEdit(it, sec.titulo)}><Pencil className="size-4" /></Button>
+                    <Button size="icon" variant="ghost" aria-label={`Editar parámetro estándar ${o?.label ?? it.l}`} onClick={() => startBaseEdit(it, sec.titulo)}><Pencil className="size-4" /></Button>
                     {oculto ? (
-                      <Button size="icon" variant="ghost" onClick={() => restaurarBase(it.k)}><RotateCcw className="size-4" /></Button>
+                      <Button size="icon" variant="ghost" aria-label={`Restaurar parámetro ${o?.label ?? it.l}`} onClick={() => restaurarBase(it.k)}><RotateCcw className="size-4" /></Button>
                     ) : (
-                      <Button size="icon" variant="ghost" onClick={() => upsertOverride(it.k, { oculto: true })}><EyeOff className="size-4 text-fail" /></Button>
+                      <Button size="icon" variant="ghost" aria-label={`Ocultar parámetro ${o?.label ?? it.l}`} onClick={() => upsertOverride(it.k, { oculto: true })}><EyeOff className="size-4 text-fail" /></Button>
                     )}
                     {o && !oculto && (
-                      <Button size="icon" variant="ghost" onClick={() => restaurarBase(it.k)}><RotateCcw className="size-4" /></Button>
+                      <Button size="icon" variant="ghost" aria-label={`Restaurar parámetro ${o?.label ?? it.l}`} onClick={() => restaurarBase(it.k)}><RotateCcw className="size-4" /></Button>
                     )}
                   </div>
                 );
