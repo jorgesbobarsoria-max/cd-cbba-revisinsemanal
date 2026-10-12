@@ -99,7 +99,7 @@ function DetallePage() {
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-2xl">{plantilla?.icon ?? "🛠️"}</span>
-          <h2 className="text-lg font-bold">{plantilla?.nombre ?? row.tipo}</h2>
+          <h1 className="text-lg font-bold">Registro de mantenimiento · {plantilla?.nombre ?? row.tipo}</h1>
         </div>
         <p className="text-xs text-muted-foreground">{target} · {row.fecha} · {row.tecnico ?? "—"}</p>
         <span className={`inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold ${row.estado === "finalizado" ? "bg-ok/15 text-ok" : "bg-warn/15 text-warn"}`}>{row.estado}</span>
@@ -130,7 +130,7 @@ function DetallePage() {
       </section>
 
       <section className="glass rounded-xl p-3.5 mb-3">
-        <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">Evidencia fotográfica general</h3>
+        <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">Evidencia fotográfica general</h2>
         <PhotoCapture
           mode="immediate"
           parent={{ mantenimiento_id: id }}
@@ -144,7 +144,7 @@ function DetallePage() {
 
       {plantilla?.secciones.map(sec => (
         <section key={sec.titulo} className="glass rounded-xl p-3.5 mb-3">
-          <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">{sec.titulo}</h3>
+          <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">{sec.titulo}</h2>
           <div className="space-y-2">
             {sec.items.map(it => {
               const v = datos[it.k];
@@ -179,7 +179,7 @@ function DetallePage() {
 
       {row.observaciones && (
         <section className="glass rounded-xl p-3.5 mb-3">
-          <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1 flex items-center gap-1"><FileText className="size-3.5" /> Observaciones</h3>
+          <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1 flex items-center gap-1"><FileText className="size-3.5" /> Observaciones</h2>
           <p className="text-sm whitespace-pre-wrap">{row.observaciones}</p>
         </section>
       )}

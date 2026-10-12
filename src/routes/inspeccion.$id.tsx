@@ -284,6 +284,7 @@ function InspeccionPage() {
     <AppShell title={`Semana ${insp?.semana ?? "—"}`}>
       {/* Encabezado */}
       <div className="glass rounded-2xl p-4 mb-4">
+        <h1 className="text-lg font-bold mb-2">Revisión semanal · Semana {insp?.semana ?? "—"}</h1>
         <div className="flex items-baseline justify-between">
           <div>
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Fecha</p>

@@ -222,7 +222,7 @@ export function MantenimientoForm({ tipo, existing }: { tipo: string; existing?:
         {!modoExterno ? (
           <>
             <Select value={equipoId} onValueChange={setEquipoId}>
-              <SelectTrigger><SelectValue placeholder={`Selecciona equipo (${equipos.length})`} /></SelectTrigger>
+              <SelectTrigger aria-label="Equipo a mantener"><SelectValue placeholder={`Selecciona equipo (${equipos.length})`} /></SelectTrigger>
               <SelectContent>
                 {equipos.map(e => <SelectItem key={e.id} value={e.id}>{e.tag} · {e.id}</SelectItem>)}
               </SelectContent>
@@ -242,7 +242,7 @@ export function MantenimientoForm({ tipo, existing }: { tipo: string; existing?:
                   const f = externos.find(e => e.id === v);
                   if (f) setExt({ tag: f.tag, modelo: f.modelo ?? "", serie: f.serie ?? "", marca: f.marca ?? "", capacidad: f.capacidad ?? "", ubicacion: f.ubicacion ?? "" });
                 }}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Equipos guardados"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__nuevo__">＋ Ingresar nuevo manualmente</SelectItem>
                     {externos.map(e => <SelectItem key={e.id} value={e.id}>{e.tag} · {e.modelo ?? e.marca ?? "—"}</SelectItem>)}
