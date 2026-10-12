@@ -398,6 +398,7 @@ function InspeccionPage() {
 
       {/* Contenido del equipo activo */}
       <div className="space-y-3 mb-6">
+        <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-2">Detalle por equipo</h2>
         {(() => {
           const eq = equipos.find((e) => e.id === open);
           if (!eq) return null;
