@@ -280,8 +280,9 @@ function HomePage() {
       {/* Selector de semana */}
       <section className="glass rounded-2xl p-3 mb-4 flex items-center gap-2">
         <Calendar className="size-4 text-primary shrink-0" />
-        <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">Semana</label>
+        <label htmlFor="selector-semana" className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">Semana</label>
         <select
+          id="selector-semana"
           value={selectedId ?? ""}
           onChange={(e) => setSelectedId(e.target.value || null)}
           disabled={insps.length === 0}
