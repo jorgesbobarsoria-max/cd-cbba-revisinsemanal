@@ -410,8 +410,8 @@ function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack
               <div className="flex gap-1">
                 {puedeGestionar && (
                   <>
-                    <Button size="sm" variant="outline" aria-label={`Editar parámetro ${p.nombre}`} onClick={() => setEditing(p)}><Pencil className="size-3.5" /></Button>
-                    <Button size="sm" variant="outline" aria-label={`Eliminar parámetro ${p.nombre}`} onClick={() => del(p.id)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
+                    <Button size="sm" variant="outline" aria-label={`Editar parámetro ${p.descripcion}`} onClick={() => setEditing(p)}><Pencil className="size-3.5" /></Button>
+                    <Button size="sm" variant="outline" aria-label={`Eliminar parámetro ${p.descripcion}`} onClick={() => del(p.id)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
                   </>
                 )}
               </div>
