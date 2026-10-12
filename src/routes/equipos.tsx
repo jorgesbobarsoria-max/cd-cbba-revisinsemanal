@@ -228,10 +228,10 @@ function EquiposPage() {
                       <Button size="sm" variant="outline" title="Bajar" disabled={e.orden === maxOrden} onClick={() => mover(e.id, 1)}>
                         <ArrowDown className="size-3.5" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditing(e)}>
+                      <Button size="sm" variant="outline" aria-label={`Editar equipo ${e.tag}`} onClick={() => setEditing(e)}>
                         <Pencil className="size-3.5" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => delEquipo(e.id)} className="text-fail hover:text-fail">
+                      <Button size="sm" variant="outline" aria-label={`Eliminar equipo ${e.tag}`} onClick={() => delEquipo(e.id)} className="text-fail hover:text-fail">
                         <Trash2 className="size-3.5" />
                       </Button>
                     </>
@@ -324,7 +324,7 @@ function DatosAdicionalesEditor({ value, onChange }: { value: Record<string, str
         <div key={k} className="grid grid-cols-[1fr_1fr_auto] gap-1.5 items-center">
           <Input value={k} onChange={(e) => setKey(k, e.target.value)} placeholder="Etiqueta" className="h-9 text-sm" />
           <Input value={v} onChange={(e) => setVal(k, e.target.value)} placeholder="Valor" className="h-9 text-sm" />
-          <Button type="button" size="sm" variant="outline" onClick={() => remove(k)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
+          <Button type="button" size="sm" variant="outline" aria-label="Quitar dato adicional" onClick={() => remove(k)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
         </div>
       ))}
     </div>
@@ -410,8 +410,8 @@ function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack
               <div className="flex gap-1">
                 {puedeGestionar && (
                   <>
-                    <Button size="sm" variant="outline" onClick={() => setEditing(p)}><Pencil className="size-3.5" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => del(p.id)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
+                    <Button size="sm" variant="outline" aria-label={`Editar parámetro ${p.descripcion}`} onClick={() => setEditing(p)}><Pencil className="size-3.5" /></Button>
+                    <Button size="sm" variant="outline" aria-label={`Eliminar parámetro ${p.descripcion}`} onClick={() => del(p.id)} className="text-fail hover:text-fail"><Trash2 className="size-3.5" /></Button>
                   </>
                 )}
               </div>
