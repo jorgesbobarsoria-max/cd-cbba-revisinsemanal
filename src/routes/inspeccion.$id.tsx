@@ -336,6 +336,7 @@ function InspeccionPage() {
             ))}
           </div>
         )}
+        <h2 className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mt-4">Resumen de estado</h2>
         <div className="grid grid-cols-4 gap-2 mt-3">
           <div className="text-center bg-ok/10 rounded-lg py-2"><p className="text-lg font-mono font-bold text-ok">{ok}</p><p className="text-[9px] uppercase text-muted-foreground">OK</p></div>
           <div className="text-center bg-warn/10 rounded-lg py-2"><p className="text-lg font-mono font-bold text-warn">{al}</p><p className="text-[9px] uppercase text-muted-foreground">Alerta</p></div>
