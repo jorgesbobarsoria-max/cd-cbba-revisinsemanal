@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://cd-cbba-revisinsemanal.lovable.app/sitemap.xml
