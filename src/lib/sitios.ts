@@ -1,5 +1,6 @@
 // Sitios (ciudades) donde opera la infraestructura.
-export const CIUDADES = ["Cochabamba", "La Paz"];
+export const CIUDADES = ["Cochabamba", "La Paz", "ENDE Matriz"];
+export const SITIO_ENDE_MATRIZ = "ENDE Matriz";
 
 /** ¿El usuario puede registrar datos en esta ciudad? */
 export function puedeEscribirEnSitio(

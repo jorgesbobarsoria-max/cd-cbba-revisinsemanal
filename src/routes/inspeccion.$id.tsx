@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight, Save, Trash2, CheckCircle2, Loader2, Thermom
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { generarInformeWord } from "@/lib/reporte.functions";
+import { generarPlanillaEndeMatriz } from "@/lib/planilla-ende.functions";
 import { PhotoCapture } from "@/components/photo-capture";
 import { listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
 import { descargarDocx } from "@/lib/download-docx";
@@ -54,6 +55,8 @@ function InspeccionPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportingPlanilla, setExportingPlanilla] = useState(false);
+  const exportarPlanilla = useServerFn(generarPlanillaEndeMatriz);
   const exportar = useServerFn(generarInformeWord);
   const [evidencias, setEvidencias] = useState<EvidenciaRow[]>([]);
 
@@ -76,6 +79,19 @@ function InspeccionPage() {
     setEvidencias(await listEvidencias({ inspeccion_id: id }));
   };
   useEffect(() => { reloadEvidencias(); }, [id]);
+
+  const descargarPlanilla = async () => {
+    setExportingPlanilla(true);
+    try {
+      const res = await exportarPlanilla({ data: { inspeccionId: id } });
+      descargarDocx(res.base64, res.filename);
+      toast.success("Planilla Word descargada");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Error al exportar la planilla");
+    } finally {
+      setExportingPlanilla(false);
+    }
+  };
 
   const descargarWord = async () => {
     setExporting(true);
@@ -674,6 +690,16 @@ function InspeccionPage() {
           {exporting ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
           {exporting ? "Generando informe…" : "Descargar informe Word"}
         </button>
+        {(insp as any)?.ciudad === "ENDE Matriz" && (
+          <button
+            onClick={descargarPlanilla}
+            disabled={exportingPlanilla}
+            className="mt-2 w-full h-11 rounded-xl bg-secondary border border-primary/40 font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-60"
+          >
+            {exportingPlanilla ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
+            {exportingPlanilla ? "Generando planilla…" : "Descargar planilla ENDE Matriz (Word)"}
+          </button>
+        )}
       </div>
 
       {/* Botones */}
