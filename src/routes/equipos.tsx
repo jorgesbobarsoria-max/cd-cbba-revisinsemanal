@@ -197,7 +197,7 @@ function EquiposPage() {
       )}
 
       {reordenando && puedeGestionar && (
-        <ReorderList equipos={[...eq].sort((a, b) => a.orden - b.orden)} onReorder={guardarOrden} />
+        <ReorderList items={[...eq].sort((a, b) => a.orden - b.orden)} onReorder={guardarOrden} titulo={(e) => e.tag} subtitulo={(e) => `${e.categoria} · ${e.id}`} />
       )}
 
       {!reordenando && Object.entries(groups).map(([cat, items]) => (
@@ -334,6 +334,18 @@ function DatosAdicionalesEditor({ value, onChange }: { value: Record<string, str
 function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack: () => void; puedeGestionar: boolean }) {
   const [pts, setPts] = useState<Punto[]>([]);
   const [editing, setEditing] = useState<Partial<Punto> | null>(null);
+  const [reordenando, setReordenando] = useState(false);
+
+  // Renumera los parámetros según el orden del arrastre (1..n).
+  async function guardarOrdenPts(lista: Punto[]) {
+    const cambios = lista.map((p, i) => ({ id: p.id, numero: i + 1 })).filter((c, i) => c.numero !== lista[i].numero);
+    if (cambios.length === 0) return;
+    setPts(lista.map((p, i) => ({ ...p, numero: i + 1 })));
+    const res = await Promise.all(cambios.map((c) => supabase.from("puntos_inspeccion").update({ numero: c.numero }).eq("id", c.id)));
+    const err = res.find((r) => r.error)?.error;
+    if (err) { toast.error(friendlyDbError(err)); load(); return; }
+    toast.success("Orden guardado");
+  }
 
   async function load() {
     const { data } = await supabase.from("puntos_inspeccion").select("*").eq("equipo_id", equipo.id).order("numero");
@@ -393,7 +405,17 @@ function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack
         <p className="text-xs text-muted-foreground">{equipo.id} · {pts.length} parámetros</p>
       </div>
 
-      <div className="space-y-2">
+      {puedeGestionar && pts.length > 1 && (
+        <Button size="sm" variant={reordenando ? "default" : "outline"} className="w-full mb-4" onClick={() => setReordenando((v) => !v)}>
+          {reordenando ? <><Check className="size-4" /> Terminar reordenamiento</> : <><ListOrdered className="size-4" /> Reordenar arrastrando</>}
+        </Button>
+      )}
+
+      {reordenando && puedeGestionar && (
+        <ReorderList items={pts} onReorder={guardarOrdenPts} titulo={(p) => p.descripcion} subtitulo={(p) => `${p.tipo}${p.unidad ? ` · ${p.unidad}` : ""}`} />
+      )}
+
+      <div className={`space-y-2 ${reordenando ? "hidden" : ""}`}>
         {pts.map((p) => (
           <div key={p.id} className="glass rounded-xl p-3">
             <div className="flex items-start justify-between gap-2">
@@ -491,9 +513,9 @@ function numOrNull(v: unknown): number | null {
 }
 
 // Lista plana con arrastre (pointer events: funciona con mouse y táctil en Android).
-function ReorderList({ equipos, onReorder }: { equipos: Equipo[]; onReorder: (l: Equipo[]) => void }) {
-  const [lista, setLista] = useState<Equipo[]>(equipos);
-  const [dragId, setDragId] = useState<string | null>(null);
+function ReorderList<T extends { id: string | number }>({ items: equipos, onReorder, titulo, subtitulo }: { items: T[]; onReorder: (l: T[]) => void; titulo: (x: T) => string; subtitulo: (x: T) => string }) {
+  const [lista, setLista] = useState<T[]>(equipos);
+  const [dragId, setDragId] = useState<string | number | null>(null);
   const contRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setLista(equipos); }, [equipos]);
@@ -509,7 +531,7 @@ function ReorderList({ equipos, onReorder }: { equipos: Equipo[]; onReorder: (l:
     return filas.length - 1;
   }
 
-  function onPointerDown(e: React.PointerEvent, id: string) {
+  function onPointerDown(e: React.PointerEvent, id: string | number) {
     e.preventDefault();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     setDragId(id);
@@ -551,14 +573,14 @@ function ReorderList({ equipos, onReorder }: { equipos: Equipo[]; onReorder: (l:
           <button
             onPointerDown={(ev) => onPointerDown(ev, e.id)}
             className="p-1 -m-1 text-muted-foreground cursor-grab active:cursor-grabbing"
-            aria-label={`Mover ${e.tag}`}
+            aria-label={`Mover ${titulo(e)}`}
           >
             <GripVertical className="size-5" />
           </button>
           <span className="text-xs font-mono text-muted-foreground w-5 shrink-0">{i + 1}</span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium truncate">{e.tag}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{e.categoria} · {e.id}</p>
+            <p className="text-sm font-medium truncate">{titulo(e)}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{subtitulo(e)}</p>
           </div>
         </div>
       ))}
