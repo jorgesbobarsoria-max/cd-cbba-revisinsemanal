@@ -84,6 +84,14 @@ const GRUPOS: Grupo[] = [
   },
 ];
 
+// Descripción original de cada parámetro (posición = número inicial), por prefijo de equipo.
+const DESCRIPCIONES: Record<string, string[]> = {
+  "EM-AIR": ["Temp. Retorno","Temp. de Inyección","Humedad HR","Ventilador Evaporador","Ventilador Condensador","Tensión Total del Sistema","Corriente Total del Sistema","Alertas Presentes","Fugas de Refrigerante Alta","Fugas de Refrigerante Baja","Presión de Alta","Presión de Baja","Ruidos Anormales","Tensión del Compresor","Corriente del Compresor"],
+  "EM-UPS": ["% de Carga","Tensión de Entrada","Voltaje de Baterías","Frecuencia","Tiempo de Autonomía","Tensión de Salida","Corriente de Salida","Alertas Presentes"],
+  "EM-GEN": ["Fugas Presentes","Batería","Horas de Funcionamiento","Nivel de Combustible","Temp. Calentador de Agua","Tensión Entrada/Salida","Corriente de Salida","Alertas Presentes"],
+  "EM-SEG": ["Temperatura Ambiente T-1 / T-2","Humedad Relativa","Sensor de Humo operativo","Sensor de Puerta operativo","Sensor de Movimiento operativo","Tensión","Batería","Salida de Mensajes SMS / Teléfono","Alertas Presentes"],
+};
+
 export const generarPlanillaEndeMatriz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ inspeccionId: z.string().uuid() }).parse(d))
@@ -95,12 +103,18 @@ export const generarPlanillaEndeMatriz = createServerFn({ method: "POST" })
 
     const [{ data: equipos }, { data: puntos }, { data: items }] = await Promise.all([
       sb.from("equipos").select("id,tag,marca,capacidad,modelo,categoria").eq("ciudad", "ENDE Matriz"),
-      sb.from("puntos_inspeccion").select("id,equipo_id,numero,unidad,tipo"),
+      sb.from("puntos_inspeccion").select("id,equipo_id,numero,unidad,tipo,descripcion"),
       sb.from("inspeccion_items").select("punto_id,equipo_id,valor,estado,semaforo,observaciones").eq("inspeccion_id", data.inspeccionId),
     ]);
     const standby = new Set<string>((insp.standby_equipos ?? []) as string[]);
     const sbObs = (insp.standby_observaciones ?? {}) as Record<string, string>;
-    const punto = (eq: string, n: number) => (puntos ?? []).find((p) => p.equipo_id === eq && p.numero === n);
+    // Los parámetros pueden reordenarse; se ubican por su descripción original y, si no, por número.
+    const norm = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const punto = (eq: string, n: number) => {
+      const desc = DESCRIPCIONES[eq.slice(0, 6)]?.[n - 1];
+      const delEq = (puntos ?? []).filter((p) => p.equipo_id === eq);
+      return (desc && delEq.find((p) => norm(p.descripcion) === norm(desc))) || delEq.find((p) => p.numero === n);
+    };
     const item = (pid?: number) => (pid ? (items ?? []).find((i) => i.punto_id === pid) : undefined);
 
     const valorDe = (eq: string, n: number) => {
