@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { TendenciaParametro } from "@/components/tendencia-parametro";
 import { useAuth } from "@/hooks/use-auth";
 import { resumir } from "@/lib/evaluacion";
 import { AppShell } from "@/components/app-shell";
@@ -377,6 +378,10 @@ function HomePage() {
       <DashboardDetalle tipo={detalle} onClose={() => setDetalle(null)}
         equipos={equipos} items={items} puntos={puntos} insps={insps}
         inspeccionId={selectedId} standby={standby} />
+
+      <section className="mb-5">
+        <TendenciaParametro ciudad={ciudad} equipos={equipos} puntos={puntos} insps={insps} />
+      </section>
 
       {/* Charts */}
       <section className="space-y-3 mb-5">
