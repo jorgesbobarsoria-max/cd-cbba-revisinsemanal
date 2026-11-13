@@ -1,3 +1,5 @@
 - [x] Adaptar la barra inferior a tablet y orientación horizontal.
 - [x] Añadir nombres accesibles y selección visible a cada opción.
 - [x] Verificar navegación, espacio libre y selección en distintos tamaños.
+- [ ] Añadir opciones relacionadas con cada parámetro ESTADO y BINARIO, configurables por equipo en todos los sitios.
+- [ ] Verificar guardado y selección de opciones con una revisión real.

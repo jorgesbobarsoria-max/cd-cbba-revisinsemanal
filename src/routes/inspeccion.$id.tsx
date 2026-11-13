@@ -13,6 +13,8 @@ import { generarPlanillaEndeMatriz } from "@/lib/planilla-ende.functions";
 import { PhotoCapture } from "@/components/photo-capture";
 import { listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
 import { descargarDocx } from "@/lib/download-docx";
+import { opcionesParametro, type OpcionParametro } from "@/lib/opciones-parametro";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 export const Route = createFileRoute("/inspeccion/$id")({
@@ -28,7 +30,7 @@ export const Route = createFileRoute("/inspeccion/$id")({
 });
 
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
-type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null; respuesta_esperada?: string | null; severidad?: string | null; obligatorio?: boolean | null };
+type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null; valores_count?: number | null; etiquetas_valores?: string[] | null; respuesta_esperada?: string | null; severidad?: string | null; obligatorio?: boolean | null; opciones?: unknown };
 type Item = { id?: string; punto_id: number; equipo_id: string; estado?: string; valor?: string; semaforo?: string; observaciones?: string; accion_correctiva?: string };
 
 const iconCat: Record<string, React.ElementType> = {
@@ -578,36 +580,16 @@ function InspeccionPage() {
                       })()}
 
 
-                      {p.tipo === "binario" && (() => {
-                        // La respuesta correcta se define por parámetro (por defecto "No").
-                        const esperada = (p.respuesta_esperada ?? "No").trim();
-                        const grave = (p.severidad ?? "falla") === "falla";
-                        return (
-                          <div className="grid grid-cols-2 gap-1 mb-2">
-                            {(["No", "Sí"] as const).map((v) => {
-                              const conforme = v.toLowerCase() === esperada.toLowerCase();
-                              const activo = it?.valor === v;
-                              return (
-                                <button
-                                  key={v}
-                                  disabled={soloLectura}
-                                  onClick={() => update(p, { valor: v })}
-                                  className={`py-2 text-xs font-semibold rounded-lg transition disabled:opacity-60 ${
-                                    activo
-                                      ? conforme
-                                        ? "bg-ok text-ok-foreground"
-                                        : grave
-                                          ? "bg-fail text-fail-foreground"
-                                          : "bg-warn text-warn-foreground"
-                                      : "bg-background/40 text-muted-foreground hover:text-foreground"
-                                  }`}
-                                >
-                                  {conforme ? "✓ " : "⚠ "}{v}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        );
+                      {(p.tipo === "binario" || p.tipo === "estado") && (() => {
+                        const opciones = opcionesParametro(p);
+                        const historico = it?.valor && !opciones.some(o => o.valor === it.valor);
+                        return <Select value={it?.valor ?? ""} disabled={soloLectura} onValueChange={valor => update(p, { valor, estado: undefined })}>
+                          <SelectTrigger className="w-full mb-2 h-auto min-h-9 whitespace-normal text-left" aria-label={`Respuesta: ${p.descripcion}`}><SelectValue placeholder="Seleccionar respuesta" /></SelectTrigger>
+                          <SelectContent>
+                            {historico && <SelectItem value={it.valor ?? ""}>{it.valor} · registrado</SelectItem>}
+                            {opciones.map(o => <SelectItem key={o.valor} value={o.valor}><span className="flex items-center gap-2"><span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${o.semaforo === "verde" ? "bg-ok" : o.semaforo === "amarillo" ? "bg-warn" : o.semaforo === "rojo" ? "bg-fail" : "bg-muted-foreground"}`} />{o.etiqueta}</span></SelectItem>)}
+                          </SelectContent>
+                        </Select>;
                       })()}
 
                       {p.tipo === "texto" && (

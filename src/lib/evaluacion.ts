@@ -2,10 +2,14 @@
 // Toda la app (formularios, dashboard e informes Word) debe usar estas funciones
 // para que un mismo dato produzca siempre el mismo semáforo y la misma métrica.
 
+import { opcionesParametro } from "@/lib/opciones-parametro";
+
 export type Semaforo = "verde" | "amarillo" | "rojo" | "gris";
 
 export type ReglaPunto = {
   tipo: string;
+  descripcion?: string;
+  opciones?: unknown;
   unidad?: string | null;
   min_ok?: number | null;
   max_ok?: number | null;
@@ -81,9 +85,13 @@ export function evaluarPunto(
       return "rojo";
   }
 
-  if (regla.tipo === "binario") {
+  if (regla.tipo === "binario" || regla.tipo === "estado") {
     const v = (valor ?? "").trim();
     if (v === "") return "gris";
+    const opcion = opcionesParametro(regla).find(o => o.valor.toLowerCase() === v.toLowerCase());
+    if (opcion) return opcion.semaforo;
+    // Mantiene la evaluación de respuestas históricas que ya no estén en la lista.
+    if (regla.tipo === "estado") return "verde";
     const esperada = (regla.respuesta_esperada ?? "No").trim();
     return v.toLowerCase() === esperada.toLowerCase() ? "verde" : severidadA(regla);
   }
