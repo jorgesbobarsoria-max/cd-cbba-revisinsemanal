@@ -13,7 +13,7 @@ import { generarPlanillaEndeMatriz } from "@/lib/planilla-ende.functions";
 import { PhotoCapture } from "@/components/photo-capture";
 import { listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
 import { descargarDocx } from "@/lib/download-docx";
-import { opcionesParametro, type OpcionParametro } from "@/lib/opciones-parametro";
+import { opcionesParametro } from "@/lib/opciones-parametro";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 

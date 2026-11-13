@@ -360,7 +360,7 @@ function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack
     const vc = Math.max(1, Math.min(3, Number(editing.valores_count ?? 1) || 1));
     const etiquetas = (editing.etiquetas_valores ?? []).map((s) => (s ?? "").toString().trim()).filter((s) => s !== "");
     const seleccion = editing.tipo === "estado" || editing.tipo === "binario";
-    const opciones = seleccion ? opcionesParametro(editing as Punto).map(o => ({ ...o, valor: o.valor.trim(), etiqueta: o.etiqueta.trim() })) : null;
+    const opciones = seleccion ? (editing.opciones ?? opcionesParametro(editing as Punto)).map(o => ({ ...o, valor: o.valor.trim(), etiqueta: o.etiqueta.trim() })) : null;
     if (opciones && (opciones.some(o => !o.valor || !o.etiqueta) || new Set(opciones.map(o => o.valor.toLowerCase())).size !== opciones.length)) {
       toast.error("Cada opción debe tener un valor único y una etiqueta"); return;
     }
