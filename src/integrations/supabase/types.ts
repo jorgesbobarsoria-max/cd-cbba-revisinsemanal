@@ -581,6 +581,7 @@ export type Database = {
           min_ok: number | null
           numero: number
           obligatorio: boolean
+          opciones: Json | null
           respuesta_esperada: string | null
           severidad: string
           tipo: string
@@ -598,6 +599,7 @@ export type Database = {
           min_ok?: number | null
           numero: number
           obligatorio?: boolean
+          opciones?: Json | null
           respuesta_esperada?: string | null
           severidad?: string
           tipo?: string
@@ -615,6 +617,7 @@ export type Database = {
           min_ok?: number | null
           numero?: number
           obligatorio?: boolean
+          opciones?: Json | null
           respuesta_esperada?: string | null
           severidad?: string
           tipo?: string

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Pencil, Trash2, Settings2, ChevronLeft, Lock, ArrowUp, ArrowDown, GripVertical, ListOrdered, Check } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyDbError } from "@/lib/friendly-errors";
+import { opcionesParametro, type OpcionParametro } from "@/lib/opciones-parametro";
 
 export const Route = createFileRoute("/equipos")({
   head: () => ({ meta: [
@@ -39,6 +40,7 @@ type Punto = {
   min_ok: number | null; max_ok: number | null;
   min_alerta: number | null; max_alerta: number | null;
   valores_count?: number | null; etiquetas_valores?: string[] | null;
+  opciones?: OpcionParametro[] | null; respuesta_esperada?: string | null; severidad?: string | null;
 };
 
 import { CIUDADES } from "@/lib/sitios";
@@ -357,6 +359,11 @@ function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack
     if (!editing?.descripcion || !editing?.tipo) { toast.error("Descripción y tipo son obligatorios"); return; }
     const vc = Math.max(1, Math.min(3, Number(editing.valores_count ?? 1) || 1));
     const etiquetas = (editing.etiquetas_valores ?? []).map((s) => (s ?? "").toString().trim()).filter((s) => s !== "");
+    const seleccion = editing.tipo === "estado" || editing.tipo === "binario";
+    const opciones = seleccion ? (editing.opciones ?? opcionesParametro(editing as Punto)).map(o => ({ ...o, valor: o.valor.trim(), etiqueta: o.etiqueta.trim() })) : null;
+    if (opciones && (opciones.some(o => !o.valor || !o.etiqueta) || new Set(opciones.map(o => o.valor.toLowerCase())).size !== opciones.length)) {
+      toast.error("Cada opción debe tener un valor único y una etiqueta"); return;
+    }
     const payload = {
       equipo_id: equipo.id,
       numero: editing.numero ?? pts.length + 1,
@@ -367,6 +374,7 @@ function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack
       min_alerta: numOrNull(editing.min_alerta), max_alerta: numOrNull(editing.max_alerta),
       valores_count: editing.tipo === "numerico" ? vc : 1,
       etiquetas_valores: editing.tipo === "numerico" && vc > 1 && etiquetas.length > 0 ? etiquetas.slice(0, vc) : null,
+      opciones,
     };
     const q = editing.id
       ? supabase.from("puntos_inspeccion").update(payload).eq("id", editing.id)
@@ -424,6 +432,7 @@ function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   <span className="uppercase">{p.tipo}</span>
                   {p.unidad && ` · ${p.unidad}`}
+                  {(p.tipo === "estado" || p.tipo === "binario") && ` · ${opcionesParametro(p).map(o => o.etiqueta).join(" / ")}`}
                   {p.tipo === "numerico" && (
                     <> · OK [{p.min_ok ?? "—"}, {p.max_ok ?? "—"}] · Alerta [{p.min_alerta ?? "—"}, {p.max_alerta ?? "—"}]</>
                   )}
@@ -461,6 +470,26 @@ function ParamsView({ equipo, onBack, puedeGestionar }: { equipo: Equipo; onBack
               </div>
               <Field label="Descripción"><Textarea value={editing.descripcion ?? ""} onChange={(e) => setEditing({ ...editing, descripcion: e.target.value })} rows={2} /></Field>
               <Field label="Unidad (°C, %, V, A...)"><Input value={editing.unidad ?? ""} onChange={(e) => setEditing({ ...editing, unidad: e.target.value })} /></Field>
+              {(editing.tipo === "estado" || editing.tipo === "binario") && (() => {
+                const opciones = Array.isArray(editing.opciones) ? editing.opciones : opcionesParametro(editing as Punto);
+                const cambiar = (i: number, patch: Partial<OpcionParametro>) => setEditing({ ...editing, opciones: opciones.map((o, j) => j === i ? { ...o, ...patch } : o) });
+                return <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label>Opciones de respuesta</Label>
+                    <Button size="sm" variant="outline" onClick={() => setEditing({ ...editing, opciones: [...opciones, { valor: "", etiqueta: "", semaforo: "amarillo" }] })}><Plus className="size-4" /> Añadir</Button>
+                  </div>
+                  {opciones.map((o, i) => <div key={i} className="space-y-2 border-b border-border pb-3">
+                    <div className="flex items-center gap-2">
+                      <Input aria-label={`Opción ${i + 1}`} value={o.etiqueta} onChange={e => cambiar(i, { etiqueta: e.target.value, valor: e.target.value })} />
+                      <Button size="icon" variant="ghost" disabled={opciones.length <= 2} aria-label={`Eliminar opción ${i + 1}`} onClick={() => setEditing({ ...editing, opciones: opciones.filter((_, j) => j !== i) })}><Trash2 className="size-4" /></Button>
+                    </div>
+                    <Select value={o.semaforo} onValueChange={v => cambiar(i, { semaforo: v as OpcionParametro["semaforo"] })}>
+                      <SelectTrigger aria-label={`Resultado de opción ${i + 1}`}><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="verde">Conforme</SelectItem><SelectItem value="amarillo">Alerta</SelectItem><SelectItem value="rojo">Falla</SelectItem><SelectItem value="gris">No aplica</SelectItem></SelectContent>
+                    </Select>
+                  </div>)}
+                </div>;
+              })()}
               {editing.tipo === "numerico" && (
                 <>
                   <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold pt-2">Valores a medir</p>

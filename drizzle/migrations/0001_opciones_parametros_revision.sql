@@ -1,0 +1,3 @@
+ALTER TABLE public.puntos_inspeccion ADD COLUMN IF NOT EXISTS opciones jsonb;
+COMMENT ON COLUMN public.puntos_inspeccion.opciones IS 'Opciones de respuesta por parámetro: lista de objetos valor, etiqueta y semaforo; null usa las opciones sugeridas por descripción.';
+ALTER TABLE public.puntos_inspeccion ADD CONSTRAINT puntos_opciones_array CHECK (opciones IS NULL OR jsonb_typeof(opciones) = 'array');
