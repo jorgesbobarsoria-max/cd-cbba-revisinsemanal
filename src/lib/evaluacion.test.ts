@@ -8,6 +8,29 @@ import {
   validarNumerico,
 } from "@/lib/evaluacion";
 import { permisosDe, rolPrincipal } from "@/lib/permisos";
+import { opcionesParametro } from "@/lib/opciones-parametro";
+
+describe("opciones de revisión", () => {
+  it("ESTADO ofrece respuestas relacionadas con el filtro y evalúa la selección", () => {
+    const p = { tipo: "estado", descripcion: "Filtro de Aire" };
+    expect(opcionesParametro(p).map(o => o.valor)).toEqual(["Limpio", "Sucio", "Obstruido / requiere cambio"]);
+    expect(evaluarPunto("Sucio", p)).toBe("amarillo");
+    expect(evaluarPunto("Obstruido / requiere cambio", p)).toBe("rojo");
+  });
+  it("BINARIO mantiene Sí/No y relaciona las etiquetas con las alertas", () => {
+    const p = { tipo: "binario", descripcion: "Alertas Presentes", respuesta_esperada: "No", severidad: "falla" };
+    expect(opcionesParametro(p).map(o => o.valor)).toEqual(["No", "Sí"]);
+    expect(evaluarPunto("No", p)).toBe("verde");
+    expect(evaluarPunto("Sí", p)).toBe("rojo");
+  });
+  it("ambos tipos utilizan las opciones y resultados personalizados", () => {
+    for (const tipo of ["estado", "binario"]) {
+      const p = { tipo, opciones: [{ valor: "En prueba", etiqueta: "En prueba", semaforo: "amarillo" }] };
+      expect(opcionesParametro(p).map(o => o.valor)).toEqual(["En prueba"]);
+      expect(evaluarPunto("En prueba", p)).toBe("amarillo");
+    }
+  });
+});
 
 describe("evaluarNumero", () => {
   const r = { tipo: "numerico", min_ok: 18, max_ok: 27, min_alerta: 15, max_alerta: 30 };
