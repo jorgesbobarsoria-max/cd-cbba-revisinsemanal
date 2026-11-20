@@ -3,3 +3,5 @@
 - [x] Verificar navegación, espacio libre y selección en distintos tamaños.
 - [x] Añadir opciones relacionadas con cada parámetro ESTADO y BINARIO, configurables por equipo en todos los sitios.
 - [x] Verificar guardado de opciones y selección en una revisión existente, sin alterar sus lecturas guardadas.
+- [x] Permitir editar datos de usuarios y añadir cargo y atributos personalizados desde Administración.
+- [x] Verificar guardado y lectura posterior con sesión administradora; comprobar autorización y validación con pruebas.

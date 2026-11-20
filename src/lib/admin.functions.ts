@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { userDetailsSchema, exigirAdministrador } from "@/lib/user-details";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function ensureAdmin(context: { supabase: any; userId: string }) {
@@ -9,7 +10,7 @@ async function ensureAdmin(context: { supabase: any; userId: string }) {
     _role: "admin",
   });
   if (error) throw new Error("No se pudo verificar permisos");
-  if (!data) throw new Error("Forbidden: solo administradores");
+  exigirAdministrador(data);
 }
 
 export const listUsers = createServerFn({ method: "GET" })
@@ -20,7 +21,7 @@ export const listUsers = createServerFn({ method: "GET" })
 
     const { data: profiles, error: pErr } = await supabaseAdmin
       .from("profiles")
-      .select("id, email, full_name, must_change_password, is_active, created_at")
+      .select("id, email, full_name, cargo, atributos, must_change_password, is_active, created_at")
       .order("created_at", { ascending: false });
     if (pErr) throw new Error(pErr.message);
 
@@ -58,6 +59,8 @@ export const listUsers = createServerFn({ method: "GET" })
       id: p.id,
       email: p.email,
       full_name: p.full_name,
+      cargo: p.cargo,
+      atributos: p.atributos,
       must_change_password: p.must_change_password,
       is_active: p.is_active,
       created_at: p.created_at,
@@ -75,6 +78,8 @@ export const createUser = createServerFn({ method: "POST" })
         email: z.string().trim().email().max(255),
         password: z.string().min(12).max(128),
         full_name: z.string().trim().max(120).optional(),
+        cargo: z.string().trim().max(120).optional(),
+        atributos: userDetailsSchema.shape.atributos.optional(),
         role: z.enum(["admin", "tecnico", "viewer"]),
       })
       .parse(data),
@@ -98,21 +103,51 @@ export const createUser = createServerFn({ method: "POST" })
 
     // El trigger handle_new_user crea el profile y asigna el rol desde user_metadata.
     // Aseguramos consistencia:
-    await supabaseAdmin
+    const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .update({
         email: data.email,
         full_name: data.full_name ?? null,
+        cargo: data.cargo || null,
+        atributos: data.atributos ?? {},
         must_change_password: true,
         is_active: true,
       })
       .eq("id", created.user.id);
+    if (profileError) throw new Error("Usuario creado, pero no se pudieron guardar sus datos. Edítalos desde Administración.");
 
     // Rehacer roles a exactamente el rol elegido
     await supabaseAdmin.from("user_roles").delete().eq("user_id", created.user.id);
     await supabaseAdmin.from("user_roles").insert({ user_id: created.user.id, role: data.role });
 
     return { id: created.user.id };
+  });
+
+export const updateUserDetails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(input => userDetailsSchema.extend({ user_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: old, error: readError } = await supabaseAdmin.from("profiles").select("email, full_name").eq("id", data.user_id).single();
+    if (readError || !old) throw new Error("No se encontró el usuario");
+    const changedEmail = old.email.toLowerCase() !== data.email.toLowerCase();
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      ...(changedEmail ? { email: data.email } : {}),
+      user_metadata: { full_name: data.full_name || null },
+    });
+    if (authError) throw new Error("No se pudieron actualizar los datos de acceso. Comprueba que el correo no pertenezca a otro usuario.");
+    const { error } = await supabaseAdmin.from("profiles").update({
+      email: data.email, full_name: data.full_name || null, cargo: data.cargo || null, atributos: data.atributos,
+    }).eq("id", data.user_id);
+    if (error) {
+      const { error: restoreError } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+        ...(changedEmail ? { email: old.email } : {}), user_metadata: { full_name: old.full_name },
+      });
+      if (restoreError) throw new Error("No se guardó el perfil, pero los datos de acceso cambiaron. Revisa el correo antes de volver a guardar.");
+      throw new Error("No se guardaron los cambios del usuario. Inténtalo nuevamente.");
+    }
+    return { ok: true };
   });
 
 export const updateUserRole = createServerFn({ method: "POST" })

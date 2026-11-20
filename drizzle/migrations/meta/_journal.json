@@ -15,6 +15,13 @@
       "when": 1794602406784,
       "tag": "0001_opciones_parametros_revision",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795208502491,
+      "tag": "0002_atributos_usuarios_admin",
+      "breakpoints": true
     }
   ]
 }

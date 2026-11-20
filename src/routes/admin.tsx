@@ -12,11 +12,17 @@ import {
   deleteUser,
   resetUserPassword,
   setUserSitios,
+  updateUserDetails,
 } from "@/lib/admin.functions";
 import { CIUDADES } from "@/lib/sitios";
 import { toast } from "sonner";
-import { UserPlus, Shield, Loader2, Trash2, KeyRound, Ban, Check, Users, Eye, EyeOff, Wand2, MapPin } from "lucide-react";
+import { UserPlus, Shield, Loader2, Trash2, KeyRound, Ban, Check, Users, Eye, EyeOff, Wand2, MapPin, Pencil } from "lucide-react";
 import { friendlyDbError } from "@/lib/friendly-errors";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { UserAttributesEditor, type AttributeRow } from "@/components/user-attributes-editor";
+import { atributosDesdeFilas } from "@/lib/user-details";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [
@@ -64,6 +70,7 @@ function AdminPage() {
   const deleteFn = useServerFn(deleteUser);
   const resetPwFn = useServerFn(resetUserPassword);
   const setSitiosFn = useServerFn(setUserSitios);
+  const updateDetailsFn = useServerFn(updateUserDetails);
 
   useEffect(() => {
     if (loading) return;
@@ -78,6 +85,11 @@ function AdminPage() {
   });
 
   const [openNew, setOpenNew] = useState(false);
+  const [editTarget, setEditTarget] = useState<string | null>(null);
+  const [details, setDetails] = useState({ email: "", full_name: "", cargo: "" });
+  const [attributeRows, setAttributeRows] = useState<AttributeRow[]>([]);
+  const [newCargo, setNewCargo] = useState("");
+  const [newAttributes, setNewAttributes] = useState<AttributeRow[]>([]);
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -102,11 +114,14 @@ function AdminPage() {
           password: form.password,
           full_name: form.full_name.trim() || undefined,
           role: form.role,
+          cargo: newCargo,
+          atributos: atributosDesdeFilas(newAttributes),
         },
       });
       toast.success("Usuario creado. Deberá cambiar su contraseña al primer inicio.");
       setOpenNew(false);
       setForm({ email: "", password: "", full_name: "", role: "viewer" });
+      setNewCargo(""); setNewAttributes([]);
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     } catch (err) {
       toast.error(friendlyDbError(err));
@@ -123,6 +138,19 @@ function AdminPage() {
     } catch (err) {
       toast.error(friendlyDbError(err));
     }
+  };
+
+  const saveDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTarget || busy) return;
+    setBusy(true);
+    try {
+      await updateDetailsFn({ data: { user_id: editTarget, ...details, atributos: atributosDesdeFilas(attributeRows) } });
+      toast.success("Datos del usuario actualizados");
+      setEditTarget(null);
+      await qc.invalidateQueries({ queryKey: ["admin-users"] });
+    } catch (err) { toast.error(friendlyDbError(err)); }
+    finally { setBusy(false); }
   };
 
   const toggleSitio = async (u: { id: string; sitios: string[] }, ciudad: string) => {
@@ -228,6 +256,7 @@ function AdminPage() {
                       )}
                     </p>
                     <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
+                    {u.cargo && <p className="text-xs text-foreground mt-1 break-words">{u.cargo}</p>}
                   </div>
                   <span
                     className={`shrink-0 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border font-semibold ${ROLE_BADGE[primaryRole]}`}
@@ -302,8 +331,18 @@ function AdminPage() {
                   )}
                 </div>
 
+                {u.atributos && typeof u.atributos === "object" && !Array.isArray(u.atributos) && <dl className="text-xs mb-2 space-y-1">
+                  {Object.entries(u.atributos).map(([nombre, valor]) => <div key={nombre} className="flex flex-wrap gap-x-2"><dt className="text-muted-foreground break-words">{nombre}:</dt><dd className="break-words min-w-0">{String(valor ?? "")}</dd></div>)}
+                </dl>}
                 <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/40">
+                  <Button variant="outline" size="sm" aria-label={`Editar datos de ${u.full_name || u.email}`} onClick={() => {
+                    setDetails({ email: u.email, full_name: u.full_name ?? "", cargo: u.cargo ?? "" });
+                    const attrs = u.atributos && typeof u.atributos === "object" && !Array.isArray(u.atributos) ? u.atributos : {};
+                    setAttributeRows(Object.entries(attrs).map(([nombre, valor]) => ({ nombre, valor: String(valor ?? "") })));
+                    setEditTarget(u.id);
+                  }}><Pencil className="size-3.5" /> Editar datos</Button>
                   <select
+                    aria-label={`Rol de ${u.full_name || u.email}`}
                     value={primaryRole}
                     onChange={(e) => changeRole(u.id, e.target.value as Role)}
                     className="min-h-11 text-[11px] rounded-lg bg-secondary border border-border px-2"
@@ -354,6 +393,18 @@ function AdminPage() {
         </ul>
       )}
 
+      <Dialog open={!!editTarget} onOpenChange={open => { if (!open && !busy) setEditTarget(null); }}>
+        <DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Editar usuario</DialogTitle></DialogHeader>
+          <form className="space-y-4" onSubmit={saveDetails}>
+            <Field label="Nombre completo"><Input maxLength={120} value={details.full_name} onChange={e => setDetails({ ...details, full_name: e.target.value })} /></Field>
+            <Field label="Correo electrónico"><Input type="email" required maxLength={255} value={details.email} onChange={e => setDetails({ ...details, email: e.target.value })} /></Field>
+            <UserAttributesEditor cargo={details.cargo} onCargoChange={cargo => setDetails({ ...details, cargo })} rows={attributeRows} onChange={setAttributeRows} />
+            <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={() => setEditTarget(null)}>Cancelar</Button><Button type="submit" disabled={busy}>{busy && <Loader2 className="size-4 animate-spin" />} Guardar datos</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {openNew && (
         <div
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4"
@@ -362,7 +413,7 @@ function AdminPage() {
           <form
             onClick={(e) => e.stopPropagation()}
             onSubmit={submitNew}
-            className="glass rounded-2xl p-5 w-full max-w-sm space-y-3"
+            className="glass rounded-2xl p-5 w-full max-w-sm space-y-3 max-h-[85dvh] overflow-y-auto"
           >
             <h3 className="font-semibold text-base flex items-center gap-2">
               <UserPlus className="size-4 text-primary" /> Nuevo usuario
@@ -375,6 +426,7 @@ function AdminPage() {
                 placeholder="Juan Pérez"
               />
             </Field>
+            <UserAttributesEditor cargo={newCargo} onCargoChange={setNewCargo} rows={newAttributes} onChange={setNewAttributes} />
             <Field label="Email">
               <input
                 type="email"

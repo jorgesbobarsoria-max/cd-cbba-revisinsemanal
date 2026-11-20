@@ -541,6 +541,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          atributos: Json
+          cargo: string | null
           created_at: string
           email: string
           full_name: string | null
@@ -550,6 +552,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          atributos?: Json
+          cargo?: string | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -559,6 +563,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          atributos?: Json
+          cargo?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
