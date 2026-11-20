@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { DashboardDetalle, type DetalleTipo } from "@/components/dashboard-detalle";
 import { Button } from "@/components/ui/button";
+import { datosTecnico } from "@/lib/responsables";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/")({
@@ -218,6 +219,8 @@ function HomePage() {
     setBusy(true);
     try {
       const today = new Date();
+      const { data: profile, error: profileError } = await supabase.from("profiles").select("full_name,cargo").eq("id", user.id).single();
+      if (profileError) throw new Error("No se pudieron cargar tus datos de usuario");
       const { data, error } = await supabase
         .from("inspecciones")
         .insert({
@@ -225,7 +228,7 @@ function HomePage() {
           ciudad,
           fecha: today.toISOString().slice(0, 10),
           semana: getWeekNumber(today),
-          tecnico: user.user_metadata?.full_name ?? user.email,
+          ...datosTecnico(profile, user.email ?? ""),
         })
         .select("id").single();
       if (error) throw error;

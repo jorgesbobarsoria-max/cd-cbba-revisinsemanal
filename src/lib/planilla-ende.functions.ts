@@ -190,7 +190,7 @@ export const generarPlanillaEndeMatriz = createServerFn({ method: "POST" })
         new TableRow({ height: { value: 1100, rule: "atLeast" as never }, children: [cell("", half), cell("", half)] }),
         new TableRow({ children: [
           cell(`FIRMA RESPONSABLE\n${insp.tecnico ?? ""}${insp.cargo ? ` · ${insp.cargo}` : ""}\nENDE SERVICIOS Y CONSTRUCCIONES S.A.`, half, { bold: true, size: 16 }),
-          cell(`FIRMA RESPONSABLE\n${insp.supervisor ?? ""}\nENDE MATRIZ`, half, { bold: true, size: 16 }),
+          cell(`FIRMA RESPONSABLE\n${insp.supervisor ?? ""}${insp.cargo_supervisor ? ` · ${insp.cargo_supervisor}` : ""}\nENDE MATRIZ`, half, { bold: true, size: 16 }),
         ] }),
       ],
     }));

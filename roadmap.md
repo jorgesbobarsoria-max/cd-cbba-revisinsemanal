@@ -5,3 +5,6 @@
 - [x] Verificar guardado de opciones y selección en una revisión existente, sin alterar sus lecturas guardadas.
 - [x] Permitir editar datos de usuarios y añadir cargo y atributos personalizados desde Administración.
 - [x] Verificar guardado y lectura posterior con sesión administradora; comprobar autorización y validación con pruebas.
+- [ ] Autocompletar nombre y cargo del técnico y permitir seleccionar supervisor y su cargo en revisión semanal.
+- [ ] Conservar los responsables guardados e incluirlos en informe Word y planilla ENDE Matriz.
+- [ ] Verificar selección, guardado y descarga del informe.

@@ -27,7 +27,7 @@ import { lineChartSvg, svgImageOptions } from "@/lib/chart-svg";
 type Equipo = { id: string; categoria: string; tag: string; marca: string | null; modelo: string | null; ubicacion: string | null; criticidad: string | null; orden: number };
 type Punto = { id: number; equipo_id: string; numero: number; descripcion: string; tipo: string; unidad: string | null; min_ok: number | null; max_ok: number | null; min_alerta: number | null; max_alerta: number | null };
 type Item = { punto_id: number; equipo_id: string; estado: string | null; valor: string | null; semaforo: string | null; observaciones: string | null; accion_correctiva: string | null };
-type Insp = { id: string; fecha: string; semana: number; tecnico: string | null; turno: string | null; supervisor: string | null; cargo: string | null; condicion_clima: string | null; temp_sala: number | null; hr_sala: number | null; pue: number | null; carga_it: number | null; estado: string; standby_equipos: string[] | null };
+type Insp = { id: string; fecha: string; semana: number; tecnico: string | null; turno: string | null; supervisor: string | null; cargo: string | null; cargo_supervisor: string | null; condicion_clima: string | null; temp_sala: number | null; hr_sala: number | null; pue: number | null; carga_it: number | null; estado: string; standby_equipos: string[] | null };
 
 const semaforoLabel: Record<string, string> = { verde: "OK", amarillo: "ALERTA", rojo: "FALLA", gris: "N/A" };
 const semaforoFill: Record<string, string> = { verde: "C8E6C9", amarillo: "FFE0B2", rojo: "FFCDD2", gris: "ECEFF1" };
@@ -120,7 +120,8 @@ export const generarInformeWord = createServerFn({ method: "POST" })
       new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Infraestructura Crítica – Data Center ${ciudadInsp}`, size: 28, font: "Calibri", color: "455A64" })] }),
       new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 600 }, children: [new TextRun({ text: `Semana ${I.semana} · ${I.fecha}`, size: 26, bold: true, font: "Calibri" })] }),
       new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200 }, children: [new TextRun({ text: `Técnico: ${I.tecnico ?? "—"}    Turno: ${I.turno ?? "—"}`, size: 22, font: "Calibri" })] }),
-      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Supervisor: ${I.supervisor ?? "—"}`, size: 22, font: "Calibri" })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Cargo del técnico: ${I.cargo ?? "—"}`, size: 22, font: "Calibri" })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Supervisor: ${I.supervisor ?? "—"}${I.cargo_supervisor ? ` · ${I.cargo_supervisor}` : ""}`, size: 22, font: "Calibri" })] }),
       new Paragraph({ children: [new TextRun({ text: "", break: 8 })] }),
     );
 
@@ -319,7 +320,7 @@ export const generarInformeWord = createServerFn({ method: "POST" })
       rows: [
         new TableRow({ children: [
           cell(`\n\n_________________________\n${I.tecnico ?? "Técnico responsable"}\n${I.cargo ?? "Operación – Infraestructura"}`, { align: AlignmentType.CENTER, width: 4680 }),
-          cell(`\n\n_________________________\n${I.supervisor ?? "Supervisor"}\nSupervisión de Operaciones`, { align: AlignmentType.CENTER, width: 4680 }),
+          cell(`\n\n_________________________\n${I.supervisor ?? "Supervisor"}\n${I.cargo_supervisor ?? "Supervisión de Operaciones"}`, { align: AlignmentType.CENTER, width: 4680 }),
         ]}),
       ],
     }));

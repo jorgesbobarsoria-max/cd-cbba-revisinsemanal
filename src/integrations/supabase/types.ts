@@ -295,6 +295,7 @@ export type Database = {
         Row: {
           carga_it: number | null
           cargo: string | null
+          cargo_supervisor: string | null
           ciudad: string
           condicion_clima: string | null
           created_at: string
@@ -309,6 +310,7 @@ export type Database = {
           standby_equipos: string[]
           standby_observaciones: Json
           supervisor: string | null
+          supervisor_id: string | null
           tecnico: string | null
           temp_sala: number | null
           turno: string | null
@@ -319,6 +321,7 @@ export type Database = {
         Insert: {
           carga_it?: number | null
           cargo?: string | null
+          cargo_supervisor?: string | null
           ciudad?: string
           condicion_clima?: string | null
           created_at?: string
@@ -333,6 +336,7 @@ export type Database = {
           standby_equipos?: string[]
           standby_observaciones?: Json
           supervisor?: string | null
+          supervisor_id?: string | null
           tecnico?: string | null
           temp_sala?: number | null
           turno?: string | null
@@ -343,6 +347,7 @@ export type Database = {
         Update: {
           carga_it?: number | null
           cargo?: string | null
+          cargo_supervisor?: string | null
           ciudad?: string
           condicion_clima?: string | null
           created_at?: string
@@ -357,6 +362,7 @@ export type Database = {
           standby_equipos?: string[]
           standby_observaciones?: Json
           supervisor?: string | null
+          supervisor_id?: string | null
           tecnico?: string | null
           temp_sala?: number | null
           turno?: string | null

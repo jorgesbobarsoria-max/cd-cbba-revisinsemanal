@@ -15,6 +15,9 @@ import { listEvidencias, type EvidenciaRow } from "@/lib/photo-utils";
 import { descargarDocx } from "@/lib/download-docx";
 import { opcionesParametro } from "@/lib/opciones-parametro";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { listarResponsables } from "@/lib/responsables.functions";
+import { datosTecnico, datosSupervisor } from "@/lib/responsables";
+import { useQuery } from "@tanstack/react-query";
 
 
 export const Route = createFileRoute("/inspeccion/$id")({
@@ -52,6 +55,10 @@ function InspeccionPage() {
   const [insp, setInsp] = useState<{ fecha: string; semana: number; tecnico: string | null; turno: string | null; estado: string; user_id?: string } | null>(null);
   const [standby, setStandby] = useState<Set<string>>(new Set());
   const [cab, setCab] = useState<Record<string, string>>({});
+  const directorioFn = useServerFn(listarResponsables);
+  const { data: responsables = [], isLoading: cargandoResponsables, isError: errorResponsables, refetch: recargarResponsables } = useQuery({
+    queryKey: ["responsables-revision", user?.id], queryFn: () => directorioFn(), enabled: !!user && !authLoading,
+  });
   const [verCab, setVerCab] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,7 +123,7 @@ function InspeccionPage() {
       const [eq, pt, ins, it] = await Promise.all([
         supabase.from("equipos").select("*").order("orden"),
         supabase.from("puntos_inspeccion").select("*").order("numero"),
-        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,supervisor,cargo,condicion_clima,temp_sala,hr_sala,carga_it,pue,proxima_revision,estado,standby_equipos,ciudad,user_id").eq("id", id).single(),
+        supabase.from("inspecciones").select("fecha,semana,tecnico,turno,supervisor,cargo,supervisor_id,cargo_supervisor,condicion_clima,temp_sala,hr_sala,carga_it,pue,proxima_revision,estado,standby_equipos,ciudad,user_id").eq("id", id).single(),
         supabase.from("inspeccion_items").select("*").eq("inspeccion_id", id),
       ]);
       const ciudadInsp = ((ins.data as any)?.ciudad as string) ?? "Cochabamba";
@@ -128,10 +135,18 @@ function InspeccionPage() {
       setInsp(ins.data);
       setStandby(new Set(((ins.data as any)?.standby_equipos ?? []) as string[]));
       const d = (ins.data ?? {}) as Record<string, unknown>;
+      let tecnicoDefaults = { tecnico: "", cargo: "" };
+      if (ins.data && ins.data.estado !== "finalizado" && (!ins.data.tecnico || !ins.data.cargo)) {
+        const { data: profile } = await supabase.from("profiles").select("full_name,cargo").eq("id", ins.data.user_id).maybeSingle();
+        tecnicoDefaults = datosTecnico(profile, "");
+      }
       setCab({
+        tecnico: (d.tecnico as string) || tecnicoDefaults.tecnico,
         turno: (d.turno as string) ?? "",
         supervisor: (d.supervisor as string) ?? "",
-        cargo: (d.cargo as string) ?? "",
+        supervisor_id: (d.supervisor_id as string) ?? "",
+        cargo_supervisor: (d.cargo_supervisor as string) ?? "",
+        cargo: (d.cargo as string) || tecnicoDefaults.cargo,
         condicion_clima: (d.condicion_clima as string) ?? "",
         temp_sala: d.temp_sala != null ? String(d.temp_sala) : "",
         hr_sala: d.hr_sala != null ? String(d.hr_sala) : "",
@@ -256,7 +271,10 @@ function InspeccionPage() {
         standby_equipos: standbyArr,
         updated_at: new Date().toISOString(),
         turno: cab.turno?.trim() || null,
+        tecnico: cab.tecnico?.trim() || null,
         supervisor: cab.supervisor?.trim() || null,
+        supervisor_id: cab.supervisor_id || null,
+        cargo_supervisor: cab.cargo_supervisor?.trim() || null,
         cargo: cab.cargo?.trim() || null,
         condicion_clima: cab.condicion_clima?.trim() || null,
         temp_sala: numOrNull(cab.temp_sala),
@@ -314,8 +332,8 @@ function InspeccionPage() {
           aria-label="Técnico responsable"
           placeholder="Técnico responsable"
           disabled={soloLectura}
-          defaultValue={insp?.tecnico ?? ""}
-          onBlur={(e) => supabase.from("inspecciones").update({ tecnico: e.target.value }).eq("id", id)}
+          value={cab.tecnico ?? ""}
+          onChange={(e) => setCab(c => ({ ...c, tecnico: e.target.value }))}
           className="mt-3 w-full bg-surface-1 border border-border rounded-lg px-3 h-10 text-sm focus:outline-none focus:border-primary"
         />
         <button
@@ -329,10 +347,26 @@ function InspeccionPage() {
         </button>
         {verCab && (
           <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="col-span-2 space-y-2">
+              <label className="block text-[10px] uppercase tracking-wider text-muted-foreground" htmlFor="supervisor-revision">Supervisor</label>
+              <Select value={cab.supervisor_id || (cab.supervisor ? "registrado" : "ninguno")} disabled={soloLectura || cargandoResponsables} onValueChange={value => {
+                if (value === "registrado") return;
+                const persona = responsables.find(r => r.id === value) ?? null;
+                setCab(c => ({ ...c, ...datosSupervisor(persona) }));
+              }}>
+                <SelectTrigger id="supervisor-revision" className="w-full h-auto min-h-11 whitespace-normal text-left"><SelectValue placeholder="Seleccionar supervisor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ninguno">Sin supervisor</SelectItem>
+                  {cab.supervisor && (!cab.supervisor_id || !responsables.some(r => r.id === cab.supervisor_id)) && <SelectItem value={cab.supervisor_id || "registrado"}>{cab.supervisor} · registrado</SelectItem>}
+                  {responsables.map(r => <SelectItem key={r.id} value={r.id}>{r.nombre}{r.cargo ? ` · ${r.cargo}` : ""}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {errorResponsables && <div className="flex items-center gap-2 text-xs text-fail">No se cargaron los responsables.<button type="button" onClick={() => recargarResponsables()}>Reintentar</button></div>}
+              <label className="block"><span className="text-[10px] uppercase tracking-wider text-muted-foreground">Cargo del supervisor</span><input aria-label="Cargo del supervisor" value={cab.cargo_supervisor ?? ""} disabled={soloLectura} onChange={e => setCab(c => ({ ...c, cargo_supervisor: e.target.value }))} className="mt-1 w-full bg-surface-1 border border-border rounded-lg px-3 h-11 text-sm" /></label>
+            </div>
             {([
               ["turno", "Turno", "text"],
-              ["supervisor", "Supervisor", "text"],
-              ["cargo", "Cargo", "text"],
+              ["cargo", "Cargo del técnico", "text"],
               ["condicion_clima", "Condición climática", "text"],
               ["temp_sala", "Temp. sala (°C)", "number"],
               ["hr_sala", "Humedad relativa (%)", "number"],
